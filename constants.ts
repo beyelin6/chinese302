@@ -454,7 +454,7 @@ export const STEP_3_VISUAL_GENERIC_PROMPT = `
 # ROLE: V-MAX 視覺策略師 (Visual Strategist)
 # MISSION: 為本課推薦 6 種「視覺隱喻 (Metaphor)」與「視覺風格 (Style)」組合。
 
-### 🎨 1️⃣ Style SSOT (視覺風格 A-M)
+### 🎨 1️⃣ Style SSOT (視覺風格 A-Y)
 ⚠️ 你必須從以下清單中挑選風格，並在 reason 中說明為何適合：
 A. 溫暖吉卜力: "Studio Ghibli style, hand-painted anime art, lush greenery, warm golden lighting, detailed background art, Hayao Miyazaki aesthetic."
 B. 現代扁平: "Modern Flat Design, vector art, clean geometric shapes, bold solid colors, minimalist composition, corporate memphis style."
@@ -469,6 +469,18 @@ J. 奇幻繪本: "Vintage storybook collage, mixed media textures, whimsical fan
 K. 療癒色鉛筆: "Colored pencil, waxy texture, visible hatching, soft warm tones, childlike innocence, rough paper grain."
 L. 幾何資訊圖: "Isometric infographic, clean blocks, technical lines, logical structure, data visualization style, blueprint aesthetic."
 M. 復古浮世繪: "Ukiyo-e woodblock print, mineral pigments, bold outlines, decorative waves, traditional Japanese art, flat perspective."
+N. 熱血少年戰鬥: "Shonen manga style, dynamic fish-eye lens, speed lines, impact sparks, red/black high contrast."
+O. Vtuber 學院: "Vtuber stream overlay design, anime academy theme, chat box UI, digital vibrant colors."
+P. 賽博龐克: "Cyberpunk aesthetic, neon lights, rainy night city, high-tech low-life, purple and teal palette."
+Q. 極簡包浩斯: "Bauhaus style, primary colors (red/blue/yellow), geometric abstraction, functionalist design."
+R. 蒸氣龐克: "Steampunk, Victorian industrial, brass gears, clockwork, sepia tones, intricate machinery."
+S. 黑白漫畫: "Classic B&W Manga, screentones, dramatic ink hatching, high contrast storytelling."
+T. 波普藝術: "Pop Art, Andy Warhol style, Ben-Day dots, vibrant repetitive patterns, comic book aesthetic."
+U. 可愛像素: "Kawaii Pixel Art, 8-bit/16-bit retro game style, pastel colors, simple and charming."
+V. 超現實主義: "Surrealism, Salvador Dali vibes, melting objects, dream-like logic, unexpected juxtapositions."
+W. 暗黑哥德: "Dark Gothic, Victorian mystery, ornate lace, candle lighting, moody atmosphere."
+X. 科幻藍圖: "Sci-fi blueprint, holographic lines, technical schematics, glowing blue UI elements."
+Y. 低多邊形: "Low Poly art, faceted surfaces, sharp edges, stylized 3D look, vibrant lighting."
 
 ### 🗺️ 2️⃣ Visual Metaphor Mapping (視覺隱喻庫)
 ⚠️ 邏輯：根據文體與內容選擇最契合的隱喻。
@@ -493,7 +505,7 @@ Special Structures (特殊文體)
 {
   "recommendations": [
     {
-      "style": { "code": "A-M", "name": "風格名稱", "description": "對應的英文提示詞" },
+      "style": { "code": "A-Y", "name": "風格名稱", "description": "對應的英文提示詞" },
       "metaphor": { "code": "M1-S6", "name": "隱喻名稱", "description": "視覺隱喻的具體描述" },
       "reason": "為什麼這個風格與隱喻的組合最適合本課？(連結文體與主題)"
     }

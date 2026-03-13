@@ -58,11 +58,33 @@ export const useStep5Output = () => {
         ...data.idioms.map((i: any) => ({ type: 'AtomicSlide', title: `成語解析：${i.word}`, idiom: i.word }))
       ];
 
+      // 🌟 [新增] 根據風格碼注入專屬指令
+      const styleCode = data.visualDNA?.recommendations?.[0]?.style?.code || 'A';
+      const getStyleSpecificInstruction = (code: string) => {
+        switch (code) {
+          case 'N': return `\n# 🎭 熱血少年戰鬥風格 (Style N) 專屬指令：\n- 投影片內容呈現「戰鬥數據面板」感。\n- 引導語充滿熱血挑戰感。`;
+          case 'U': return `\n# 👾 可愛像素風格 (Style U) 專屬指令：\n- 投影片內容呈現「RPG 對話框」感。\n- 引導語像遊戲 NPC 一樣親切。`;
+          case 'S': return `\n# 📖 黑白漫畫風格 (Style S) 專屬指令：\n- 投影片內容呈現「漫畫分鏡對白」感。\n- 強調對比與張力。`;
+          case 'O': return `\n# 📺 Vtuber 學院風格 (Style O) 專屬指令：\n- 呈現「直播介面」感，引導語像直播主互動。`;
+          case 'P': return `\n# 🌃 賽博龐克風格 (Style P) 專屬指令：\n- 呈現「高科技顯示器」感，引導語冷酷未來感。`;
+          case 'Q': return `\n# 📐 極簡包浩斯風格 (Style Q) 專屬指令：\n- 強調幾何構成，引導語邏輯嚴密。`;
+          case 'R': return `\n# ⚙️ 蒸氣龐克風格 (Style R) 專屬指令：\n- 呈現「古老設計圖」感，引導語充滿工業氣息。`;
+          case 'T': return `\n# 🎨 波普藝術風格 (Style T) 專屬指令：\n- 呈現「大膽配色」，引導語活潑流行感。`;
+          case 'V': return `\n# 🌀 超現實主義風格 (Style V) 專屬指令：\n- 呈現「夢境」感，引導語充滿哲思聯想。`;
+          case 'W': return `\n# 🕯️ 暗黑哥德風格 (Style W) 專屬指令：\n- 呈現「古堡秘辛」感，引導語神秘深沉。`;
+          case 'X': return `\n# 💻 科幻藍圖風格 (Style X) 專屬指令：\n- 呈現「全息投影」感，引導語精確數據導向。`;
+          case 'Y': return `\n# 💎 低多邊形風格 (Style Y) 專屬指令：\n- 呈現「數位雕塑」感，引導語現代俐落。`;
+          default: return "";
+        }
+      };
+      const styleSpecificInstruction = getStyleSpecificInstruction(styleCode);
+
       dispatch({ type: 'SET_LOADING_STATUS', payload: `正在根據藍圖生成 ${blueprint.length} 張投影片腳本...` });
 
       const prompt = `
         ${SYSTEM_PROMPT}
         ${FINAL_ATOMIC_SCRIPT_PROMPT}
+        ${styleSpecificInstruction}
         
         # 🚨 執行任務：強制藍圖 (MANDATORY BLUEPRINT)
         請依照以下順序與數量生成投影片，不得遺漏：
