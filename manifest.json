@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "V-MAX Omni-Architect",
+  "version": "1.0",
+  "description": "A high-end educational material generation engine.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "index.html"
+  }
+}
