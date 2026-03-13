@@ -1,7 +1,11 @@
 // 檔案路徑: src/components/Step3Visuals.tsx
 
 import React, { useState, useEffect } from 'react';
-import { Palette, Box, Check, AlertCircle, ArrowRight, Info, ArrowLeft, Sparkles, Layout, ChevronDown, Edit3, Plus, X } from 'lucide-react';
+import { 
+  Palette, Box, Check, AlertCircle, ArrowRight, 
+  Info, ArrowLeft, Sparkles, Layout, ChevronDown, 
+  Edit3, Loader2 
+} from 'lucide-react';
 import { VisualData, RecStyleItem, RecMetaphorItem } from '../types';
 
 // 🌟 [SSOT 對齊] 載入 A-Y 全量風格庫
@@ -179,7 +183,7 @@ const Step3Visuals: React.FC<Step3VisualsProps> = ({ visualResult, onConfirmVisu
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t border-slate-200 flex justify-center gap-4 z-50">
         <button onClick={onBack} className="px-8 py-4 text-slate-500 font-bold hover:bg-slate-100 rounded-2xl transition-all border border-slate-200">返回</button>
         <button onClick={handleConfirm} disabled={isLoading} className="flex-1 max-w-xl py-4 bg-slate-900 text-white font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
-          {isLoading ? <Sparkles className="animate-spin" /> : <ArrowRight />} 確認並進入選角
+          {isLoading ? <Loader2 className="animate-spin" /> : <ArrowRight />} 確認並進入選角
         </button>
       </div>
     </div>
