@@ -51,7 +51,7 @@ export default function StepRouter() {
     handleGenerateVisualOptions,
     handleGenerateCastingOptions
   } = useStep4VisualsAndCasting();
-  const { handleGenerateModule, handleGenerateSingleModule } = useStep5Output();
+  const { handleScriptPipeline, handleManualModule } = useStep5Output();
 
   // 🌟 [保留] 您的原始 JSON 解析邏輯
   const parseJSON = (json: string | null) => {
@@ -193,9 +193,8 @@ export default function StepRouter() {
                 outputKb={state.outputKb}
                 outputNotebookLMGuide={state.outputNotebookLMGuide}
                 outputGamifiedQuiz={state.outputGamifiedQuiz}
-                analysisData={state.analysisData}
-                onScriptPipeline={handleGenerateModule}
-                onManualModule={handleGenerateSingleModule}
+                onScriptPipeline={handleScriptPipeline}
+                onManualModule={handleManualModule}
                 isLoading={state.isLoading}
                 onBack={handleBack}
               />

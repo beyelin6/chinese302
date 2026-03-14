@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { 
   Layout, FileText, Check, Download, ArrowLeft, Loader2, 
-  Sparkles, BookOpen, Database, Copy, Code, Edit2, Zap
+  Sparkles, BookOpen, Database, Copy, Code, Zap
 } from 'lucide-react';
 import { useWorkflowContext } from '../context/WorkflowContext';
 
@@ -39,12 +39,11 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     }
   }, [outputScript, isLoading, onScriptPipeline]);
 
-  // 2. 🌟 增量同步邏輯：支援分段產出
+  // 2. 增量同步邏輯：解析傳入的統一腳本 (YAML + Slides)
   useEffect(() => {
     if (outputScript) {
       try {
         const parsed = JSON.parse(outputScript);
-        // 支援多種回傳格式 (陣列或包含 slides 的物件)
         const incomingSlides = parsed.slides || (Array.isArray(parsed) ? parsed : []);
         
         if (incomingSlides.length > prevSlidesLength.current) {
@@ -58,8 +57,8 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   }, [outputScript]);
 
   /**
-   * 3. 🌟 [核心進化]：即時封裝「YAML 標頭 + 編輯後的內容」
-   * 確保右側代碼永遠包含完整的視覺 DNA
+   * 3. 🌟 [核心進化]：根據「4 大核心細節」即時封裝 Unified Data
+   * 這保證了即便在前端編輯過文字，匯出的 YAML 依然完整。
    */
   const syncRawCode = useMemo(() => {
     if (activeTab !== 'script') {
@@ -68,7 +67,6 @@ const Step5Output: React.FC<Step5OutputProps> = ({
              activeTab === 'kb' ? outputKb || "" : outputNotebookLMGuide || "";
     }
 
-    // 解析視覺與人設數據
     const safeParse = (data: any) => {
       try { return typeof data === 'string' ? JSON.parse(data) : data; }
       catch { return {}; }
@@ -76,29 +74,50 @@ const Step5Output: React.FC<Step5OutputProps> = ({
 
     const visual = safeParse(state.visualResult);
     const casting = safeParse(state.castingResult);
+    const analysis = state.analysisData;
+    const vocabData = safeParse(state.deepVocabResult);
 
-    // 建立一體化結構
+    // 🌟 構建與「之前設定」完全對位的 YAML 核心結構
     const unifiedPayload = {
-      // ⚙️ NOTEBOOKLM DRIVER (系統驅動指令)
+      // ⚙️ NOTEBOOKLM DRIVER (系統級指令驅動)
       notebooklm_driver: {
+        system_role: "You are the V-MAX Slide Architect. Generate slides based on the YAML constraints.",
         artistic_consistency: visual?.style?.code || "A",
+        style_prompt: visual?.style?.description || "Maintain stylistic consistency.",
         dna_traits: {
-          protagonist: casting?.protagonist || "標準主角特徵",
+          protagonist: casting?.protagonist || "主角視覺特徵",
           guide: `${casting?.guide?.name || '導師'} | ${casting?.guide?.visualDNA || '標準人設'}`
-        },
-        style_prompt: `artistic style code: ${visual?.style?.code || 'A'}. Maintain high consistency in strokes and saturation.`
-      },
-      // 🎬 第一部分：YAML 核心記錄細節
-      VMAX_STRUCTURE_YAML: {
-        global_visual_protocol: { 
-          artistic_consistency: visual?.style?.code || "A", 
-          image_ratio: "16:9" 
-        },
-        scaffolding_logic: {
-          macro_structure: state.analysisData?.visualStructureRecommendation || "N1 故事山",
-          visual_metaphor: visual?.metaphor?.label || "M3 故事絲帶"
         }
       },
+      // 🎬 第一部分：YAML 核心記錄細節 (四大細節)
+      VMAX_STRUCTURE_YAML: {
+        // 1. 視覺執行協定
+        global_visual_protocol: { 
+          artistic_consistency: visual?.style?.code || "A", 
+          image_ratio: "16:9",
+          rendering_priority: "Visual DNA Consistency"
+        },
+        // 2. 結構與隱喻選擇
+        scaffolding_logic: {
+          macro_structure: analysis?.visualStructureRecommendation || "N1 故事山",
+          micro_thinking: "C1 氣泡圖 (分析) / T1 對比圖 (辨析)",
+          visual_metaphor: visual?.metaphor?.label || "M3 故事絲帶",
+          visual_description: `必須在背景中使用「${visual?.metaphor?.label || '隱喻元素'}」串連全課。`
+        },
+        // 3. 角色視覺錨點
+        visual_dna_anchor: {
+          protagonist_dna: casting?.protagonist || "主角視覺 DNA",
+          guide_dna: casting?.guide?.visualDNA || "導師視覺 DNA"
+        },
+        // 4. 簡報結構藍圖 (動態記錄)
+        slide_sequence_blueprint: {
+          PART_A: "導航與鷹架 (P1-P3)",
+          PART_B: "詳盡課文迴圈 (意義段解析)",
+          PART_C: "原子語文與評量 (C1-C4)",
+          PART_D_E: "策略、語文活動與結尾"
+        }
+      },
+      // 第三部分：原子化動態腳本
       slides: editableSlides
     };
 
@@ -181,25 +200,33 @@ const Step5Output: React.FC<Step5OutputProps> = ({
                       <span className="flex items-center gap-1 text-emerald-500"><Check size={10}/> DNA_SYNCED</span>
                     </div>
                     <div className="p-4 space-y-3">
+                      <div className="flex gap-2">
+                         <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/30">鏡頭: {slide.lens || "中景"}</span>
+                      </div>
                       <textarea 
                         value={slide.displayText} 
                         onChange={(e) => updateSlide(idx, 'displayText', e.target.value)}
                         className="w-full bg-slate-900/80 border border-slate-700 rounded-lg p-3 text-sm font-bold text-white focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
+                        placeholder="投影片顯示文字 (100% 原文鎖定)..."
                         rows={2}
                       />
                       <textarea 
                         value={slide.guideTalk} 
                         onChange={(e) => updateSlide(idx, 'guideTalk', e.target.value)}
                         className="w-full bg-slate-900/40 border border-slate-700 rounded-lg p-3 text-xs text-slate-400 italic focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
+                        placeholder="導師引導語腳本..."
                         rows={2}
                       />
+                      <div className="text-[9px] text-slate-600 font-mono break-all line-clamp-1 hover:line-clamp-none transition-all">
+                        IMAGE_PROMPT: {slide.visual_prompt}
+                      </div>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-600">
                   <Loader2 size={40} className="animate-spin mb-4 text-indigo-500" />
-                  <p className="font-bold text-sm tracking-widest uppercase">Initializing Unified Data Flow...</p>
+                  <p className="font-bold text-sm tracking-widest uppercase">Executing Digital Twin Protocol...</p>
                 </div>
               )
             ) : (
@@ -210,20 +237,23 @@ const Step5Output: React.FC<Step5OutputProps> = ({
           </div>
         </div>
 
-        {/* 右側：即時碼 (即時包含 YAML 標頭) */}
+        {/* 右側：即時碼 (即時包含完整的四大核心記錄細節) */}
         <div className="w-[480px] border-l border-slate-700 bg-slate-900 flex flex-col">
           <div className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
             <span className="text-[10px] font-black text-indigo-400 flex items-center gap-2 tracking-widest uppercase">
-              <Code size={12} /> Unified Script & YAML
+              <Code size={12} /> {activeTab === 'script' ? 'Unified JSON Engine' : 'Raw Documentation'}
             </span>
             <button onClick={() => { navigator.clipboard.writeText(syncRawCode); setIsCopied(true); setTimeout(()=>setIsCopied(false), 2000); }} className="text-slate-400 hover:text-white">
               {isCopied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
             </button>
           </div>
           <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto custom-scrollbar bg-black/20">
-            <pre className="text-emerald-500/70 whitespace-pre-wrap">
+            <pre className="text-emerald-500/70 whitespace-pre-wrap leading-relaxed">
               <code>{syncRawCode}</code>
             </pre>
+          </div>
+          <div className="p-3 bg-indigo-600/10 border-t border-slate-700 text-[9px] text-indigo-400/60 font-mono">
+            VMAX_PROTOCOL: {activeTab === 'script' ? 'SYNCED_WITH_DNA_ANCHOR' : 'READY_TO_COPY'}
           </div>
         </div>
       </div>
