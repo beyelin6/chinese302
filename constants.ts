@@ -740,4 +740,22 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 [type: Assessment] (綜合評量)
 - lens: "資訊中心"
 - displayText: "【測驗題型】：{題型}\\n❓ 題目：{題目}\\n🔘 (A) {選項}\\n🔘 (B) {選項}\\n🔘 (C) {選項}\\n🔘 (D) {選項}"
-- guideTalk: "孩子們，準備好要公佈
+- guideTalk: "孩子們，準備好要公佈答案了嗎？"
+
+== PART D: 策略與活動 (Strategy & Activity) ==
+[type: LanguageActivity] (語文活動)
+- lens: "互動舞台"
+- visual_prompt: "Subject: {導師 DNA} leading an activity. Context: Classroom interaction. Composition: Wide shot. Artistic VIS: {風格碼}. Safety: No text."
+- displayText: "【活動名稱】：{活動標題}\\n{活動內容}"
+
+[type: Strategy] (教學策略)
+- lens: "百寶箱"
+- visual_prompt: "Subject: A magical treasure box opening. Context: Glowing wisdom. Composition: Close-up. Artistic VIS: {風格碼}. Safety: No text."
+- displayText: "【教學策略】：{策略標題}"
+
+== PART E: 結尾 (Ending) ==
+[type: Ending] (結尾道別)
+- lens: "遠景"
+- visual_prompt: "Subject: {導師 DNA} waving goodbye. Context: Sunset or peaceful background. Composition: Wide shot. Artistic VIS: {風格碼}. Safety: No text."
+- guideTalk: "[溫暖的結尾語與鼓勵]"
+`;
