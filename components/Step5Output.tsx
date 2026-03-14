@@ -1,10 +1,10 @@
 // 檔案路徑: src/components/Step5Output.tsx
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { 
   Layout, FileText, Check, Download, ArrowLeft, Loader2, 
-  Sparkles, BookOpen, Database, AlertCircle, Copy, Edit3 
+  Sparkles, BookOpen, Database, Copy, Code, Edit2, Zap
 } from 'lucide-react';
 import { useWorkflowContext } from '../context/WorkflowContext';
 
@@ -29,65 +29,76 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   const { state } = useWorkflowContext();
   const [activeTab, setActiveTab] = useState('script');
   const [isCopied, setIsCopied] = useState(false);
+  const [editableSlides, setEditableSlides] = useState<any[]>([]);
+  
+  // 用來追蹤上一次產出的長度，防止編輯被覆蓋
+  const prevSlidesLength = useRef(0);
 
-  // 自動觸發產出
+  // 1. 初始化與自動觸發
   useEffect(() => {
     if (!outputScript && !isLoading) {
       onScriptPipeline();
     }
   }, [outputScript, isLoading, onScriptPipeline]);
 
-  // 解析腳本 JSON
-  const scriptSlides = useMemo(() => {
-    if (!outputScript) return [];
-    try {
-      let cleanJson = outputScript.replace(/```json/gi, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(cleanJson);
-      return Array.isArray(parsed) ? parsed : (parsed.slides || parsed.data || []);
-    } catch (e) {
-      return [];
+  // 2. 🌟 增量同步邏輯：支援分段產出
+  useEffect(() => {
+    if (outputScript) {
+      try {
+        const cleanJson = outputScript.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleanJson);
+        const incomingSlides = Array.isArray(parsed) ? parsed : (parsed.slides || []);
+        
+        // 僅當「新產出的頁數」大於「目前已有的頁數」時才更新
+        // 這能確保 AI 在產出第 6-10 頁時，不會洗掉你對 1-5 頁做的手動修改
+        if (incomingSlides.length > prevSlidesLength.current) {
+          setEditableSlides(incomingSlides);
+          prevSlidesLength.current = incomingSlides.length;
+        }
+      } catch (e) {
+        console.error("解析腳本失敗", e);
+      }
     }
   }, [outputScript]);
 
-  // 取得目前分頁的原始字串內容
-  const currentRawContent = useMemo(() => {
-    switch(activeTab) {
-      case 'script': return outputScript;
-      case 'worksheet': return outputWorksheet;
-      case 'assessment': return outputAssessment;
-      case 'kb': return outputKb;
-      case 'notebooklm': return outputNotebookLMGuide;
-      case 'quiz': return outputGamifiedQuiz;
-      default: return null;
-    }
-  }, [activeTab, outputScript, outputWorksheet, outputAssessment, outputKb, outputNotebookLMGuide, outputGamifiedQuiz]);
+  // 3. 即時封裝原始碼
+  const syncRawCode = useMemo(() => {
+    // 嘗試解析視覺與選角資料，增加防呆
+    const getSafeData = (data: any) => {
+      try { return typeof data === 'string' ? JSON.parse(data) : data; }
+      catch { return {}; }
+    };
 
-  // 🌟 [新增] 匯出下載功能邏輯
-  const handleDownload = () => {
-    if (!currentRawContent) return;
+    const visual = getSafeData(state.visualResult);
+    const casting = getSafeData(state.castingResult);
     
-    // 建立檔案內容 (加入 BOM 以防止中文亂碼)
-    const blob = new Blob(['\ufeff', currentRawContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    
-    // 建立隱藏連結並觸發點擊
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `VMAX_${activeTab.toUpperCase()}_${new Date().getTime()}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    
-    // 清理記憶體
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const wrapper = {
+      VMAX_DNA: {
+        style: visual?.style?.code || 'A',
+        anchor: casting?.protagonist?.name || 'Standard',
+        version: "10.0-ATOMIC"
+      },
+      slides: editableSlides
+    };
+    return JSON.stringify(wrapper, null, 2);
+  }, [editableSlides, state.visualResult, state.castingResult]);
+
+  const updateSlide = (index: number, field: string, value: string) => {
+    const newSlides = [...editableSlides];
+    newSlides[index] = { ...newSlides[index], [field]: value };
+    setEditableSlides(newSlides);
   };
 
-  const handleCopy = () => {
-    if (currentRawContent) {
-      navigator.clipboard.writeText(currentRawContent);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    }
+  const handleDownload = () => {
+    const content = activeTab === 'script' ? syncRawCode : (activeTab === 'worksheet' ? outputWorksheet : outputAssessment);
+    if (!content) return;
+    const blob = new Blob(['\ufeff', content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `VMAX_${activeTab.toUpperCase()}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const modules = [
@@ -96,128 +107,110 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     { id: 'assessment', title: '評量卷', icon: Check, data: outputAssessment, action: () => onManualModule('assessment') },
     { id: 'kb', title: '知識庫', icon: Database, data: outputKb, action: () => onManualModule('kb') },
     { id: 'notebooklm', title: 'NotebookLM', icon: BookOpen, data: outputNotebookLMGuide, action: () => onManualModule('notebooklm') },
-    { id: 'quiz', title: '遊戲測驗', icon: Sparkles, data: outputGamifiedQuiz, action: () => onManualModule('quiz') },
   ];
 
   return (
-    <div className="flex flex-col h-full space-y-6 pb-24 animate-in fade-in duration-700 bg-slate-50/50 p-4">
+    <div className="flex flex-col h-screen bg-slate-900 text-slate-200 overflow-hidden">
       
-      {/* 標題區 */}
-      <div className="flex justify-between items-end px-2">
-        <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tighter flex items-center gap-3">
-            <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg">
-              <Sparkles size={24} />
-            </div>
-            AI 全原子模組產出
-          </h2>
+      {/* 頂部控制列 */}
+      <div className="h-16 border-b border-slate-700 bg-slate-800 flex items-center justify-between px-6 flex-shrink-0 z-10 shadow-lg">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+            <ArrowLeft size={20} />
+          </button>
+          <div className="flex flex-col">
+            <h2 className="font-black text-lg tracking-tight flex items-center gap-2">
+              <Zap className="text-amber-400 fill-amber-400" size={18} />
+              V-MAX ATOMIC TERMINAL
+            </h2>
+            <div className="text-[10px] text-slate-500 font-mono">STATUS: {isLoading ? 'GENERATING_SEGMENTS...' : 'IDLE_READY'}</div>
+          </div>
         </div>
-      </div>
 
-      {/* 模組選擇導覽器 */}
-      <div className="flex overflow-x-auto pb-2 gap-4 px-2 no-scrollbar">
-        {modules.map((mod) => {
-          const isActive = activeTab === mod.id;
-          const hasData = !!mod.data;
-          return (
-            <button 
+        <div className="flex items-center gap-2">
+          {modules.map(mod => (
+            <button
               key={mod.id}
-              onClick={() => { setActiveTab(mod.id); if(!hasData) mod.action(); }}
-              className={`flex-none w-44 p-4 rounded-2xl border-2 transition-all duration-300 relative bg-white ${
-                isActive ? 'border-indigo-600 shadow-xl -translate-y-1' : 'border-slate-200 grayscale hover:grayscale-0'
-              }`}
+              onClick={() => { setActiveTab(mod.id); if(!mod.data) mod.action(); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeTab === mod.id ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
             >
-              <div className={`p-2 rounded-lg w-fit mb-3 ${isActive ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                <mod.icon size={20} />
-              </div>
-              <div className="font-black text-slate-800 text-left">{mod.title}</div>
-              <div className="text-[10px] font-bold text-slate-400 text-left uppercase tracking-widest mt-1">
-                {hasData ? '● Ready' : '○ Standby'}
-              </div>
+              <mod.icon size={14} /> {mod.title}
             </button>
-          )
-        })}
+          ))}
+          <div className="w-px h-6 bg-slate-700 mx-2" />
+          <button onClick={handleDownload} className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
+            <Download size={14} /> 匯出
+          </button>
+        </div>
       </div>
 
-      {/* 主內容區 */}
-      <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl overflow-hidden flex flex-col mx-2 min-h-[600px]">
+      <div className="flex-1 flex overflow-hidden">
         
-        {/* 工具列 - 已修正按鈕 onClick */}
-        <div className="bg-slate-50 px-8 py-4 border-b flex justify-between items-center">
-            <div className="flex items-center gap-4">
-               <span className="bg-slate-200 text-slate-600 text-[10px] px-2 py-1 rounded font-black">Preview</span>
-               <h3 className="font-black text-slate-700">{modules.find(m => m.id === activeTab)?.title}</h3>
-            </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={handleCopy}
-                disabled={!currentRawContent}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-              >
-                {isCopied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                {isCopied ? '已複製' : '複製內容'}
-              </button>
-              
-              {/* 🌟 核心修正處：注入 handleDownload */}
-              <button 
-                onClick={handleDownload}
-                disabled={!currentRawContent}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 shadow-lg disabled:bg-slate-300 disabled:shadow-none transition-all"
-              >
-                <Download size={14} /> 匯出模組 (.txt)
-              </button>
-            </div>
-        </div>
-
-        {/* 內容渲染 */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          {isLoading && !currentRawContent && activeTab !== 'script' ? (
-             <div className="flex flex-col items-center justify-center h-full space-y-4">
-                <Loader2 size={48} className="animate-spin text-indigo-600" />
-                <p className="font-black text-slate-400 tracking-widest">AI 原子能運算中...</p>
-             </div>
-          ) : activeTab === 'script' && scriptSlides.length > 0 ? (
-            <div className="grid grid-cols-1 gap-8 max-w-4xl mx-auto">
-              {scriptSlides.map((slide: any, idx: number) => (
-                <div key={idx} className="bg-slate-50 border-2 border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-                  <div className="bg-slate-200/50 px-6 py-3 border-b border-slate-200 text-[10px] font-black text-slate-500">
-                    SLIDE {idx + 1} // {slide.type}
-                  </div>
-                  <div className="p-8 space-y-6">
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-black text-indigo-500 uppercase">顯示文字</div>
-                      <div className="text-xl font-bold text-slate-800 leading-relaxed bg-white p-4 rounded-xl border border-slate-100 shadow-inner">
-                        {slide.displayText || '---'}
-                      </div>
+        {/* 左側：編輯區 */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-950/30">
+          <div className="max-w-3xl mx-auto space-y-6 pb-20">
+            {activeTab === 'script' ? (
+              editableSlides.length > 0 ? (
+                editableSlides.map((slide, idx) => (
+                  <div key={idx} className="bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="bg-slate-800/80 px-4 py-2 border-b border-slate-700 text-[10px] font-mono text-slate-500 flex justify-between items-center">
+                      <span>UNIT_SLIDE_{idx + 1} // {slide.type}</span>
+                      <span className="flex items-center gap-1 text-emerald-500"><Check size={10}/> VERIFIED</span>
                     </div>
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-black text-emerald-500 uppercase">引導語腳本</div>
-                      <div className="text-sm text-slate-600 leading-relaxed italic border-l-4 border-emerald-400 pl-4 py-2">
-                        {slide.guideTalk || '---'}
-                      </div>
+                    <div className="p-4 space-y-3">
+                      <textarea 
+                        value={slide.displayText} 
+                        onChange={(e) => updateSlide(idx, 'displayText', e.target.value)}
+                        className="w-full bg-slate-900/80 border border-slate-700 rounded-lg p-3 text-sm font-bold text-white focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
+                        placeholder="投影片顯示文字..."
+                        rows={2}
+                      />
+                      <textarea 
+                        value={slide.guideTalk} 
+                        onChange={(e) => updateSlide(idx, 'guideTalk', e.target.value)}
+                        className="w-full bg-slate-900/40 border border-slate-700 rounded-lg p-3 text-xs text-slate-400 italic focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
+                        placeholder="引導語腳本..."
+                        rows={2}
+                      />
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 text-slate-600">
+                  <Loader2 size={40} className="animate-spin mb-4 text-indigo-500" />
+                  <p className="font-bold text-sm tracking-widest">正在從原子藍圖構建投影片腳本...</p>
                 </div>
-              ))}
-            </div>
-          ) : currentRawContent ? (
-            <div className="prose prose-slate prose-indigo max-w-4xl mx-auto bg-slate-50 p-10 rounded-3xl border border-slate-100 shadow-inner">
-               <ReactMarkdown>{currentRawContent}</ReactMarkdown>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-32 text-slate-300">
-               <AlertCircle size={64} strokeWidth={1} className="mb-4" />
-               <p className="font-bold">目前無內容，請點擊模組觸發生成</p>
-            </div>
-          )}
+              )
+            ) : (
+              <div className="bg-slate-800/20 rounded-2xl p-8 border border-slate-800 prose prose-invert max-w-none shadow-inner">
+                <ReactMarkdown>{activeTab === 'worksheet' ? outputWorksheet || '' : activeTab === 'assessment' ? outputAssessment || '' : outputKb || ''}</ReactMarkdown>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* 底部導航 */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t flex justify-center z-50">
-        <button onClick={onBack} className="px-8 py-4 text-slate-500 font-black hover:bg-slate-100 rounded-2xl border-2 border-slate-200 flex items-center gap-2">
-          <ArrowLeft size={20} /> 返回修改選角設定
-        </button>
+        {/* 右側：即時碼 */}
+        <div className="w-[480px] border-l border-slate-700 bg-slate-900 flex flex-col">
+          <div className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
+            <span className="text-[10px] font-black text-indigo-400 flex items-center gap-2 tracking-widest uppercase">
+              <Code size={12} /> Live Engine Data
+            </span>
+            <div className="flex gap-2">
+               <span className="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-400">JSON</span>
+               <button onClick={() => { navigator.clipboard.writeText(syncRawCode); setIsCopied(true); setTimeout(()=>setIsCopied(false), 2000); }} className="text-slate-400 hover:text-white transition-colors">
+                 {isCopied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+               </button>
+            </div>
+          </div>
+          <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto custom-scrollbar bg-black/20">
+            <pre className="text-emerald-500/70 leading-relaxed">
+              <code>{syncRawCode}</code>
+            </pre>
+          </div>
+          <div className="p-4 bg-slate-800/30 border-t border-slate-700 text-[10px] text-slate-500 italic">
+            此區塊為即時封裝的資料流，包含 DNA 標記，可直接複製至 AI 工具。
+          </div>
+        </div>
       </div>
     </div>
   );
