@@ -30,8 +30,6 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   const [activeTab, setActiveTab] = useState('script');
   const [isCopied, setIsCopied] = useState(false);
   const [editableSlides, setEditableSlides] = useState<any[]>([]);
-  
-  // 用來追蹤上一次產出的長度，防止編輯被覆蓋
   const prevSlidesLength = useRef(0);
 
   // 1. 初始化與自動觸發
@@ -45,12 +43,10 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   useEffect(() => {
     if (outputScript) {
       try {
-        const cleanJson = outputScript.replace(/```json/gi, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleanJson);
-        const incomingSlides = Array.isArray(parsed) ? parsed : (parsed.slides || []);
+        const parsed = JSON.parse(outputScript);
+        // 支援多種回傳格式 (陣列或包含 slides 的物件)
+        const incomingSlides = parsed.slides || (Array.isArray(parsed) ? parsed : []);
         
-        // 僅當「新產出的頁數」大於「目前已有的頁數」時才更新
-        // 這能確保 AI 在產出第 6-10 頁時，不會洗掉你對 1-5 頁做的手動修改
         if (incomingSlides.length > prevSlidesLength.current) {
           setEditableSlides(incomingSlides);
           prevSlidesLength.current = incomingSlides.length;
@@ -61,27 +57,53 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     }
   }, [outputScript]);
 
-  // 3. 即時封裝原始碼
+  /**
+   * 3. 🌟 [核心進化]：即時封裝「YAML 標頭 + 編輯後的內容」
+   * 確保右側代碼永遠包含完整的視覺 DNA
+   */
   const syncRawCode = useMemo(() => {
-    // 嘗試解析視覺與選角資料，增加防呆
-    const getSafeData = (data: any) => {
+    if (activeTab !== 'script') {
+      return activeTab === 'worksheet' ? outputWorksheet || "" : 
+             activeTab === 'assessment' ? outputAssessment || "" : 
+             activeTab === 'kb' ? outputKb || "" : outputNotebookLMGuide || "";
+    }
+
+    // 解析視覺與人設數據
+    const safeParse = (data: any) => {
       try { return typeof data === 'string' ? JSON.parse(data) : data; }
       catch { return {}; }
     };
 
-    const visual = getSafeData(state.visualResult);
-    const casting = getSafeData(state.castingResult);
-    
-    const wrapper = {
-      VMAX_DNA: {
-        style: visual?.style?.code || 'A',
-        anchor: casting?.protagonist?.name || 'Standard',
-        version: "10.0-ATOMIC"
+    const visual = safeParse(state.visualResult);
+    const casting = safeParse(state.castingResult);
+
+    // 建立一體化結構
+    const unifiedPayload = {
+      // ⚙️ NOTEBOOKLM DRIVER (系統驅動指令)
+      notebooklm_driver: {
+        artistic_consistency: visual?.style?.code || "A",
+        dna_traits: {
+          protagonist: casting?.protagonist || "標準主角特徵",
+          guide: `${casting?.guide?.name || '導師'} | ${casting?.guide?.visualDNA || '標準人設'}`
+        },
+        style_prompt: `artistic style code: ${visual?.style?.code || 'A'}. Maintain high consistency in strokes and saturation.`
+      },
+      // 🎬 第一部分：YAML 核心記錄細節
+      VMAX_STRUCTURE_YAML: {
+        global_visual_protocol: { 
+          artistic_consistency: visual?.style?.code || "A", 
+          image_ratio: "16:9" 
+        },
+        scaffolding_logic: {
+          macro_structure: state.analysisData?.visualStructureRecommendation || "N1 故事山",
+          visual_metaphor: visual?.metaphor?.label || "M3 故事絲帶"
+        }
       },
       slides: editableSlides
     };
-    return JSON.stringify(wrapper, null, 2);
-  }, [editableSlides, state.visualResult, state.castingResult]);
+
+    return JSON.stringify(unifiedPayload, null, 2);
+  }, [editableSlides, activeTab, state.visualResult, state.castingResult, state.analysisData, outputWorksheet, outputAssessment, outputKb, outputNotebookLMGuide]);
 
   const updateSlide = (index: number, field: string, value: string) => {
     const newSlides = [...editableSlides];
@@ -90,23 +112,22 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   };
 
   const handleDownload = () => {
-    const content = activeTab === 'script' ? syncRawCode : (activeTab === 'worksheet' ? outputWorksheet : outputAssessment);
-    if (!content) return;
-    const blob = new Blob(['\ufeff', content], { type: 'text/plain;charset=utf-8' });
+    if (!syncRawCode) return;
+    const blob = new Blob(['\ufeff', syncRawCode], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `VMAX_${activeTab.toUpperCase()}.txt`;
+    link.download = `VMAX_${activeTab.toUpperCase()}_UNIFIED.txt`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
   const modules = [
-    { id: 'script', title: '教學腳本', icon: Layout, data: outputScript, action: onScriptPipeline },
+    { id: 'script', title: '一體化腳本', icon: Layout, data: outputScript, action: onScriptPipeline },
     { id: 'worksheet', title: '學習單', icon: FileText, data: outputWorksheet, action: () => onManualModule('worksheet') },
     { id: 'assessment', title: '評量卷', icon: Check, data: outputAssessment, action: () => onManualModule('assessment') },
     { id: 'kb', title: '知識庫', icon: Database, data: outputKb, action: () => onManualModule('kb') },
-    { id: 'notebooklm', title: 'NotebookLM', icon: BookOpen, data: outputNotebookLMGuide, action: () => onManualModule('notebooklm') },
+    { id: 'notebooklm', title: '操作指令', icon: BookOpen, data: outputNotebookLMGuide, action: () => onManualModule('notebooklm') },
   ];
 
   return (
@@ -120,10 +141,12 @@ const Step5Output: React.FC<Step5OutputProps> = ({
           </button>
           <div className="flex flex-col">
             <h2 className="font-black text-lg tracking-tight flex items-center gap-2">
-              <Zap className="text-amber-400 fill-amber-400" size={18} />
-              V-MAX ATOMIC TERMINAL
+              <Sparkles className="text-indigo-400" size={18} />
+              V-MAX UNIFIED TERMINAL
             </h2>
-            <div className="text-[10px] text-slate-500 font-mono">STATUS: {isLoading ? 'GENERATING_SEGMENTS...' : 'IDLE_READY'}</div>
+            <div className="text-[10px] text-slate-500 font-mono">
+              MODE: {activeTab === 'script' ? 'ENGINE_YAML_ACTIVE' : 'DOCUMENT_PREVIEW'}
+            </div>
           </div>
         </div>
 
@@ -152,24 +175,22 @@ const Step5Output: React.FC<Step5OutputProps> = ({
             {activeTab === 'script' ? (
               editableSlides.length > 0 ? (
                 editableSlides.map((slide, idx) => (
-                  <div key={idx} className="bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div key={idx} className="bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden focus-within:border-indigo-500/50 transition-all">
                     <div className="bg-slate-800/80 px-4 py-2 border-b border-slate-700 text-[10px] font-mono text-slate-500 flex justify-between items-center">
                       <span>UNIT_SLIDE_{idx + 1} // {slide.type}</span>
-                      <span className="flex items-center gap-1 text-emerald-500"><Check size={10}/> VERIFIED</span>
+                      <span className="flex items-center gap-1 text-emerald-500"><Check size={10}/> DNA_SYNCED</span>
                     </div>
                     <div className="p-4 space-y-3">
                       <textarea 
                         value={slide.displayText} 
                         onChange={(e) => updateSlide(idx, 'displayText', e.target.value)}
                         className="w-full bg-slate-900/80 border border-slate-700 rounded-lg p-3 text-sm font-bold text-white focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
-                        placeholder="投影片顯示文字..."
                         rows={2}
                       />
                       <textarea 
                         value={slide.guideTalk} 
                         onChange={(e) => updateSlide(idx, 'guideTalk', e.target.value)}
                         className="w-full bg-slate-900/40 border border-slate-700 rounded-lg p-3 text-xs text-slate-400 italic focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
-                        placeholder="引導語腳本..."
                         rows={2}
                       />
                     </div>
@@ -178,37 +199,31 @@ const Step5Output: React.FC<Step5OutputProps> = ({
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-600">
                   <Loader2 size={40} className="animate-spin mb-4 text-indigo-500" />
-                  <p className="font-bold text-sm tracking-widest">正在從原子藍圖構建投影片腳本...</p>
+                  <p className="font-bold text-sm tracking-widest uppercase">Initializing Unified Data Flow...</p>
                 </div>
               )
             ) : (
               <div className="bg-slate-800/20 rounded-2xl p-8 border border-slate-800 prose prose-invert max-w-none shadow-inner">
-                <ReactMarkdown>{activeTab === 'worksheet' ? outputWorksheet || '' : activeTab === 'assessment' ? outputAssessment || '' : outputKb || ''}</ReactMarkdown>
+                <ReactMarkdown>{syncRawCode}</ReactMarkdown>
               </div>
             )}
           </div>
         </div>
 
-        {/* 右側：即時碼 */}
+        {/* 右側：即時碼 (即時包含 YAML 標頭) */}
         <div className="w-[480px] border-l border-slate-700 bg-slate-900 flex flex-col">
           <div className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
             <span className="text-[10px] font-black text-indigo-400 flex items-center gap-2 tracking-widest uppercase">
-              <Code size={12} /> Live Engine Data
+              <Code size={12} /> Unified Script & YAML
             </span>
-            <div className="flex gap-2">
-               <span className="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-400">JSON</span>
-               <button onClick={() => { navigator.clipboard.writeText(syncRawCode); setIsCopied(true); setTimeout(()=>setIsCopied(false), 2000); }} className="text-slate-400 hover:text-white transition-colors">
-                 {isCopied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-               </button>
-            </div>
+            <button onClick={() => { navigator.clipboard.writeText(syncRawCode); setIsCopied(true); setTimeout(()=>setIsCopied(false), 2000); }} className="text-slate-400 hover:text-white">
+              {isCopied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+            </button>
           </div>
           <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto custom-scrollbar bg-black/20">
-            <pre className="text-emerald-500/70 leading-relaxed">
+            <pre className="text-emerald-500/70 whitespace-pre-wrap">
               <code>{syncRawCode}</code>
             </pre>
-          </div>
-          <div className="p-4 bg-slate-800/30 border-t border-slate-700 text-[10px] text-slate-500 italic">
-            此區塊為即時封裝的資料流，包含 DNA 標記，可直接複製至 AI 工具。
           </div>
         </div>
       </div>

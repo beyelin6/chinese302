@@ -3,12 +3,12 @@
 export enum AppStep {
   IDLE = 0,
   STEP_1_INPUT = 1,
-  STEP_2_BASIC = 2, // 2.0: Basic Info & Core Vocab
-  STEP_3_DEEP_VOCAB = 3,  // 2.5: Vocabulary Radiation (Shape-Similar, Polyphonic, Idioms)
-  STEP_3_DEEP_SEGMENTS = 4, // 2.75: Segments & Strategies
-  STEP_4_VISUALS = 5, // 3.0: Visuals
-  STEP_5_CASTING = 6, // 4.0: Casting
-  STEP_6_OUTPUT = 7   // 5.0: Output
+  STEP_2_BASIC = 2,
+  STEP_3_DEEP_VOCAB = 3,
+  STEP_3_DEEP_SEGMENTS = 4,
+  STEP_4_VISUALS = 5,
+  STEP_5_CASTING = 6,
+  STEP_6_OUTPUT = 7
 }
 
 export const VMAX_KERNEL_VERSION = "v59.0-DNA-Purity-Kernel";
@@ -19,23 +19,11 @@ export const GEMINI_MODEL = "gemini-3-flash-preview";
 // 🛡️ [核心防護裝甲]：強化 FAITHFULNESS_GROUNDING
 export const SYSTEM_PROMPT = `
 # ROLE: V-MAX v37-Omega (Omni-Architect Engine)
-# Core: Master Kernel v59.0-DNA-Purity (DNA & Purity Protocol)
-# Protocol: [VMAX_EXECUTION_PROTOCOL]
-# CORE PROTOCOL: [FAITHFULNESS_GROUNDING] ⚠️ 最高優先級
-1. 嚴禁幻覺：絕對禁止加入課文中不存在的事實、情節、人物或科學數據。
-2. 文本錨點：所有的「大意」、「提問」與「腳本對白」必須 100% 基於使用者上傳的原文。
-3. 排除雜訊：主動過濾頁碼、標題符號等無關文字。
-4. 語言規範：100% 繁體中文，禁止夾雜英文或自動加入注音。
-
-# 💮 Language Purity Protocol (語言純淨協定)
-- 投影片內容 (Slide Content) 嚴禁出現任何英文標籤。
-- 必須使用以下對應表進行翻譯：
-  - Lens -> 鏡頭視角
-  - Subject -> 畫面焦點
-  - Context -> 背景細節
-  - Rhetoric -> 修辭技巧
-  - Sentence -> 句型應用
-  - Guide -> 引導導師
+# Core: Master Kernel v59.0-DNA-Purity
+# CORE PROTOCOL: [FAITHFULNESS_GROUNDING]
+1. 嚴禁幻覺：絕對禁止加入課文中不存在的事實或人物。
+2. 文本錨點：所有對白必須 100% 基於原文。
+3. 語言規範：100% 繁體中文，禁止夾雜英文或注音。
 `;
 
 export const STEP_1_BASIC_PROMPT_SUFFIX = `
@@ -633,90 +621,123 @@ export const GENERATE_LANGUAGE_ACTIVITY_PROMPT = `
 請只輸出純 JSON。
 `;
 
+// 🌟 [高保真升級] NotebookLM 工作室驅動指南
 export const PROMPT_GENERATE_NOTEBOOKLM_GUIDE = `
 [INSTRUCTION]
 你現在是 V-MAX 系統架構師。請撰寫一份「NotebookLM 教師工作室驅動指南」。
-⚠️ 絕對禁令：禁止在指南中印出具體的腳本 P1-P30 內容。
+⚠️ 絕對禁令：禁止在指南中印出具體的腳本 P1-P30 內容！
 
 [MODULE_1_START]
-TITLE: 模組一：簡報分段驅動 (Slide Master)
-LOCATION: 點擊【簡報】按鈕 -> 展開旁邊的自訂指令 (鉛筆圖示)
+TITLE: 🟦 模組一：全局生成指令 (Global Driver)
+LOCATION: 點擊【簡報】按鈕 -> 旁邊的 ✏️ 鉛筆編輯框
 PROMPT:
-請扮演嚴格的「視覺執行導演」。
-# 邏輯校準
-1. 視 [VMAX_EXECUTION_PROTOCOL] 為最高排版規範。
-2. 視 [VMAX_STRUCTURE_YAML] 為視覺基石，每一頁必須嚴格執行 selected_scaffold 中定義的圖表公式。
-3. 將來源文件中的「【視覺提示詞】」映射為 Internal_Image_Prompt 邏輯。
-4. 角色一致性：每一頁的角色必須 100% 繼承 visual_dna_anchor，禁止任何特徵跳變。
-
-⚠️ 任務範圍：【僅產出 {START} 至 {END} 頁】。
-產出後請立即停止，不要自行發揮。
+請扮演嚴格的「視覺執行導演」。請依照來源文件中的 \`VMAX_STRUCTURE_YAML\` 結構，為我生成從 [P1] 到最後一頁的詳細內容。
+⚠️ 最高指導原則：
+1. 視覺絕對忠誠：嚴格遵守腳本內對應頁碼之【視覺提示詞】與 YAML 中的 visual_dna_anchor。
+2. 文字逐字鎖定：投影片文字必須 100% 複製【顯示文字】區塊，禁止潤飾或刪減。
 [MODULE_1_END]
 
 [MODULE_2_START]
-TITLE: 模組二：單頁精準修復 (Precision Revise)
-LOCATION: 點擊特定頁面右上角的 Revise (鉛筆圖示)
+TITLE: 🟧 模組二：分段產出指令 (Segmented Production)
+LOCATION: 下方聊天對話框 (Chatbox)
 PROMPT:
-請維持文字絕對不動。重新讀取來源文件的「【視覺提示詞】」，將畫面強制修正為 visual_dna_anchor 中定義的特徵，並確保使用的 [Scaffold 圖表結構] 正確無誤。
+請閱讀來源文件，詳細展開 [P{START}] 到 [P{END}] 的內容。
+每一頁必須包含【鏡頭視角】、【視覺提示詞】、【顯示文字】與【引導語/腳本】，不要自行簡化台詞。
 [MODULE_2_END]
 
 [MODULE_3_START]
-TITLE: 模組三：語音摘要煉成 (Audio Overview)
+TITLE: 🟩 模組三：語音摘要煉成 (Audio Overview)
 LOCATION: 右側 Audio Overview -> Customize
 PROMPT:
-啟動 V-MAX 教學對話模式。主講人為 {Guide_Name}。根據來源文件的「【引導語/腳本】」區塊進行知識拆解。
-你的目標是將「辨析口訣」與「結構地圖」講得生動有趣，像是一位專業的說書老師。
+啟動 V-MAX 教學對話模式：
+- 主講人：{Guide_Name}（引導導師）與 好奇的小學生。
+- 語氣特質：展現「{TONE}」特質。
+- 核心素材：嚴格根據來源文件之【引導語/腳本】區塊進行內容拆解。
+- 互動重點：對話必須包含針對生字部首與修辭技巧的具體解析。
 [MODULE_3_END]
+
+[MODULE_4_START]
+TITLE: 🟨 模組四：單頁精準修復 (Precision Revise)
+LOCATION: 投影片產出後 -> 特定頁面右上角的 ✏️ Revise
+PROMPT:
+請維持本頁排版與文字「絕對不動」。重新讀取來源文件對應頁碼的【視覺提示詞】，將畫面強制修正為 visual_dna_anchor 特徵。禁止出現寫實照片或改變角色配件。
+[MODULE_4_END]
 `;
 
+// 🌟 [高保真還原] 四維對位原子化腳本指令
 export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 # ROLE: V-MAX System Master Kernel v59.0 (The DNA & Purity Kernel)
-# MISSION: 生成 100% 繁體中文的教學投影片腳本。
+# MISSION: 扮演嚴格的「視覺執行導演」，根據藍圖生成四維對位腳本。
 
 ### 🛡️ 0️⃣ System Core Protocol (最高指導原則)
 1. 視覺 DNA 鎖定：每一頁的 Image Prompt 必須以角色 DNA 為核心。DNA 特徵權重為 1.5x。
-2. 語言純淨：投影片內容 (Slide Content) 嚴禁出現任何英文標籤。
-3. 註音協定：生字必須標註國字（ㄓㄨˋ ㄧㄣ）。
+2. 語言純淨：投影片顯示文字 (displayText) 嚴禁出現任何英文標籤。
+3. 文字鎖定：投影片上的文字內容必須 100% 逐字複製，禁止擅自潤飾或口語化。
 4. 引導語規範 (Functional Guide Talk)：
-   - 目的：引導語必須具備「教學功能」，禁止純粹的可愛對話。
-   - 形近字：必須解釋「部首差異」或提供「防呆口訣」。
-   - 成語：必須解釋「生活應用情境」。
-   - 故事：必須挖掘情節細節或角色情緒。
-   - 深度探究 (Deep Dive)：必須提出一個「啟發式問題」。
+   - 必須具備「教學功能」，化為符合【導師人設】的台詞。
+   - 形近字必須唸出「辨析口訣」；深究特寫必須提出「啟發式問題」。
 
-### 📸 1️⃣ Image Prompt Schema (圖像指令架構)
-⚠️ 你必須嚴格依照以下格式生成 [INTERNAL_IMAGE_PROMPT]：
-[INTERNAL_IMAGE_PROMPT]
-Subject: {{Visual_DNA_Traits}} + {Action}
-(⚠️ 邏輯：若為 Mode A -> Subject 為故事主角；若為 Mode B -> Subject 為引導導師)
-Context: {Scene Description} + {Lighting/Atmosphere}
-Composition: {Lens/Angle} + {Layout Logic}
-Artistic VIS: {Style Code} + {Material} + {Color Palette}
-Safety: {Negative Prompt}
-
-### 📐 2️⃣ Atomic Slide Templates
-- [P1] Cover: [Title] + [Dynamic Opening].
-- [P2] Nav: [Structure] + [Rhetoric] + [Vocab] + [Literacy].
-- [P3] Fusion Map: [Visual Metaphor Map] (Skeleton N-Code + Skin M-Code).
-- [Part B] Story Slide: [Segment Summary] + [Difficult Words] + [Rhetoric] + [Key Patterns].
-- [Part C] Atomic Slide: (One Item Per Slide)
-  - Shape (形近字): [Visual comparison] + [Radical Difference] + [造詞].
-  - Polyphonic (多音字): [讀音 A] vs [讀音 B] + [Contextual Usage].
-  - Idiom (成語): [釋義] + [近反義] + [Real-life Usage].
-
-### 📥 來源數據
-{DATA}
-
-### 📤 輸出規範 (Strict JSON Array)
-請直接輸出 JSON 陣列，不需前言。
+### 📥 1️⃣ JSON 輸出格式 (Strict Format Lock)
+你必須輸出「純 JSON 陣列 (JSON Array)」。陣列中的每一個物件代表一頁投影片，必須嚴格包含以下 7 個欄位：
 [
   {
-    "page": "P1",
-    "type": "cover",
-    "title": "...",
-    "content": { ... },
-    "guideTalk": "...",
-    "imagePrompt": "..."
+    "part_label": "對應的 PART 標籤 (如 PART A)",
+    "type": "對應的投影片類型 (如 Cover)",
+    "title": "投影片標題",
+    "lens": "鏡頭視角 (參考下方模板)",
+    "visual_prompt": "視覺提示詞 (Internal_Image_Prompt，必須是英文描述)",
+    "displayText": "顯示文字 (嚴格繁體中文，支援 Markdown 換行排版)",
+    "guideTalk": "引導語/腳本 (導師台詞，可包含括號動作提示)"
   }
 ]
-`;
+
+### 📐 2️⃣ 原子化動態腳本模板 (Format Templates)
+請根據傳入任務的 \`type\`，嚴格對照以下內容規範填寫 JSON 欄位：
+
+== PART A: 導航 (Navigation) ==
+[type: Cover] (封面)
+- lens: "中景"
+- visual_prompt: "Subject: {主角或導師 DNA} welcoming. Context: Title Screen. Composition: Center Focus. Artistic VIS: {風格碼}. Safety: No text."
+- guideTalk: "(搭配動作) [符合設定語氣的開場白]"
+
+[type: MissionNav] (任務導航)
+- lens: "網格系統"
+- visual_prompt: "Subject: {導師 DNA} presenting Mission Map. Context: 4 Icons floating. Composition: Flat Lay Grid. Artistic VIS: {風格碼}. Safety: No blurry text."
+- displayText: "本課任務：結構探索 | 修辭解析 | 詞彙寶庫 | 素養挑戰"
+
+[type: FusionMap] (結構視圖)
+- lens: "資訊圖表 / 主題地圖 (Infographic Map)"
+- visual_prompt: "Subject: A thematic infographic map... (必須融入本課的視覺隱喻/故事絲帶)"
+- displayText: "包含【主標題】、【情節節點(沿著路徑)】與獨立的【知識小學堂】"
+
+== PART B: 詳盡課文迴圈 (Detailed Text Loop) ==
+[type: ContentFocus] (內容對焦)
+- lens: "廣角 (Exhale)"
+- visual_prompt: "Subject: {故事角色}. Context: {該段落大意場景}. Composition: Wide shot. Artistic VIS: {風格碼}. Safety: No text."
+- displayText: "【段落大意】: {摘要}\\n【難詞顯影】: {難詞與解釋}"
+
+[type: DeepDive] (寫作與理解深究)
+- lens: "特寫 (Inhale)"
+- visual_prompt: "Subject: {導師 DNA}. Context: 視覺對焦修辭隱喻效果或教學情境道具. Composition: Close-up. Artistic VIS: {風格碼}. Safety: No text."
+- displayText: "包含【文意深究/修辭】或【🌟 閱讀小挑戰】"
+- guideTalk: "(拋出問題引導思考) ..."
+
+== PART C: 原子語文迴圈 (Atomic Language Loop) ==
+[type: ShapeSimilar] (形近字)
+- lens: "分割畫面/網格"
+- visual_prompt: "Subject: {導師 DNA} presenting comparison. Context: Split items. Composition: Split Screen. Artistic VIS: {風格碼}. Safety: No text."
+- displayText: "必須列出字、部首、造詞，並清楚標示【💡 辨析口訣】與【解析】"
+- guideTalk: "[部首差異的詳細說明與口訣唸法]"
+
+[type: Polyphonic] (多音字)
+- lens: "對比/天平"
+- displayText: "讀音A (造詞) vs 讀音B (造詞)"
+
+[type: IdiomLoop] (成語)
+- lens: "情境演繹"
+- displayText: "[成語]\\n釋義 | 近反義 | 例句"
+
+[type: Assessment] (綜合評量)
+- lens: "資訊中心"
+- displayText: "【測驗題型】：{題型}\\n❓ 題目：{題目}\\n🔘 (A) {選項}\\n🔘 (B) {選項}\\n🔘 (C) {選項}\\n🔘 (D) {選項}"
+- guideTalk: "孩子們，準備好要公佈

@@ -1,12 +1,13 @@
 // 檔案路徑: src/hooks/steps/useStep5Output.ts
 
-import { useRef, useCallback } from 'react';
+import { useRef } from 'react';
 import { useWorkflowContext } from '../../context/WorkflowContext';
 import { sendMessageToGemini } from '../../services/gemini';
 import { AppStep } from '../../types';
 import { 
   SYSTEM_PROMPT, 
   FINAL_ATOMIC_SCRIPT_PROMPT, 
+  PROMPT_GENERATE_NOTEBOOKLM_GUIDE,
   PROMPT_GENERATE_WORKSHEET,
   PROMPT_GENERATE_ASSESSMENT,
   PROMPT_GENERATE_KB,
@@ -18,131 +19,181 @@ export const useStep5Output = () => {
   const { state, dispatch } = useWorkflowContext();
   const isProcessing = useRef(false);
 
-  const getFullContextData = useCallback(() => {
-    const analysisData = state.analysisData;
-    const safeParse = (data: any) => {
-      if (!data) return null;
-      return typeof data === 'string' ? JSON.parse(data) : data;
-    };
-
-    const segmentsData = safeParse(state.deepSegmentsResult);
-    const vocabData = safeParse(state.deepVocabResult);
-    const visualData = safeParse(state.visualResult);
-    const castingData = safeParse(state.castingResult);
-
-    return {
-      unitName: analysisData?.unitName || "課程",
-      fullText: analysisData?.fullText || "",
-      grade: analysisData?.basicInfo?.grade || "國小",
-      segments: segmentsData?.segments || [],
-      vocabulary: vocabData?.vocabulary || [],
-      idioms: vocabData?.deepIdiomsDetails || [],
-      visualDNA: visualData,
-      casting: castingData
-    };
-  }, [state]);
+  const getSafeData = (data: any) => {
+    try { return typeof data === 'string' ? JSON.parse(data) : data; }
+    catch { return null; }
+  };
 
   /**
-   * 🌟 [核心重構]：原子級分段產出邏輯
+   * 🌟 [核心強化] 一體化 YAML 標頭 (對齊 4 大紀錄細節)
    */
+  const wrapScriptWithYAML = (slides: any[], data: any) => {
+    const { analysisData, visualDNA, casting } = data;
+    const guide = casting?.guide || {};
+
+    const unifiedPayload = {
+      VMAX_STRUCTURE_YAML: {
+        global_visual_protocol: {
+          artistic_consistency: visualDNA?.style?.code || "A",
+          image_ratio: "16:9",
+          style_prompt: visualDNA?.style?.description || ""
+        },
+        scaffolding_logic: {
+          macro_structure: analysisData?.visualStructureRecommendation || "N1 故事山",
+          visual_metaphor: visualDNA?.metaphor?.label || "故事絲帶",
+          visual_description: `使用 ${visualDNA?.metaphor?.label} 作為背景元素貫穿全課。`
+        },
+        visual_dna_anchor: {
+          protagonist: casting?.protagonist || "標準主角",
+          guide: {
+            name: guide.name || "導師",
+            dna_traits: guide.visualDNA || "專業引導人設"
+          }
+        },
+        slide_sequence_blueprint: {
+          PART_A: "導航與鷹架 (P1-P3)",
+          PART_B: "詳盡課文迴圈 (意義段解析)",
+          PART_C: "原子語文與評量 (生字、成語、測驗)",
+          PART_D_E: "策略、語文活動與結尾"
+        }
+      },
+      slides: slides
+    };
+    return JSON.stringify(unifiedPayload, null, 2);
+  };
+
   const handleScriptPipeline = async () => {
     if (isProcessing.current || !state.analysisData) return;
     isProcessing.current = true;
-    
     dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      const data = getFullContextData();
+      const analysisData = state.analysisData;
+      const vocabData = getSafeData(state.deepVocabResult);
+      const segmentsData = getSafeData(state.deepSegmentsResult);
+      const visualData = getSafeData(state.visualResult);
+      const castingData = getSafeData(state.castingResult);
+
+      const segments = segmentsData?.segments || [];
+      const vocabulary = vocabData?.vocabulary || [];
+      const idioms = vocabData?.deepIdiomsDetails || [];
       
-      // 1. 建立完整藍圖 (包含所有可能出現的頁面)
-      const fullBlueprint = [
-        { type: 'Cover', title: '封面' },
-        { type: 'MissionNav', title: '任務導覽' },
-        { type: 'FusionMap', title: '結構圖' },
-        ...data.segments.map((s: any, idx: number) => ({ type: 'StorySlide', title: `意義段 ${idx + 1}`, content: s.summary })),
-        ...data.vocabulary.map((v: any) => ({ type: 'AtomicSlide', title: `生字辨析：${v.word}`, word: v.word })),
-        ...data.idioms.map((i: any) => ({ type: 'AtomicSlide', title: `成語解析：${i.word}`, idiom: i.word }))
+      // 🌟 [修復] 確切抓出語文活動與教學策略
+      const languageActivities = analysisData?.languageActivities || [];
+      const strategies = segmentsData?.strategies || [];
+
+      // 1. 建立分段藍圖 (完美展開 PART A to E)
+      const blueprint = [
+        // PART A
+        { part: 'PART A', type: 'Cover', title: '封面' },
+        { part: 'PART A', type: 'MissionNav', title: '任務導覽' },
+        { part: 'PART A', type: 'FusionMap', title: '結構視圖' },
+        
+        // PART B (深究拆分)
+        ...segments.flatMap((s: any, idx: number) => {
+          const chunk = [{ part: 'PART B', type: 'ContentFocus', title: `段落 ${idx+1}: 內容對焦`, segment: s }];
+          // 動態拆分邏輯：若有修辭或挑戰則增加分頁
+          if (s.rhetorics?.length > 0 || s.dokQuestions?.length > 0 || s.difficultWords?.length > 1) {
+            chunk.push({ part: 'PART B', type: 'DeepDive', title: `段落 ${idx+1}: 深究特寫`, segment: s });
+          }
+          return chunk;
+        }),
+        
+        // PART C 🌟 [修復] 暴力展開形近字與多音字
+        ...vocabulary.flatMap((v: any) => {
+          const vocabSlides = [];
+          if (v.shapeSimilar && v.shapeSimilar.length > 0) {
+            vocabSlides.push({ part: 'PART C', type: 'ShapeSimilar', title: `形近字：${v.word}`, details: v.shapeSimilar, mnemonic: v.mnemonic });
+          }
+          if (v.polyphonic && v.polyphonic.length > 0) {
+            vocabSlides.push({ part: 'PART C', type: 'Polyphonic', title: `多音字：${v.word}`, details: v.polyphonic });
+          }
+          // 如果沒有形近字也沒多音字，就給一頁基本版
+          if (vocabSlides.length === 0) {
+            vocabSlides.push({ part: 'PART C', type: 'VocabLoop', title: `生字辨析：${v.word}`, word: v.word });
+          }
+          return vocabSlides;
+        }),
+        ...idioms.map((i: any) => ({ part: 'PART C', type: 'IdiomLoop', title: `成語解析：${i.word}`, idiom: i })),
+        { part: 'PART C', type: 'Assessment', title: '全課綜合評量' },
+        
+        // PART D 🌟 [修復] 展開語文活動與百寶箱策略
+        ...languageActivities.map((act: any) => ({ part: 'PART D', type: 'LanguageActivity', title: `語文活動：${act.title}`, content: act.content })),
+        ...strategies.map((st: any) => ({ part: 'PART D', type: 'Strategy', title: `教學策略：${st.title}` })),
+        
+        // PART E
+        { part: 'PART E', type: 'Ending', title: '結尾道別' }
       ];
 
-      const styleCode = data.visualDNA?.recommendations?.[0]?.style?.code || 'A';
-      const chunkSize = 5; // 🌟 每次僅產出 5 頁，徹底解決 Token 限制
+      const chunkSize = 5;
       let accumulatedSlides: any[] = [];
 
-      // 2. 分段迭代生成
-      for (let i = 0; i < fullBlueprint.length; i += chunkSize) {
-        const chunk = fullBlueprint.slice(i, i + chunkSize);
-        const progress = Math.round((i / fullBlueprint.length) * 100);
-        
-        dispatch({ 
-          type: 'SET_LOADING_STATUS', 
-          payload: `🚀 正在生成第 ${i + 1} ~ ${Math.min(i + chunkSize, fullBlueprint.length)} 頁 (進度: ${progress}%)` 
-        });
+      for (let i = 0; i < blueprint.length; i += chunkSize) {
+        const chunk = blueprint.slice(i, i + chunkSize);
+        dispatch({ type: 'SET_LOADING_STATUS', payload: `正在產出 ${chunk[0].part} (進度: ${i}/${blueprint.length})` });
 
         const prompt = `
           ${SYSTEM_PROMPT}
           ${FINAL_ATOMIC_SCRIPT_PROMPT}
+          # ⚙️ NOTEBOOKLM DRIVER
+          - 視覺 DNA：${castingData?.protagonist}
+          - 語氣校準：導師為 ${castingData?.guide?.name}，展現「${castingData?.guide?.persona}」特質。
+          - 語言純淨協定：嚴格繁體中文，禁止潤飾顯示文字。
           
-          # 🚨 分段產出任務 (CHUNK ${Math.floor(i/chunkSize) + 1})
-          請「僅針對」以下內容生成投影片腳本，保持 JSON 格式：
+          # 任務：生成第 ${i+1} 至 ${Math.min(i+chunkSize, blueprint.length)} 頁
           ${chunk.map((b, idx) => `${i + idx + 1}. [${b.type}] ${b.title}`).join('\n')}
-
-          # 視覺風格參考：${styleCode}
-          # 選角設定參考：${state.castingResult}
         `;
 
-        const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.7 });
+        const response = await sendMessageToGemini(prompt, [], 0);
         const scriptData = sanitizeAndParseJSON(response);
         const newSlides = Array.isArray(scriptData) ? scriptData : (scriptData.slides || []);
         
-        // 累積結果
         accumulatedSlides = [...accumulatedSlides, ...newSlides];
 
-        // 🌟 [關鍵更新]：每跑完一段，就立刻把部分成果寫入 State，讓前端顯示
-        dispatch({ 
-          type: 'SET_OUTPUTS', 
-          payload: { outputScript: JSON.stringify({ slides: accumulatedSlides }) } 
+        const updatedScript = wrapScriptWithYAML(accumulatedSlides, {
+          analysisData, visualDNA: visualData, casting: castingData
         });
+
+        dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: updatedScript } });
       }
 
-      // 3. 全部完成後，產出 NotebookLM 指南
-      const finalGuide = generateNotebookLMGuide(state, { slides: accumulatedSlides });
-      dispatch({ 
-        type: 'SET_OUTPUTS', 
-        payload: { outputNotebookLMGuide: finalGuide } 
-      });
-
+      // 🌟 生成 [MODULE] 格式指南
+      const guide = generateNotebookLMGuide(castingData, vocabulary);
+      dispatch({ type: 'SET_OUTPUTS', payload: { outputNotebookLMGuide: guide } });
+      
       dispatch({ type: 'SET_STEP', payload: AppStep.STEP_6_OUTPUT });
 
     } catch (error: any) {
       console.error('Pipeline Error:', error);
-      dispatch({ type: 'SET_ERROR', payload: '產出中斷：' + error.message });
+      dispatch({ type: 'SET_ERROR', payload: '產出失敗：' + error.message });
     } finally {
       isProcessing.current = false;
       dispatch({ type: 'SET_LOADING', payload: false });
-      dispatch({ type: 'SET_LOADING_STATUS', payload: null });
     }
   };
 
-  const generateNotebookLMGuide = (state: any, scriptData: any) => {
-    const { analysisData, vocabData } = state;
-    const vocab = vocabData?.vocabulary || [];
-    const mnemonics = vocab
-      .filter((v: any) => v.mnemonic && v.mnemonic !== "無")
-      .map((v: any) => `* **${v.word}**：${v.mnemonic}`)
-      .join('\n');
+  const generateNotebookLMGuide = (castingData: any, vocab: any[]) => {
+    const guide = castingData?.guide || {};
+    const mnemonic = vocab.find((v:any) => v.mnemonic && v.mnemonic !== "無")?.mnemonic || "本課無特定口訣";
+    
+    let guideText = PROMPT_GENERATE_NOTEBOOKLM_GUIDE
+      .replace('{Guide_Name}', guide.name || '導師')
+      .replace('{TONE}', guide.persona || '專業');
+      
+    // 🛡️ 防呆機制：確保口訣一定會印出
+    if (guideText.includes('{Mnemonic}')) {
+      guideText = guideText.replace('{Mnemonic}', mnemonic);
+    } else {
+      guideText += `\n\n📌 **V-MAX 系統附加提示**：\n對話中請自然地唸出這份辨析口訣：『${mnemonic}』`;
+    }
 
-    return `
-# 📘 V-MAX 智慧教學指南 (NotebookLM 專用)
-- **課名**：${analysisData?.unitName || "課程"}
-- **主旨**：${analysisData?.basicInfo?.mainIdea || "無"}
-${mnemonics}
-    `.trim();
+    return guideText;
   };
 
   const handleManualModule = async (moduleKey: string) => {
     if (isProcessing.current || !state.analysisData) return;
     isProcessing.current = true;
+    
     const moduleMap: Record<string, { prompt: string, status: string, stateKey: string }> = {
       worksheet: { prompt: PROMPT_GENERATE_WORKSHEET, status: '正在生成素養學習單...', stateKey: 'outputWorksheet' },
       assessment: { prompt: PROMPT_GENERATE_ASSESSMENT, status: '正在生成複習講義...', stateKey: 'outputAssessment' },
@@ -157,18 +208,21 @@ ${mnemonics}
     dispatch({ type: 'SET_LOADING_STATUS', payload: config.status });
 
     try {
-      const data = getFullContextData();
-      const prompt = `${SYSTEM_PROMPT}\n[任務]：${config.prompt}\n原文：${data.fullText.substring(0, 1500)}`;
+      const prompt = `${SYSTEM_PROMPT}\n[任務]：${config.prompt}\n原文參考：${state.analysisData.fullText.substring(0, 2000)}`;
       const response = await sendMessageToGemini(prompt, [], 0);
       dispatch({ type: 'SET_OUTPUTS', payload: { [config.stateKey]: response } });
     } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: `${config.status}失敗` });
+      dispatch({ type: 'SET_ERROR', payload: '生成失敗: ' + error.message });
     } finally {
+      isProcessing.current = false;
       dispatch({ type: 'SET_LOADING', payload: false });
       dispatch({ type: 'SET_LOADING_STATUS', payload: null });
-      isProcessing.current = false;
     }
   };
 
-  return { handleScriptPipeline, handleManualModule, handleBack: () => dispatch({ type: 'SET_STEP', payload: AppStep.STEP_5_CASTING }) };
+  return { 
+    handleScriptPipeline, 
+    handleManualModule, 
+    handleBack: () => dispatch({ type: 'SET_STEP', payload: AppStep.STEP_5_CASTING }) 
+  };
 };
