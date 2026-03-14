@@ -25,40 +25,78 @@ export const useStep5Output = () => {
   };
 
   /**
-   * 🌟 [核心強化] 一體化 YAML 標頭 (對齊 4 大紀錄細節)
+   * 🌟 [終極武裝版] 一體化 YAML 標頭 (高精度 NotebookLM 驅動引擎 + 絕對頁碼注入)
    */
   const wrapScriptWithYAML = (slides: any[], data: any) => {
     const { analysisData, visualDNA, casting } = data;
-    const guide = casting?.guide || {};
+    
+    // 1. 深度萃取視覺風格與隱喻
+    const styleCode = visualDNA?.style?.code || "F";
+    const styleDesc = visualDNA?.style?.description || visualDNA?.style?.prompt || "Clean, high-quality educational vector art with vibrant and engaging colors.";
+    const metaphorLabel = visualDNA?.metaphor?.label || "主題隱喻";
+    const metaphorDesc = visualDNA?.metaphor?.description || `在畫面背景與過場中，必須巧妙融入【${metaphorLabel}】的視覺元素，藉此串連全課情境。`;
+
+    // 2. 深度萃取角色 DNA (過濾掉無用的預設字眼)
+    const protagDNA = casting?.protagonist || "符合課文情境的核心人物，保持清晰的臉部特徵與連貫的服裝設定。";
+    const guideName = casting?.guide?.name || "V-MAX 導師";
+    const guidePersona = casting?.guide?.persona || "專業、溫暖、具啟發性";
+    
+    // 若導師設定是空值或出現「預設」字眼，強制給予具體的 Prompt
+    let guideDNA = casting?.guide?.visualDNA || "";
+    if (!guideDNA || guideDNA.includes("預設")) {
+        guideDNA = "身穿俐落的現代教學套裝，帶著親切且自信的微笑，常以手勢指示畫面的重點。";
+    }
+
+    // 3. 🌟 [新增] 絕對頁碼注入器 (Absolute Page Injector)
+    // 保證無論 AI 分幾段產出，組合起來的陣列都會有完美的 1 到 N 頁碼
+    const numberedSlides = slides.map((slide, index) => {
+      // 確保 page_number 排在 JSON 物件的第一個屬性，方便人類閱讀
+      const { page_number, ...restProps } = slide; 
+      return {
+        page_number: index + 1,
+        ...restProps
+      };
+    });
 
     const unifiedPayload = {
-      VMAX_STRUCTURE_YAML: {
-        global_visual_protocol: {
-          artistic_consistency: visualDNA?.style?.code || "A",
-          image_ratio: "16:9",
-          style_prompt: visualDNA?.style?.description || ""
-        },
-        scaffolding_logic: {
-          macro_structure: analysisData?.visualStructureRecommendation || "N1 故事山",
-          visual_metaphor: visualDNA?.metaphor?.label || "故事絲帶",
-          visual_description: `使用 ${visualDNA?.metaphor?.label} 作為背景元素貫穿全課。`
-        },
-        visual_dna_anchor: {
-          protagonist: casting?.protagonist || "標準主角",
-          guide: {
-            name: guide.name || "導師",
-            dna_traits: guide.visualDNA || "專業引導人設"
-          }
-        },
-        slide_sequence_blueprint: {
-          PART_A: "導航與鷹架 (P1-P3)",
-          PART_B: "詳盡課文迴圈 (意義段解析)",
-          PART_C: "原子語文與評量 (勾選同步產出)",
-          PART_D_E: "策略、語文活動與結尾"
+      // ⚙️ NotebookLM 系統級最高權限指令
+      notebooklm_driver: {
+        system_role: "You are the V-MAX Slide Architect. Your absolute priority is to strictly follow the VMAX_STRUCTURE_YAML protocols and the dynamic slide blueprints.",
+        artistic_consistency: styleCode,
+        style_prompt: `Artistic VIS [${styleCode}]: ${styleDesc}. (CRITICAL: Maintain absolute stylistic consistency across all slides.)`,
+        dna_traits: {
+          protagonist: protagDNA,
+          guide: `[Name: ${guideName}] | [Persona: ${guidePersona}] | [Visual Prompt: ${guideDNA}]`
         }
       },
-      slides: slides
+      // 🎬 核心結構藍圖
+      VMAX_STRUCTURE_YAML: {
+        global_visual_protocol: {
+          artistic_consistency: styleCode,
+          image_ratio: "16:9",
+          rendering_priority: "1. Protagonist DNA -> 2. Metaphor Integration -> 3. Action Accuracy"
+        },
+        scaffolding_logic: {
+          macro_structure: analysisData?.visualStructureRecommendation || "鷹架導航結構",
+          micro_thinking: "C1 氣泡圖 (分析) / T1 對比圖 (辨析)",
+          visual_metaphor: metaphorLabel,
+          visual_description: metaphorDesc
+        },
+        visual_dna_anchor: {
+          protagonist_dna: protagDNA,
+          guide_dna: guideDNA
+        },
+        slide_sequence_blueprint: {
+          PART_A: "【導航與鷹架】建立全課心智地圖與學習任務",
+          PART_B: "【詳盡課文迴圈】逐段深究、情境重現與修辭解析",
+          PART_C: "【原子語文與評量】生字寫法、形近多音辨析與總結測驗",
+          PART_D_E: "【策略與結尾】語文百寶箱活動與課程收尾"
+        }
+      },
+      // 📝 動態腳本內容 (帶入已注入頁碼的陣列)
+      slides: numberedSlides
     };
+    
     return JSON.stringify(unifiedPayload, null, 2);
   };
 
