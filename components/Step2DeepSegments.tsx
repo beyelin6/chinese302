@@ -1,7 +1,17 @@
+// 檔案路徑: src/components/Step2DeepSegments.tsx
+
 import React, { useState, useEffect } from 'react';
 import { Brain, Edit2, Trash2, Check, X, Plus, RefreshCw, Layers, ArrowRight, Sparkles, AlertCircle, Wand2, Zap, ArrowLeft, Tag } from 'lucide-react';
 import { AnalysisData, SegmentItem, StrategyItem } from '../types';
 import { Step2WritingFocus } from './Step2WritingFocus';
+
+// 🛡️ [防崩潰裝甲]：確保所有送入 JSX 渲染的變數絕對是「字串」
+const safeRender = (val: any): string => {
+  if (!val) return "";
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object') return val.word || val.label || val.name || JSON.stringify(val);
+  return String(val);
+};
 
 // 🌟 新增：語文活動卡片組件 (處理局部狀態)
 const LanguageActivityCard = ({ activity, idx, onGenerateExtraActivity, grade }: { 
@@ -137,6 +147,7 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
           if (!seg.rhetorics) seg.rhetorics = [];
           if (!seg.sentencePatterns) seg.sentencePatterns = [];
           if (!seg.readingQuestions) seg.readingQuestions = [];
+          if (!seg.dokQuestions) seg.dokQuestions = [];
       });
 
       setData(mergedData);
@@ -216,7 +227,6 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
           const result = await onGenerateRhetoricGuidance(segment.title, rhetoric.name, rhetoric.example);
           if (result) {
               const newData = { ...data };
-              // Update specific fields instead of appending to example
               newData.segments[segmentIdx].rhetorics[rhetoricIdx].pedagogicalPoint = result.teachingPoint;
               newData.segments[segmentIdx].rhetorics[rhetoricIdx].application = result.application;
               setData(newData);
@@ -291,7 +301,6 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
     const newData = { ...data };
     
     if (editingSection === 'segment') {
-       // tempEditValue already contains array updates for keywords/difficultWords
        newData.segments[editingIndex] = tempEditValue;
     } else if (editingSection === 'strategy') {
       newData.strategies[editingIndex] = tempEditValue;
@@ -335,11 +344,16 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
       setDiffWordInput("");
   };
 
-  const appendDifficultWordFromList = (word: string) => {
+  // 🛡️ 防護升級：處理可能傳入物件的狀況
+  const appendDifficultWordFromList = (wordObj: any) => {
       if (!tempEditValue || editingSection !== 'segment') return;
+      // 強制取出字串值
+      const wordStr = typeof wordObj === 'object' ? (wordObj.word || "") : String(wordObj);
+      if (!wordStr) return;
+      
       const current = tempEditValue.difficultWords || [];
-      if (current.includes(word)) return;
-      setTempEditValue({...tempEditValue, difficultWords: [...current, word]});
+      if (current.includes(wordStr)) return;
+      setTempEditValue({...tempEditValue, difficultWords: [...current, wordStr]});
   };
 
   // --- Render Helpers ---
@@ -402,9 +416,9 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                                 心智圖細節 (Keywords)
                                             </label>
                                             <div className="bg-white border border-slate-300 rounded p-2 min-h-[60px] flex flex-wrap gap-2">
-                                                {(tempEditValue.keywords || []).map((kw: string, i: number) => (
+                                                {(tempEditValue.keywords || []).map((kw: any, i: number) => (
                                                     <div key={i} className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs px-2 py-1 rounded-full flex items-center">
-                                                        {kw}
+                                                        {safeRender(kw)} {/* 🛡️ 防護 */}
                                                         <button onClick={() => removeKeyword(i)} className="ml-1 hover:text-emerald-900 text-emerald-500"><X size={12}/></button>
                                                     </div>
                                                 ))}
@@ -427,9 +441,9 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                                 <span className="flex items-center"><Sparkles size={12} className="mr-1" />段落難詞 (Difficult Words)</span>
                                             </label>
                                             <div className="bg-white border border-slate-300 rounded p-2 min-h-[60px] flex flex-wrap gap-2">
-                                                {(tempEditValue.difficultWords || []).map((dw: string, i: number) => (
+                                                {(tempEditValue.difficultWords || []).map((dw: any, i: number) => (
                                                     <div key={i} className="bg-blue-50 border border-blue-200 text-blue-700 text-xs px-2 py-1 rounded-full flex items-center">
-                                                        {dw}
+                                                        {safeRender(dw)} {/* 🛡️ 防護 */}
                                                         <button onClick={() => removeDiffWord(i)} className="ml-1 hover:text-blue-900 text-blue-500"><X size={12}/></button>
                                                     </div>
                                                 ))}
@@ -448,13 +462,13 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                             {/* Helper Chips */}
                                             {currentData.textbookDifficultWords && currentData.textbookDifficultWords.length > 0 && (
                                                 <div className="flex flex-wrap gap-1 mt-1">
-                                                    {currentData.textbookDifficultWords.map((word, wi) => (
+                                                    {currentData.textbookDifficultWords.map((wordObj, wi) => (
                                                         <button 
                                                             key={wi} 
-                                                            onClick={() => appendDifficultWordFromList(word)}
+                                                            onClick={() => appendDifficultWordFromList(wordObj)}
                                                             className="text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded hover:bg-slate-200 hover:text-slate-700 transition-colors flex items-center"
                                                         >
-                                                            <Plus size={8} className="mr-1" />{word}
+                                                            <Plus size={8} className="mr-1" />{safeRender(wordObj)} {/* 🛡️ 防護: 將物件轉回字串 */}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -592,7 +606,8 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                         {item.keywords && item.keywords.length > 0 && (
                                             <div className="flex flex-wrap gap-1 items-center mb-2">
                                                 <Brain size={10} className="text-emerald-600"/>
-                                                {item.keywords.map((kw, kwi) => <span key={kwi} className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">{kw}</span>)}
+                                                {/* 🛡️ 防護 */}
+                                                {item.keywords.map((kw: any, kwi: number) => <span key={kwi} className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">{safeRender(kw)}</span>)}
                                             </div>
                                         )}
 
@@ -642,8 +657,9 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                         )}
                                         
                                         <div className="flex flex-wrap gap-2 mb-2">
-                                            {item.difficultWords && item.difficultWords.length > 0 && item.difficultWords.map((w, wi) => (
-                                                <span key={wi} className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full flex items-center"><Sparkles size={8} className="mr-1 opacity-50"/>{w}</span>
+                                            {/* 🛡️ 防護 */}
+                                            {item.difficultWords && item.difficultWords.length > 0 && item.difficultWords.map((w: any, wi: number) => (
+                                                <span key={wi} className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full flex items-center"><Sparkles size={8} className="mr-1 opacity-50"/>{safeRender(w)}</span>
                                             ))}
                                         </div>
 
