@@ -189,30 +189,36 @@ export interface VisualData {
 export interface GuideCandidate {
   id: string;
   name: string;
-  title: string;
-  teachingStyle: string;
+  persona: string;     // 🌟 新增：對應 G1-G6
+  description: string; // 🌟 新增：教學風格描述
   visualDNA: string;
-  whyFit: string;
   // Optional fields for backward compatibility or UI state
+  title?: string;
+  teachingStyle?: string;
+  whyFit?: string;
   gender?: string; 
   age?: string;    
   type?: 'Real' | 'Virtual';
   style?: string;
   tone?: string;
-  description?: string; 
   toneLabel?: string; 
 }
 
 export interface CastingData {
-  contextTone: string;
+  mode: 'Drama Mode' | 'Field Trip Mode'; // 🌟 新增：模式鎖定
+  protagonist: {
+    name: string;
+    description: string;
+    visualDNA: string;
+    isNone: boolean;
+    // Optional fields for backward compatibility
+    gender?: string;
+    age?: string;
+    traits?: string;
+  };
   candidates: GuideCandidate[];
   // Optional fields for backward compatibility
-  protagonist?: {
-    name?: string; 
-    gender: string;
-    age: string;
-    traits: string;
-  };
+  contextTone?: string;
   fusionTable?: string; 
 }
 

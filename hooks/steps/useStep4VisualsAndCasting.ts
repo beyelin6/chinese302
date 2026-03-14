@@ -81,26 +81,29 @@ export const useStep4VisualsAndCasting = () => {
    * 🌟 [新增] 執行「靈魂選角」動態生成
    */
   const handleGenerateCastingOptions = async () => {
-    // 鎖定原始資料源
-    const sourceText = state.analysisData?.fullText || state.basicAnalysisResult; 
-
+    if (!state.analysisData) return;
     dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_LOADING_STATUS', payload: '正在根據課文靈魂，尋找最契合的引導者...' });
+    dispatch({ type: 'SET_LOADING_STATUS', payload: '正在面試合適的教學引導者...' });
 
     try {
-      const prompt = STEP_4_DYNAMIC_CASTING_PROMPT.replace('{INPUT_TEXT}', sourceText);
-      
-      // 使用中低溫度 (0.4) 兼顧穩定性與角色創意
-      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.4 });
-      const parsed = sanitizeAndParseJSON(response);
+      const prompt = `
+        ${STEP_4_CASTING_PROMPT_PREFIX}
+        ${STEP_4_DYNAMIC_CASTING_PROMPT}
+        當前課程文體：${state.analysisData.basicInfo?.genre}
+        當前核心主題：${state.analysisData.basicInfo?.subject}
+      `;
 
-      // 儲存動態產出的選角清單
+      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.6 });
+      // 🌟 [關鍵修復] 使用醫療級解析器處理 AI 的 JSON
+      const parsed = sanitizeAndParseJSON(response); 
+      
+      // 儲存至 Context
       dispatch({ type: 'SET_CASTING_RESULT', payload: JSON.stringify(parsed) });
     } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: '選角失敗：' + error.message });
-      throw error;
+      dispatch({ type: 'SET_ERROR', payload: '選角引擎啟動失敗：' + error.message });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
+      dispatch({ type: 'SET_LOADING_STATUS', payload: null });
     }
   };
 

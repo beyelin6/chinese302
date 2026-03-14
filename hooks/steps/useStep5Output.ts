@@ -93,6 +93,7 @@ export const useStep5Output = () => {
         # 參考數據：
         - 文本分析：${state.basicAnalysisResult}
         - 生字辨析：${state.deepVocabResult}
+        - 選角設定：${state.castingResult}
       `;
 
       const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.7 });

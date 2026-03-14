@@ -67,14 +67,15 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
       
       // 確保資料結構相容
       const formattedData: CastingData = {
-        contextTone: parsed.contextTone || "本課語境分析中...",
+        mode: parsed.mode || "Field Trip Mode",
         candidates: parsed.candidates || [],
-        protagonist: parsed.protagonist,
+        protagonist: parsed.protagonist || { name: "None", description: "", visualDNA: "", isNone: true },
+        contextTone: parsed.contextTone || "本課語境分析中...",
         fusionTable: parsed.fusionTable
       };
 
       setData(formattedData);
-      setCustomProtagonist(formattedData.protagonist?.traits || '');
+      setCustomProtagonist(formattedData.protagonist?.visualDNA || '');
       setParseError(null);
     } catch (err: any) {
       console.error("Casting JSON Parse Error:", err);
@@ -146,7 +147,7 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
 
   if (!data) return null;
 
-  const isModeA = data.protagonist && data.protagonist.name !== "None";
+  const isModeA = data.mode === "Drama Mode" && data.protagonist && !data.protagonist.isNone;
 
   return (
     <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-8 duration-700 pb-24 relative">
@@ -181,7 +182,7 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
             <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex flex-col md:flex-row gap-4">
               <div className="w-full md:w-1/3">
                 <div className="text-sm font-bold text-slate-800">{data.protagonist.name}</div>
-                <div className="text-xs text-slate-500 mb-2">{data.protagonist.gender} • {data.protagonist.age}</div>
+                <div className="text-xs text-slate-500 mb-2">{data.protagonist.description}</div>
                 
                 {handleExtractImageTraits && (
                    <div className="mt-4">
@@ -251,21 +252,32 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
                            />
                          </div>
                          <div>
-                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">角色頭銜</label>
-                           <input 
-                             type="text" 
-                             value={editingGuide?.title || ''} 
-                             onChange={(e) => setEditingGuide({...editingGuide!, title: e.target.value})}
+                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">語氣晶片</label>
+                           <select 
+                             value={editingGuide?.persona || ''} 
+                             onChange={(e) => setEditingGuide({...editingGuide!, persona: e.target.value})}
                              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
-                           />
+                           >
+                             {TONE_OPTIONS.map(opt => (
+                               <option key={opt.code} value={opt.code}>{opt.code} {opt.label}</option>
+                             ))}
+                           </select>
                          </div>
                        </div>
- 
+
+                       <textarea
+                         value={editingGuide?.description || ''}
+                         onChange={(e) => setEditingGuide({...editingGuide!, description: e.target.value})}
+                         className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600 shadow-inner outline-none focus:ring-2 focus:ring-teal-500"
+                         rows={2}
+                         placeholder="教學風格描述..."
+                       />
+
                        <textarea
                          value={editingGuide?.visualDNA || ''}
                          onChange={(e) => setEditingGuide({...editingGuide!, visualDNA: e.target.value})}
                          className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 shadow-inner outline-none focus:ring-2 focus:ring-teal-500"
-                         rows={4}
+                         rows={3}
                          placeholder="Visual DNA 特徵..."
                        />
                        
@@ -279,8 +291,10 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
                        <div className="flex justify-between items-start mb-3">
                          <div>
                            <h4 className="font-black text-slate-800 text-lg">{guide.name}</h4>
-                           <span className="text-[10px] px-2 py-0.5 bg-slate-100 rounded-full text-slate-500 uppercase font-bold">
-                             {guide.title}
+                           <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold ${
+                             TONE_OPTIONS.find(t => t.code === guide.persona)?.color.split(' ').slice(1, 3).join(' ') || 'bg-slate-100 text-slate-500'
+                           }`}>
+                             {TONE_OPTIONS.find(t => t.code === guide.persona)?.label || guide.persona}
                            </span>
                          </div>
                          <button 
@@ -292,18 +306,20 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
                        </div>
                        
                        <p className="text-xs text-slate-600 mb-4 leading-relaxed line-clamp-3">
-                         {guide.teachingStyle}
+                         {guide.description}
                        </p>
  
                        {/* 🌟 核心優化：顯示適配邏輯 */}
-                       <div className="bg-teal-50/50 p-3 rounded-xl border border-dashed border-teal-200 mb-4">
-                         <p className="text-[10px] text-teal-600 flex items-center gap-1 font-bold mb-1">
-                           <Sparkles size={10} /> 為什麼適合這課？
-                         </p>
-                         <p className="text-[10px] text-slate-500 italic leading-tight">
-                           {guide.whyFit}
-                         </p>
-                       </div>
+                       {guide.whyFit && (
+                         <div className="bg-teal-50/50 p-3 rounded-xl border border-dashed border-teal-200 mb-4">
+                           <p className="text-[10px] text-teal-600 flex items-center gap-1 font-bold mb-1">
+                             <Sparkles size={10} /> 為什麼適合這課？
+                           </p>
+                           <p className="text-[10px] text-slate-500 italic leading-tight">
+                             {guide.whyFit}
+                           </p>
+                         </div>
+                       )}
  
                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Visual DNA</div>

@@ -517,34 +517,28 @@ export const STEP_3_CASTING_PROMPT_PREFIX = `[V-MAX CASTING ENGINE] 請根據來
 
 export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 # ROLE: V-MAX 角色選角導演 (Casting Director)
-# MISSION: 為本課定義「故事主角 (Story Protagonist)」與「引導導師 (Guide Avatar)」的視覺 DNA。
-
-### 🧬 1️⃣ Visual DNA Anchor (視覺 DNA 錨點)
-⚠️ 你必須為每個角色定義「不可撼動的特徵」，這將作為後續所有圖片生成的基礎。
-格式：'Hair: [Style+Color] | Eyes: [Color] | Accessory: [Item] | Clothing: [Style]'
-
-### 🎭 2️⃣ Visual Logic Matrix (視覺邏輯矩陣)
-- 【Mode A: Drama Mode (戲劇模式)】：適用於記敘文、小說。主角是故事人物，導師是觀察者。
-- 【Mode B: Field Trip Mode (導覽模式)】：適用於說明文、議論文。無特定主角，導師是畫面中心。
-
-### 📥 來源資訊
-文體: {GENRE}
-主題: {SUBJECT}
+# MISSION: 為本課定義「故事主角」與推薦 3 位「引導導師」候選人。
 
 ### 📤 輸出規範 (Strict JSON)
 {
   "mode": "Drama Mode" | "Field Trip Mode",
   "protagonist": {
     "name": "主角名稱",
-    "description": "性格與背景描述",
+    "description": "性格描述",
     "visualDNA": "Hair: ... | Eyes: ... | Accessory: ... | Clothing: ...",
-    "isNone": boolean (若為 Mode B 則為 true)
+    "isNone": false
   },
-  "guide": {
-    "name": "導師名稱",
-    "persona": "G1-G6 語氣晶片名稱",
-    "visualDNA": "Hair: ... | Eyes: ... | Accessory: ... | Clothing: ..."
-  }
+  "candidates": [
+    {
+      "id": "C1",
+      "name": "導師名 1",
+      "persona": "語氣晶片碼 (G1-G6)",
+      "description": "教學風格描述",
+      "visualDNA": "Hair: ... | Eyes: ... | Accessory: ... | Clothing: ..."
+    },
+    { "id": "C2", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." },
+    { "id": "C3", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." }
+  ]
 }
 `;
 
