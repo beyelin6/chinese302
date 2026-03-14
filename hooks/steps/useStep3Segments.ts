@@ -44,7 +44,7 @@ export const useStep3Segments = () => {
 
       const rawSourceText = state.analysisData?.fullText || state.basicAnalysisResult || "";
       
-      // --- 第一階段：解構意義段落 (使用原版 V2 提示詞與難詞協定) ---
+      // --- 第一階段：解構意義段落 ---
       dispatch({ type: 'SET_LOADING_STATUS', payload: '正在執行：意義段落深究...' });
       
       const prompt1 = `
@@ -60,7 +60,6 @@ export const useStep3Segments = () => {
 
       validateGroundedness(parsedSegments, rawSourceText);
 
-      // 強制防呆
       let validSegments = parsedSegments.segments || (Array.isArray(parsedSegments) ? parsedSegments : []);
 
       // ==========================================
@@ -68,6 +67,7 @@ export const useStep3Segments = () => {
       // ==========================================
       dispatch({ type: 'SET_LOADING_STATUS', payload: '正在進行第二階段：編寫高質感教學策略...' });
       
+      // 🌟 [修復點]：統一 JSON Schema 鍵值為 teachingPoint 與 application
       const prompt2 = `
         你現在是一位「創意教學設計師」。請根據以下段落，設計 3 個極具啟發性、細節豐富的教學策略卡片。
         
@@ -76,7 +76,7 @@ export const useStep3Segments = () => {
         🚨 撰寫最高準則：
         1. 內容具體化：禁止寫「引導學生思考」這種廢話。必須寫出具體的引導情境（例：引導學生對比「鈍掉的斧頭」與「鋒利的草葉」）。
         2. 任務可執行：微任務必須是學生 1 分鐘內能完成的明確動作。
-        3. 欄位補全：必須包含 title, type, method, insight, interaction 五個欄位。
+        3. 欄位補全：必須包含 title, type, method, teachingPoint, application 五個欄位。
 
         🚨 強制輸出格式 (JSON Schema)：
         {
@@ -85,27 +85,31 @@ export const useStep3Segments = () => {
               "title": "具備吸引力的標題 (例：銳利邊緣的秘密)",
               "type": "Thinking | Inquiry | Creative Writing | Roleplay",
               "method": "教學方法論 (例：比較觀察法、第一人稱敘事法)",
-              "insight": "深入的教學引導內容 (至少 50 字，充滿情境感)",
-              "interaction": "1分鐘微任務內容 (具體的學生任務)"
+              "teachingPoint": "深入的教學引導內容 (至少 50 字，解釋本策略要解決的痛點或目標)",
+              "application": "[連結課文具體段落] + [步驟 1] -> [步驟 2] (具體的學生互動任務)"
             }
           ]
         }
       `;
       
-      // 使用 0.5 稍微提高溫度，讓 AI 更有創意
       const response2 = await sendMessageToGemini(prompt2, [], 0, { temperature: 0.5 });
       const strategiesData = sanitizeAndParseJSON(response2);
       const validStrategies = strategiesData.strategies || [];
 
-      // 打包資料
+      // 🌟 [防呆更新]：防呆預設值也必須對應正確的 Key
       const finalResult = {
           segments: validSegments,
           strategies: validStrategies.length > 0 ? validStrategies : [
-              { title: "內容回顧", type: "Thinking", insight: "確認理解。", interaction: "總結本課核心。" }
+              { 
+                title: "內容回顧", 
+                type: "Thinking", 
+                method: "問答法",
+                teachingPoint: "透過提問確認學生是否掌握本課核心精神。", 
+                application: "請學生用一句話總結主角的特質。" 
+              }
           ]
       };
 
-      // 儲存結果並推進
       dispatch({ type: 'SET_SEGMENTS_RESULT', payload: JSON.stringify(finalResult) });
       dispatch({ type: 'SET_STEP', payload: AppStep.STEP_3_DEEP_SEGMENTS });
 
@@ -118,23 +122,16 @@ export const useStep3Segments = () => {
     }
   };
 
-  /**
-   * 2. 🌟 [關鍵修正]：不再回頭問 AI，直接儲存老師在介面上修改的結果
-   */
   const handleStep2DeepSegmentsConfirm = async (finalDataString: string) => {
     if (isProcessing.current) return;
     isProcessing.current = true;
     
-    // 直接存檔老師微調後的 JSON (包含 segments 和 strategies)
     dispatch({ type: 'SET_DEEP_SEGMENTS_RESULT', payload: finalDataString });
     dispatch({ type: 'SET_SEGMENTS_RESULT', payload: finalDataString });
-
-    // 跳轉至視覺風格步驟
     dispatch({ type: 'SET_STEP', payload: AppStep.STEP_4_VISUALS });
     isProcessing.current = false;
   };
 
-  // --- 原子化工具：完整保留您的歷史排除邏輯 ---
   const handleRegenerateStrategies = async (currentSegments: any) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
@@ -179,16 +176,7 @@ export const useStep3Segments = () => {
 
   const handleRewriteQuestion = async (summary: string, content: string) => {
     try {
-      const prompt = `你是一個專業的國小語文教學設計師。請幫我把這句教學提問「換個問法」，讓它更具啟發性、引導學生深入思考。
-
-⚠️ 【最高準則：絕對忠於課文】
-請「嚴格」根據以下段落大意來重構問題，絕對禁止自行發明、腦補、或添加課文中根本沒有的角色與情節！
-
-【本段大意參考】：${summary || "無"}
-【需要換句話說的原問句】：${content}
-
-請直接回傳一個新的問句，絕對不要加上任何引號或其他解釋廢話。`;
-      
+      const prompt = `你是一個專業的國小語文教學設計師。請幫我把這句教學提問「換個問法」，讓它更具啟發性、引導學生深入思考。\n\n⚠️ 【最高準則：絕對忠於課文】\n請「嚴格」根據以下段落大意來重構問題，絕對禁止自行發明、腦補、或添加課文中根本沒有的角色與情節！\n\n【本段大意參考】：${summary || "無"}\n【需要換句話說的原問句】：${content}\n\n請直接回傳一個新的問句，絕對不要加上任何引號或其他解釋廢話。`;
       const response = await sendMessageToGemini(prompt, [], 0);
       const cleanRes = response.replace(/`{3}(?:json|markdown)?/gi, '').replace(/`{3}/g, '').trim();
       return cleanRes;
