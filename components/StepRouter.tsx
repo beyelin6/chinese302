@@ -40,7 +40,8 @@ export default function StepRouter() {
     handleRegenerateStrategies, 
     handleGenerateSingleStrategy, 
     handleGenerateRhetoricGuidance,
-    handleGenerateExtraActivity
+    handleGenerateExtraActivity,
+    handleRewriteQuestion
   } = useStep3Segments();
   const { 
     handleStep3Confirm, 
@@ -154,6 +155,7 @@ export default function StepRouter() {
                 onGenerateSingleStrategy={handleGenerateSingleStrategy}
                 onGenerateRhetoricGuidance={handleGenerateRhetoricGuidance}
                 onGenerateExtraActivity={handleGenerateExtraActivity}
+                onRewriteQuestion={handleRewriteQuestion}
                 onBack={handleBack}
               />
             );

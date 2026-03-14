@@ -177,12 +177,34 @@ export const useStep3Segments = () => {
     } catch (error: any) { return null; } finally { dispatch({ type: 'SET_LOADING', payload: false }); }
   };
 
+  const handleRewriteQuestion = async (summary: string, content: string) => {
+    try {
+      const prompt = `你是一個專業的國小語文教學設計師。請幫我把這句教學提問「換個問法」，讓它更具啟發性、引導學生深入思考。
+
+⚠️ 【最高準則：絕對忠於課文】
+請「嚴格」根據以下段落大意來重構問題，絕對禁止自行發明、腦補、或添加課文中根本沒有的角色與情節！
+
+【本段大意參考】：${summary || "無"}
+【需要換句話說的原問句】：${content}
+
+請直接回傳一個新的問句，絕對不要加上任何引號或其他解釋廢話。`;
+      
+      const response = await sendMessageToGemini(prompt, [], 0);
+      const cleanRes = response.replace(/`{3}(?:json|markdown)?/gi, '').replace(/`{3}/g, '').trim();
+      return cleanRes;
+    } catch (error: any) {
+      console.error("Rewrite question failed", error);
+      return null;
+    }
+  };
+
   return {
     handleStep2DeepVocabConfirm,
     handleStep2DeepSegmentsConfirm,
     handleRegenerateStrategies,
     handleGenerateSingleStrategy,
     handleGenerateRhetoricGuidance,
-    handleGenerateExtraActivity
+    handleGenerateExtraActivity,
+    handleRewriteQuestion
   };
 };

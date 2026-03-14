@@ -72,6 +72,7 @@ interface Step2DeepSegmentsProps {
   onGenerateSingleStrategy: (data: AnalysisData, existingStrategies: StrategyItem[], targetType?: string) => Promise<StrategyItem | null>;
   onGenerateRhetoricGuidance: (segmentTitle: string, rhetoricName: string, rhetoricExample: string) => Promise<{teachingPoint: string, application: string} | null>;
   onGenerateExtraActivity: (title: string, content: string, grade: string) => Promise<any>;
+  onRewriteQuestion: (summary: string, content: string) => Promise<string | null>;
   onBack: () => void;
 }
 
@@ -84,6 +85,7 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
     onGenerateSingleStrategy,
     onGenerateRhetoricGuidance,
     onGenerateExtraActivity,
+    onRewriteQuestion,
     onBack
 }) => {
   const [data, setData] = useState<AnalysisData | null>(null);
@@ -93,6 +95,7 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
   const [isRegeneratingStrategies, setIsRegeneratingStrategies] = useState(false);
   const [generatingType, setGeneratingType] = useState<string | null>(null);
   const [generatingRhetoricGuidance, setGeneratingRhetoricGuidance] = useState<string | null>(null); // format: "segmentIdx-rhetoricIdx"
+  const [rewritingQuestion, setRewritingQuestion] = useState<string | null>(null); // format: "segmentIdx-questionIdx"
 
   // Edit states
   const [editingSection, setEditingSection] = useState<'segment' | 'strategy' | null>(null);
@@ -223,6 +226,31 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
           alert("AI 生成教學引導失敗，請稍後再試。");
       } finally {
           setGeneratingRhetoricGuidance(null);
+      }
+  };
+
+  const handleRewriteQuestionClick = async (segmentIdx: number, questionIdx: number) => {
+      if (!data) return;
+      const segment = data.segments[segmentIdx];
+      const dok = segment.dokQuestions?.[questionIdx];
+      if (!dok) return;
+
+      const key = `${segmentIdx}-${questionIdx}`;
+      setRewritingQuestion(key);
+      try {
+          const result = await onRewriteQuestion(segment.summary, dok.question);
+          if (result) {
+              const newData = { ...data };
+              if (newData.segments[segmentIdx].dokQuestions) {
+                  newData.segments[segmentIdx].dokQuestions[questionIdx].question = result;
+                  setData(newData);
+              }
+          }
+      } catch (error) {
+          console.error("Failed to rewrite question", error);
+          alert("AI 換個問法失敗，請稍後再試。");
+      } finally {
+          setRewritingQuestion(null);
       }
   };
 
@@ -522,6 +550,33 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                             }} className="text-xs text-blue-600 flex items-center hover:text-blue-800 px-2 py-1 rounded hover:bg-slate-100 transition-colors w-fit"><Plus size={12} className="mr-1"/>新增提問</button>
                                         </div>
 
+                                        {/* DOK Questions Array Editor */}
+                                        <div className="space-y-2 border-t border-slate-300 pt-3">
+                                            <label className="text-xs text-indigo-600 font-bold uppercase flex items-center"><Sparkles size={12} className="mr-1"/> 深度思維提問 (DOK 3-4)</label>
+                                            {(tempEditValue.dokQuestions || []).map((q: any, i: number) => (
+                                                <div key={i} className="flex flex-col gap-2 mb-2 bg-white p-2 rounded border border-slate-300">
+                                                    <div className="flex gap-2 items-center">
+                                                        <input className="w-[30%] bg-slate-50 border border-slate-300 rounded p-1.5 text-slate-900 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" value={q.type} onChange={(e) => {
+                                                            const newArr = [...(tempEditValue.dokQuestions || [])]; newArr[i].type = e.target.value; setTempEditValue({...tempEditValue, dokQuestions: newArr});
+                                                        }} placeholder="類型 (例: 策略應用)" />
+                                                        <input className="flex-1 bg-slate-50 border border-slate-300 rounded p-1.5 text-slate-800 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" value={q.question} onChange={(e) => {
+                                                            const newArr = [...(tempEditValue.dokQuestions || [])]; newArr[i].question = e.target.value; setTempEditValue({...tempEditValue, dokQuestions: newArr});
+                                                        }} placeholder="問題內容" />
+                                                        <button onClick={() => {
+                                                            const newArr = [...(tempEditValue.dokQuestions || [])]; newArr.splice(i, 1); setTempEditValue({...tempEditValue, dokQuestions: newArr});
+                                                        }} className="text-red-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded"><Trash2 size={14} /></button>
+                                                    </div>
+                                                    <input className="w-full bg-slate-50 border border-slate-300 rounded p-1.5 text-slate-800 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" value={q.intent} onChange={(e) => {
+                                                        const newArr = [...(tempEditValue.dokQuestions || [])]; newArr[i].intent = e.target.value; setTempEditValue({...tempEditValue, dokQuestions: newArr});
+                                                    }} placeholder="教學意圖" />
+                                                </div>
+                                            ))}
+                                            <button onClick={() => {
+                                                const newArr = [...(tempEditValue.dokQuestions || []), { type: '策略應用', question: '', intent: '' }];
+                                                setTempEditValue({...tempEditValue, dokQuestions: newArr});
+                                            }} className="text-xs text-blue-600 flex items-center hover:text-blue-800 px-2 py-1 rounded hover:bg-slate-100 transition-colors w-fit"><Plus size={12} className="mr-1"/>新增 DOK 提問</button>
+                                        </div>
+
                                     <textarea className="w-full bg-white border border-slate-300 rounded p-3 text-slate-900 text-xs h-16 focus:ring-2 focus:ring-blue-500 outline-none" value={tempEditValue.deepDive} onChange={(e) => setTempEditValue({...tempEditValue, deepDive: e.target.value})} placeholder="深究提問" />
 
                                     <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-slate-300">
@@ -546,21 +601,35 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                         {/* 💎 深度思維鑽石區 (DOK 3-4 Questions) */}
                                         {item.dokQuestions && item.dokQuestions.length > 0 && (
                                           <div className="mt-4 grid grid-cols-1 gap-3">
-                                            {item.dokQuestions.map((dok: any, dIdx: number) => (
+                                            {item.dokQuestions.map((dok: any, dIdx: number) => {
+                                              const isRewriting = rewritingQuestion === `${idx}-${dIdx}`;
+                                              return (
                                               <div key={dIdx} className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 rounded-r-2xl group hover:shadow-md transition-all">
                                                 <div className="flex items-start gap-3">
                                                   <div className="mt-1 bg-blue-600 text-white p-1 rounded-lg">
                                                     <Sparkles size={12} />
                                                   </div>
-                                                  <div>
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                      <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
-                                                        {dok.type}
-                                                      </span>
-                                                      <span className="text-[10px] text-slate-400 font-medium">DOK Level 3-4</span>
+                                                  <div className="flex-1">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                      <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                                                          {dok.type}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 font-medium">DOK Level 3-4</span>
+                                                      </div>
+                                                      <button 
+                                                        onClick={() => handleRewriteQuestionClick(idx, dIdx)}
+                                                        disabled={isRewriting || isEditingAny}
+                                                        className={`p-1.5 rounded-lg transition-all ${isRewriting ? 'text-amber-600 bg-amber-50' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100'}`}
+                                                        title="AI 換個更棒的問法"
+                                                      >
+                                                        {isRewriting ? <RefreshCw size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                                                      </button>
                                                     </div>
                                                     <p className="text-sm font-bold text-slate-800 leading-relaxed">
-                                                      {dok.question}
+                                                      {isRewriting ? (
+                                                        <span className="text-amber-600 animate-pulse">AI 正在重新設計問法...</span>
+                                                      ) : dok.question}
                                                     </p>
                                                     <p className="mt-2 text-[10px] text-blue-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity italic">
                                                       🎯 教學意圖：{dok.intent}
@@ -568,7 +637,7 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                                   </div>
                                                 </div>
                                               </div>
-                                            ))}
+                                            )})}
                                           </div>
                                         )}
                                         
