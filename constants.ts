@@ -706,10 +706,15 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 - displayText: "本課任務：結構探索 | 修辭解析 | 詞彙寶庫 | 素養挑戰"
 
 [type: FusionMap] (結構視圖)
-- lens: "資訊圖表 / 主題地圖 (Infographic Map)"
-- visual_prompt: "Subject: A thematic infographic map... (必須融入本課的視覺隱喻/故事絲帶)"
-- displayText: "包含【主標題】、【情節節點(沿著路徑)】與獨立的【知識小學堂】"
-
+- lens: "資訊圖表 (Infographic Map)"
+- visual_prompt: "Subject: A thematic map using {Visual Metaphor}. Context: Dynamic nodes connected by a path. Composition: Overview. Artistic VIS: {Style Code}."
+- displayText: 
+  "1. 📌 主標題: [填入標題]
+   2. 👤 核心人設: [人物名 + DNA]
+   3. 🗺️ 情節路徑: [起點 -> 節點1 -> 節點2 -> 終點]
+   4. 🔑 核心關鍵詞: [從各段提取之關鍵詞，以『、』分隔]
+   5. 💡 知識小學堂: [本課核心策略亮點]"
+   
 == PART B: 詳盡課文迴圈 (Detailed Text Loop) ==
 [type: ContentFocus] (內容對焦)
 - lens: "廣角 (Exhale)"

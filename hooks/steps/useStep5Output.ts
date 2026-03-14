@@ -81,12 +81,23 @@ export const useStep5Output = () => {
       const languageActivities = analysisData?.languageActivities || [];
       const strategies = segmentsData?.strategies || [];
 
-      // 1. 🌟 [核心修復] 建立分段藍圖，並根據勾選狀態過濾
+      // 1. 🌟 [精準對位藍圖] 建立分段藍圖，包含增量關鍵詞
       const blueprint = [
         // PART A
         { part: 'PART A', type: 'Cover', title: '封面' },
         { part: 'PART A', type: 'MissionNav', title: '任務導覽' },
-        { part: 'PART A', type: 'FusionMap', title: '結構視圖' },
+        { 
+          part: 'PART A', 
+          type: 'FusionMap', 
+          title: '結構視圖',
+          // 🌟 [高密度封裝]：將關鍵詞提升至 4 個，確保掌握段落神韻
+          quickGrasp: segments.map((s: any, idx: number) => ({
+            label: `段落 ${idx + 1}`,
+            keywords: s.keywords?.slice(0, 4).join('、') || "重點萃取中"
+          })),
+          macroStructure: analysisData?.visualStructureRecommendation,
+          visualMetaphor: visualData?.metaphor?.label
+        },
         
         // PART B (深究拆分)
         ...segments.flatMap((s: any, idx: number) => {
@@ -97,45 +108,19 @@ export const useStep5Output = () => {
           return chunk;
         }),
         
-        // PART C 🌟 [精準勾選聯動] 
+        // PART C (生字勾選過濾)
         ...vocabulary.flatMap((v: any) => {
-          // 如果大勾勾沒勾，該生字完全不產出
           if (!v.isSelected) return [];
-
           const vocabSlides = [];
-
-          // 教字形 (Writing Tips)
           if (v.isWritingTipsSelected) {
-            vocabSlides.push({ 
-              part: 'PART C', 
-              type: 'VocabLoop', 
-              title: `生字辨析：${v.word}`, 
-              word: v.word,
-              writingTips: v.writingTips 
-            });
+            vocabSlides.push({ part: 'PART C', type: 'VocabLoop', title: `生字辨析：${v.word}`, word: v.word, writingTips: v.writingTips });
           }
-
-          // 教形近 (Shape Similar)
           if (v.isShapeSimilarSelected && v.shapeSimilar && v.shapeSimilar.length > 0) {
-            vocabSlides.push({ 
-              part: 'PART C', 
-              type: 'ShapeSimilar', 
-              title: `形近辨析：${v.word}`, 
-              details: v.shapeSimilar, 
-              mnemonic: v.mnemonic 
-            });
+            vocabSlides.push({ part: 'PART C', type: 'ShapeSimilar', title: `形近辨析：${v.word}`, details: v.shapeSimilar, mnemonic: v.mnemonic });
           }
-
-          // 教多音 (Polyphonic)
           if (v.isPolyphonicSelected && v.polyphonic && v.polyphonic.length > 0) {
-            vocabSlides.push({ 
-              part: 'PART C', 
-              type: 'Polyphonic', 
-              title: `多音字辨析：${v.word}`, 
-              details: v.polyphonic 
-            });
+            vocabSlides.push({ part: 'PART C', type: 'Polyphonic', title: `多音字辨析：${v.word}`, details: v.polyphonic });
           }
-
           return vocabSlides;
         }),
 
@@ -166,6 +151,12 @@ export const useStep5Output = () => {
           
           # 任務：生成第 ${i+1} 至 ${Math.min(i+chunkSize, blueprint.length)} 頁
           ${chunk.map((b, idx) => `${i + idx + 1}. [${b.type}] ${b.title}`).join('\n')}
+          
+          # 頁面特定邏輯說明：
+          - 若遇到 [FusionMap]：
+            1. 請務必利用資料中的 quickGrasp 清單。
+            2. 關鍵詞標籤必須精確對應段落。
+            3. 優先選擇『動詞』+『核心物件』，讓教師能一眼掌握段落意義。
           
           # 參考數據：
           ${JSON.stringify(chunk)}
