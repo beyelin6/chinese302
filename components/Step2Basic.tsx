@@ -24,12 +24,12 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
       const cleanJson = analysis.replace(/```json/g, '').replace(/```/g, '');
       const parsed = JSON.parse(cleanJson);
       
-      // 🌟 [自動化意圖配置]：初始化時預設「形近字」與「字形」為開啟，「多音」為關閉
+      // 🌟 [自動化意圖配置]：初始化時預設「形近字」為開啟，「字形」、「多音」為關閉
       if (parsed.coreVocabulary) {
         parsed.coreVocabulary = parsed.coreVocabulary.map((v: any) => ({
           ...v,
           isFocused: v.isFocused ?? false,
-          wantsWritingTips: true,  
+          wantsWritingTips: false,  
           wantsShapeSimilar: true, 
           wantsPolyphonic: false,  
           writingTips: v.writingTips || "請注意字形比例與重心。"
