@@ -53,7 +53,7 @@ export const useStep5Output = () => {
         slide_sequence_blueprint: {
           PART_A: "導航與鷹架 (P1-P3)",
           PART_B: "詳盡課文迴圈 (意義段解析)",
-          PART_C: "原子語文與評量 (生字、成語、測驗)",
+          PART_C: "原子語文與評量 (勾選同步產出)",
           PART_D_E: "策略、語文活動與結尾"
         }
       },
@@ -78,11 +78,10 @@ export const useStep5Output = () => {
       const vocabulary = vocabData?.vocabulary || [];
       const idioms = vocabData?.deepIdiomsDetails || [];
       
-      // 🌟 [修復] 確切抓出語文活動與教學策略
       const languageActivities = analysisData?.languageActivities || [];
       const strategies = segmentsData?.strategies || [];
 
-      // 1. 建立分段藍圖 (完美展開 PART A to E)
+      // 1. 🌟 [核心修復] 建立分段藍圖，並根據勾選狀態過濾
       const blueprint = [
         // PART A
         { part: 'PART A', type: 'Cover', title: '封面' },
@@ -92,34 +91,60 @@ export const useStep5Output = () => {
         // PART B (深究拆分)
         ...segments.flatMap((s: any, idx: number) => {
           const chunk = [{ part: 'PART B', type: 'ContentFocus', title: `段落 ${idx+1}: 內容對焦`, segment: s }];
-          // 動態拆分邏輯：若有修辭或挑戰則增加分頁
-          if (s.rhetorics?.length > 0 || s.dokQuestions?.length > 0 || s.difficultWords?.length > 1) {
+          if (s.difficultWords?.length > 1 || s.questions?.length > 0 || s.rhetorics?.length > 0) {
             chunk.push({ part: 'PART B', type: 'DeepDive', title: `段落 ${idx+1}: 深究特寫`, segment: s });
           }
           return chunk;
         }),
         
-        // PART C 🌟 [修復] 暴力展開形近字與多音字
+        // PART C 🌟 [精準勾選聯動] 
         ...vocabulary.flatMap((v: any) => {
+          // 如果大勾勾沒勾，該生字完全不產出
+          if (!v.isSelected) return [];
+
           const vocabSlides = [];
-          if (v.shapeSimilar && v.shapeSimilar.length > 0) {
-            vocabSlides.push({ part: 'PART C', type: 'ShapeSimilar', title: `形近字：${v.word}`, details: v.shapeSimilar, mnemonic: v.mnemonic });
+
+          // 教字形 (Writing Tips)
+          if (v.isWritingTipsSelected) {
+            vocabSlides.push({ 
+              part: 'PART C', 
+              type: 'VocabLoop', 
+              title: `生字辨析：${v.word}`, 
+              word: v.word,
+              writingTips: v.writingTips 
+            });
           }
-          if (v.polyphonic && v.polyphonic.length > 0) {
-            vocabSlides.push({ part: 'PART C', type: 'Polyphonic', title: `多音字：${v.word}`, details: v.polyphonic });
+
+          // 教形近 (Shape Similar)
+          if (v.isShapeSimilarSelected && v.shapeSimilar && v.shapeSimilar.length > 0) {
+            vocabSlides.push({ 
+              part: 'PART C', 
+              type: 'ShapeSimilar', 
+              title: `形近辨析：${v.word}`, 
+              details: v.shapeSimilar, 
+              mnemonic: v.mnemonic 
+            });
           }
-          // 如果沒有形近字也沒多音字，就給一頁基本版
-          if (vocabSlides.length === 0) {
-            vocabSlides.push({ part: 'PART C', type: 'VocabLoop', title: `生字辨析：${v.word}`, word: v.word });
+
+          // 教多音 (Polyphonic)
+          if (v.isPolyphonicSelected && v.polyphonic && v.polyphonic.length > 0) {
+            vocabSlides.push({ 
+              part: 'PART C', 
+              type: 'Polyphonic', 
+              title: `多音字辨析：${v.word}`, 
+              details: v.polyphonic 
+            });
           }
+
           return vocabSlides;
         }),
+
         ...idioms.map((i: any) => ({ part: 'PART C', type: 'IdiomLoop', title: `成語解析：${i.word}`, idiom: i })),
         { part: 'PART C', type: 'Assessment', title: '全課綜合評量' },
         
-        // PART D 🌟 [修復] 展開語文活動與百寶箱策略
+        // PART D 
         ...languageActivities.map((act: any) => ({ part: 'PART D', type: 'LanguageActivity', title: `語文活動：${act.title}`, content: act.content })),
-        ...strategies.map((st: any) => ({ part: 'PART D', type: 'Strategy', title: `教學策略：${st.title}` })),
+        ...strategies.map((st: any) => ({ part: 'PART D', type: 'Strategy', title: `教學策略：${st.title}`, strategy: st })),
         
         // PART E
         { part: 'PART E', type: 'Ending', title: '結尾道別' }
@@ -138,10 +163,12 @@ export const useStep5Output = () => {
           # ⚙️ NOTEBOOKLM DRIVER
           - 視覺 DNA：${castingData?.protagonist}
           - 語氣校準：導師為 ${castingData?.guide?.name}，展現「${castingData?.guide?.persona}」特質。
-          - 語言純淨協定：嚴格繁體中文，禁止潤飾顯示文字。
           
           # 任務：生成第 ${i+1} 至 ${Math.min(i+chunkSize, blueprint.length)} 頁
           ${chunk.map((b, idx) => `${i + idx + 1}. [${b.type}] ${b.title}`).join('\n')}
+          
+          # 參考數據：
+          ${JSON.stringify(chunk)}
         `;
 
         const response = await sendMessageToGemini(prompt, [], 0);
@@ -157,7 +184,6 @@ export const useStep5Output = () => {
         dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: updatedScript } });
       }
 
-      // 🌟 生成 [MODULE] 格式指南
       const guide = generateNotebookLMGuide(castingData, vocabulary);
       dispatch({ type: 'SET_OUTPUTS', payload: { outputNotebookLMGuide: guide } });
       
@@ -174,13 +200,12 @@ export const useStep5Output = () => {
 
   const generateNotebookLMGuide = (castingData: any, vocab: any[]) => {
     const guide = castingData?.guide || {};
-    const mnemonic = vocab.find((v:any) => v.mnemonic && v.mnemonic !== "無")?.mnemonic || "本課無特定口訣";
+    const mnemonic = vocab.filter(v => v.isSelected).find(v => v.mnemonic && v.mnemonic !== "無")?.mnemonic || "本課無特定口訣";
     
     let guideText = PROMPT_GENERATE_NOTEBOOKLM_GUIDE
       .replace('{Guide_Name}', guide.name || '導師')
       .replace('{TONE}', guide.persona || '專業');
       
-    // 🛡️ 防呆機制：確保口訣一定會印出
     if (guideText.includes('{Mnemonic}')) {
       guideText = guideText.replace('{Mnemonic}', mnemonic);
     } else {
@@ -193,14 +218,12 @@ export const useStep5Output = () => {
   const handleManualModule = async (moduleKey: string) => {
     if (isProcessing.current || !state.analysisData) return;
     isProcessing.current = true;
-    
     const moduleMap: Record<string, { prompt: string, status: string, stateKey: string }> = {
       worksheet: { prompt: PROMPT_GENERATE_WORKSHEET, status: '正在生成素養學習單...', stateKey: 'outputWorksheet' },
       assessment: { prompt: PROMPT_GENERATE_ASSESSMENT, status: '正在生成複習講義...', stateKey: 'outputAssessment' },
       kb: { prompt: PROMPT_GENERATE_KB, status: '正在生成知識庫資料...', stateKey: 'outputKb' },
       gamified: { prompt: PROMPT_GENERATE_GAMIFIED_QUIZ, status: '正在生成遊戲化測驗...', stateKey: 'outputGamifiedQuiz' }
     };
-    
     const config = moduleMap[moduleKey];
     if (!config) { isProcessing.current = false; return; }
 
@@ -220,9 +243,5 @@ export const useStep5Output = () => {
     }
   };
 
-  return { 
-    handleScriptPipeline, 
-    handleManualModule, 
-    handleBack: () => dispatch({ type: 'SET_STEP', payload: AppStep.STEP_5_CASTING }) 
-  };
+  return { handleScriptPipeline, handleManualModule, handleBack: () => dispatch({ type: 'SET_STEP', payload: AppStep.STEP_5_CASTING }) };
 };
