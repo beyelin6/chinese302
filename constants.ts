@@ -348,7 +348,6 @@ Schema:
 }
 `;
 
-// 🌟 完整保留所有獨立功能 Prompt
 export const GENERATE_SHAPE_SIMILAR_PROMPT = `
 [INSTRUCTION]
 你現在是 V-MAX 系統的「漢字辨析專家」。請針對目標字 "{CHAR}" 進行深度形近字挖掘。
@@ -621,50 +620,45 @@ export const GENERATE_LANGUAGE_ACTIVITY_PROMPT = `
 請只輸出純 JSON。
 `;
 
-// 🌟 [高保真升級] NotebookLM 工作室驅動指南
+// 🌟 [簡報介面專用版] NotebookLM 工作室驅動指南
 export const PROMPT_GENERATE_NOTEBOOKLM_GUIDE = `
 [INSTRUCTION]
 你現在是 V-MAX 系統架構師。請撰寫一份「NotebookLM 教師工作室驅動指南」。
 ⚠️ 絕對禁令：禁止在指南中印出具體的腳本 P1-P30 內容！
 
 [MODULE_1_START]
-TITLE: 🟦 模組一：全局生成指令 (Global Driver)
-LOCATION: 點擊【簡報】按鈕 -> 旁邊的 ✏️ 鉛筆編輯框
+TITLE: 🚀 模組一：自動簡報生成指令 (Slide Generation)
+LOCATION: NotebookLM 點擊【Slide Guide (簡報)】按鈕 -> 右側的 ✏️ 編輯指令框
 PROMPT:
-請扮演嚴格的「視覺執行導演」。請依照來源文件中的 \`VMAX_STRUCTURE_YAML\` 結構，為我生成從 [P1] 到最後一頁的詳細內容。
-⚠️ 最高指導原則：
-1. 視覺絕對忠誠：嚴格遵守腳本內對應頁碼之【視覺提示詞】與 YAML 中的 visual_dna_anchor。
-2. 文字逐字鎖定：投影片文字必須 100% 複製【顯示文字】區塊，禁止潤飾或刪減。
+請讀取我上傳的 \`VMAX_SCRIPT_UNIFIED.txt\`。
+這份檔案已經是完整的「簡報分鏡腳本」。請你嚴格按照 \`slides\` 陣列中的每一筆資料，為我依序生成完整的投影片。
+
+⚠️ 投影片生成最高準則：
+1. 畫面生成：嚴格遵循 \`visual_prompt\` 與 \`VMAX_STRUCTURE_YAML\` 裡的設定，確保角色 DNA 與畫風絕對一致。
+2. 標題與文字：投影片畫面上的文字，必須 100% 一字不漏地複製 \`title\` 與 \`displayText\` 欄位，絕對禁止自行刪減、潤飾或總結。
+3. 講者備忘錄 (Speaker Notes)：請將 \`guideAction\` (動作) 與 \`guideTalk\` (台詞) 完整放入講者備忘錄中。
 [MODULE_1_END]
 
 [MODULE_2_START]
-TITLE: 🟧 模組二：分段產出指令 (Segmented Production)
-LOCATION: 下方聊天對話框 (Chatbox)
-PROMPT:
-請閱讀來源文件，詳細展開 [P{START}] 到 [P{END}] 的內容。
-每一頁必須包含【鏡頭視角】、【視覺提示詞】、【顯示文字】與【引導語/腳本】，不要自行簡化台詞。
-[MODULE_2_END]
-
-[MODULE_3_START]
-TITLE: 🟩 模組三：語音摘要煉成 (Audio Overview)
+TITLE: 🟩 模組二：語音摘要煉成 (Audio Overview)
 LOCATION: 右側 Audio Overview -> Customize
 PROMPT:
 啟動 V-MAX 教學對話模式：
 - 主講人：{Guide_Name}（引導導師）與 好奇的小學生。
 - 語氣特質：展現「{TONE}」特質。
-- 核心素材：嚴格根據來源文件之【引導語/腳本】區塊進行內容拆解。
+- 核心素材：嚴格根據來源文件之【guideTalk】區塊進行內容對話化。
 - 互動重點：對話必須包含針對生字部首與修辭技巧的具體解析。
-[MODULE_3_END]
+[MODULE_2_END]
 
-[MODULE_4_START]
-TITLE: 🟨 模組四：單頁精準修復 (Precision Revise)
+[MODULE_3_START]
+TITLE: 🟨 模組三：單頁精準修復 (Precision Revise)
 LOCATION: 投影片產出後 -> 特定頁面右上角的 ✏️ Revise
 PROMPT:
 請維持本頁排版與文字「絕對不動」。重新讀取來源文件對應頁碼的【視覺提示詞】，將畫面強制修正為 visual_dna_anchor 特徵。禁止出現寫實照片或改變角色配件。
-[MODULE_4_END]
+[MODULE_3_END]
 `;
 
-// 🌟 [高保真還原] 四維對位原子化腳本指令
+// 🌟 [劇本原子化升級] 四維對位原子化腳本指令 (分離 guideAction 與 guideTalk)
 export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 # ROLE: V-MAX System Master Kernel v59.0 (The DNA & Purity Kernel)
 # MISSION: 扮演嚴格的「視覺執行導演」，根據藍圖生成四維對位腳本。
@@ -672,13 +666,13 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 ### 🛡️ 0️⃣ System Core Protocol (最高指導原則)
 1. 視覺 DNA 鎖定：每一頁的 Image Prompt 必須以角色 DNA 為核心。DNA 特徵權重為 1.5x。
 2. 語言純淨：投影片顯示文字 (displayText) 嚴禁出現任何英文標籤。
-3. 文字鎖定：投影片上的文字內容必須 100% 逐字複製，禁止擅自潤飾或口語化。
+3. 劇本分離：導師的「動作」與「純台詞」必須分開存放，方便未來自定語音生成。
 4. 引導語規範 (Functional Guide Talk)：
    - 必須具備「教學功能」，化為符合【導師人設】的台詞。
    - 形近字必須唸出「辨析口訣」；深究特寫必須提出「啟發式問題」。
 
 ### 📥 1️⃣ JSON 輸出格式 (Strict Format Lock)
-你必須輸出「純 JSON 陣列 (JSON Array)」。陣列中的每一個物件代表一頁投影片，必須嚴格包含以下 7 個欄位：
+你必須輸出「純 JSON 陣列 (JSON Array)」。陣列中的每一個物件代表一頁投影片，必須嚴格包含以下 8 個欄位：
 [
   {
     "part_label": "對應的 PART 標籤 (如 PART A)",
@@ -687,7 +681,8 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
     "lens": "鏡頭視角 (參考下方模板)",
     "visual_prompt": "視覺提示詞 (Internal_Image_Prompt，必須是英文描述)",
     "displayText": "顯示文字 (嚴格繁體中文，支援 Markdown 換行排版)",
-    "guideTalk": "引導語/腳本 (導師台詞，可包含括號動作提示)"
+    "guideAction": "導師的肢體動作或表情提示 (如: 溫暖地微笑並作揖，純描述，不可加括號)",
+    "guideTalk": "引導語/腳本 (導師純台詞，絕對不可包含任何動作括號)"
   }
 ]
 
@@ -698,12 +693,14 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 [type: Cover] (封面)
 - lens: "中景"
 - visual_prompt: "Subject: {主角或導師 DNA} welcoming. Context: Title Screen. Composition: Center Focus. Artistic VIS: {風格碼}. Safety: No text."
-- guideTalk: "(搭配動作) [符合設定語氣的開場白]"
+- guideAction: "符合設定語氣的開場動作"
+- guideTalk: "[純台詞，符合設定語氣的開場白]"
 
 [type: MissionNav] (任務導航)
 - lens: "網格系統"
 - visual_prompt: "Subject: {導師 DNA} presenting Mission Map. Context: 4 Icons floating. Composition: Flat Lay Grid. Artistic VIS: {風格碼}. Safety: No blurry text."
 - displayText: "本課任務：結構探索 | 修辭解析 | 詞彙寶庫 | 素養挑戰"
+- guideAction: "引導任務時的動作"
 
 [type: FusionMap] (結構視圖)
 - lens: "資訊圖表 (Infographic Map)"
@@ -712,26 +709,30 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
   "1. 📌 主標題: [填入標題]
    2. 👤 核心人設: [人物名 + DNA]
    3. 🗺️ 情節路徑: [起點 -> 節點1 -> 節點2 -> 終點]
-   4. 🔑 核心關鍵詞: [從各段提取之關鍵詞，以『、』分隔]
+   4. 🔑 快速掌握 (關鍵詞): [根據輸入資料的 quickGrasp 清單，精準列出各段落的 4 個關鍵詞]
    5. 💡 知識小學堂: [本課核心策略亮點]"
+- guideAction: "指向路徑的動作"
    
 == PART B: 詳盡課文迴圈 (Detailed Text Loop) ==
 [type: ContentFocus] (內容對焦)
 - lens: "廣角 (Exhale)"
 - visual_prompt: "Subject: {故事角色}. Context: {該段落大意場景}. Composition: Wide shot. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "【段落大意】: {摘要}\\n【難詞顯影】: {難詞與解釋}"
+- guideAction: "生動的講故事動作"
 
 [type: DeepDive] (寫作與理解深究)
 - lens: "特寫 (Inhale)"
 - visual_prompt: "Subject: {導師 DNA}. Context: 視覺對焦修辭隱喻效果或教學情境道具. Composition: Close-up. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "包含【文意深究/修辭】或【🌟 閱讀小挑戰】"
-- guideTalk: "(拋出問題引導思考) ..."
+- guideAction: "拋出問題引導思考的動作"
+- guideTalk: "[提出啟發式問題的台詞]"
 
 == PART C: 原子語文迴圈 (Atomic Language Loop) ==
 [type: ShapeSimilar] (形近字)
 - lens: "分割畫面/網格"
 - visual_prompt: "Subject: {導師 DNA} presenting comparison. Context: Split items. Composition: Split Screen. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "必須列出字、部首、造詞，並清楚標示【💡 辨析口訣】與【解析】"
+- guideAction: "對比兩者差異的手勢"
 - guideTalk: "[部首差異的詳細說明與口訣唸法]"
 
 [type: Polyphonic] (多音字)
@@ -745,7 +746,8 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 [type: Assessment] (綜合評量)
 - lens: "資訊中心"
 - displayText: "【測驗題型】：{題型}\\n❓ 題目：{題目}\\n🔘 (A) {選項}\\n🔘 (B) {選項}\\n🔘 (C) {選項}\\n🔘 (D) {選項}"
-- guideTalk: "孩子們，準備好要公佈答案了嗎？"
+- guideAction: "鼓勵學生作答的動作"
+- guideTalk: "孩子們，準備好要公佈答案了嗎？..."
 
 == PART D: 策略與活動 (Strategy & Activity) ==
 [type: LanguageActivity] (語文活動)
@@ -762,5 +764,6 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 [type: Ending] (結尾道別)
 - lens: "遠景"
 - visual_prompt: "Subject: {導師 DNA} waving goodbye. Context: Sunset or peaceful background. Composition: Wide shot. Artistic VIS: {風格碼}. Safety: No text."
+- guideAction: "溫暖揮手道別的動作"
 - guideTalk: "[溫暖的結尾語與鼓勵]"
 `;

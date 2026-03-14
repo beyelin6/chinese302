@@ -119,7 +119,7 @@ export const useStep5Output = () => {
       const languageActivities = analysisData?.languageActivities || [];
       const strategies = segmentsData?.strategies || [];
 
-      // 1. 🌟 [精準對位藍圖] 建立分段藍圖，包含增量關鍵詞
+      // 1. 🌟 [精準對位藍圖] 建立分段藍圖，包含增量關鍵詞與防呆過濾
       const blueprint = [
         // PART A
         { part: 'PART A', type: 'Cover', title: '封面' },
@@ -146,19 +146,38 @@ export const useStep5Output = () => {
           return chunk;
         }),
         
-        // PART C (生字勾選過濾)
+        // PART C (🌟 生字勾選雙重變數防呆過濾)
         ...vocabulary.flatMap((v: any) => {
-          if (!v.isSelected) return [];
+          // 🛡️ 容錯防禦：只要不是「明確被取消大勾勾」，就放行
+          if (v.isSelected === false) return [];
+          
           const vocabSlides = [];
-          if (v.isWritingTipsSelected) {
-            vocabSlides.push({ part: 'PART C', type: 'VocabLoop', title: `生字辨析：${v.word}`, word: v.word, writingTips: v.writingTips });
+          
+          // 🌟 變數名稱校準：同時支援 wantsXXX (新版) 與 isXXXSelected (舊版)
+          const wantWriting = v.wantsWritingTips || v.isWritingTipsSelected;
+          const wantShape = v.wantsShapeSimilar || v.isShapeSimilarSelected;
+          const wantPoly = v.wantsPolyphonic || v.isPolyphonicSelected;
+
+          // 🛡️ JSON.stringify 確保不會回傳物件導致 React Error #31
+          if (wantWriting) {
+            vocabSlides.push({ 
+              part: 'PART C', type: 'VocabLoop', title: `生字辨析：${v.word}`, 
+              word: String(v.word), writingTips: v.writingTips 
+            });
           }
-          if (v.isShapeSimilarSelected && v.shapeSimilar && v.shapeSimilar.length > 0) {
-            vocabSlides.push({ part: 'PART C', type: 'ShapeSimilar', title: `形近辨析：${v.word}`, details: v.shapeSimilar, mnemonic: v.mnemonic });
+          if (wantShape && v.shapeSimilar && v.shapeSimilar.length > 0) {
+            vocabSlides.push({ 
+              part: 'PART C', type: 'ShapeSimilar', title: `形近辨析：${v.word}`, 
+              details: JSON.stringify(v.shapeSimilar), mnemonic: v.mnemonic 
+            });
           }
-          if (v.isPolyphonicSelected && v.polyphonic && v.polyphonic.length > 0) {
-            vocabSlides.push({ part: 'PART C', type: 'Polyphonic', title: `多音字辨析：${v.word}`, details: v.polyphonic });
+          if (wantPoly && v.polyphonic && v.polyphonic.length > 0) {
+            vocabSlides.push({ 
+              part: 'PART C', type: 'Polyphonic', title: `多音字辨析：${v.word}`, 
+              details: JSON.stringify(v.polyphonic) 
+            });
           }
+          
           return vocabSlides;
         }),
 
