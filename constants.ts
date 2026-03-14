@@ -516,25 +516,36 @@ Special Structures (特殊文體)
 export const STEP_3_CASTING_PROMPT_PREFIX = `[V-MAX CASTING ENGINE] 請根據來源文本的靈魂，為本課推薦 3 位最契合的引導者候選人。`;
 
 export const STEP_4_DYNAMIC_CASTING_PROMPT = `
-# ROLE: V-MAX 角色選角導演 (Casting Director)
-# MISSION: 為本課定義「故事主角」與推薦 3 位「引導導師」候選人。
+# ROLE: V-MAX 視覺邏輯導演 (Casting Director v8.8)
+# MISSION: 根據文本性質執行「視覺邏輯矩陣」，並定義本課的選角。
+
+### 🎭 視覺邏輯矩陣 (Visual Logic Matrix) 準則
+【Mode A: 戲劇模式 (Drama Mode)】
+- 適用：記敘文、故事、傳記、童話（本課《工匠之祖》適用此模式）。
+- 概念：沈浸體驗。故事主角「演出」情節，引導者「點評」觀察。
+- 鏡頭：電影感、中景、特寫。
+
+【Mode B: 導覽模式 (Guide Mode)】
+- 適用：說明文、議論文、科普文章。
+- 概念：知識解構。無主角 (None)，引導者為唯一講者（如主播或教授）。
+- 鏡頭：資訊圖表感、微距、分割畫面。
 
 ### 📤 輸出規範 (Strict JSON)
 {
-  "mode": "Drama Mode" | "Field Trip Mode",
+  "mode": "Drama Mode" | "Guide Mode",
   "protagonist": {
-    "name": "主角名稱",
-    "description": "性格描述",
-    "visualDNA": "Hair: ... | Eyes: ... | Accessory: ... | Clothing: ...",
+    "name": "從文本中提取的核心人物名稱 (如: 魯班)",
+    "description": "性格描述 (如: 聰明且善於觀察的工匠)",
+    "visualDNA": "Hair: Black topknot | Eyes: Sharp and focused | Clothing: Traditional linen robe",
     "isNone": false
   },
   "candidates": [
     {
       "id": "C1",
-      "name": "導師名 1",
-      "persona": "語氣晶片碼 (G1-G6)",
-      "description": "教學風格描述",
-      "visualDNA": "Hair: ... | Eyes: ... | Accessory: ... | Clothing: ..."
+      "name": "導師候選人名",
+      "persona": "語氣晶片 (G1-G6)",
+      "description": "他在本課的角色定位 (如: 穿越時空的說書人)",
+      "visualDNA": "配戴獨特的齒輪項鍊與放大鏡"
     },
     { "id": "C2", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." },
     { "id": "C3", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." }

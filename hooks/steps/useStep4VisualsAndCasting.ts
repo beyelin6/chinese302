@@ -82,25 +82,35 @@ export const useStep4VisualsAndCasting = () => {
    */
   const handleGenerateCastingOptions = async () => {
     if (!state.analysisData) return;
+    
     dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_LOADING_STATUS', payload: '正在面試合適的教學引導者...' });
+    dispatch({ type: 'SET_LOADING_STATUS', payload: '執行視覺邏輯矩陣判定中...' });
 
     try {
+      // 🌟 [對齊關鍵]：提供 Step 1 萃取出的文體資訊
+      const genre = state.analysisData.basicInfo?.genre || "未指定";
+      const subject = state.analysisData.basicInfo?.subject || "一般主題";
+
       const prompt = `
-        ${STEP_4_CASTING_PROMPT_PREFIX}
         ${STEP_4_DYNAMIC_CASTING_PROMPT}
-        當前課程文體：${state.analysisData.basicInfo?.genre}
-        當前核心主題：${state.analysisData.basicInfo?.subject}
+        
+        【待判定文本資訊】
+        文體：${genre}
+        主題：${subject}
+        課文摘要：${state.analysisData.basicInfo?.mainIdea}
       `;
 
       const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.6 });
-      // 🌟 [關鍵修復] 使用醫療級解析器處理 AI 的 JSON
-      const parsed = sanitizeAndParseJSON(response); 
-      
-      // 儲存至 Context
+      const parsed = sanitizeAndParseJSON(response);
+
+      // 🛡️ [防崩潰檢查]：確保 candidates 存在
+      if (!parsed.candidates || parsed.candidates.length === 0) {
+        throw new Error("AI 未能產生導師候選人，請重試。");
+      }
+
       dispatch({ type: 'SET_CASTING_RESULT', payload: JSON.stringify(parsed) });
     } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: '選角引擎啟動失敗：' + error.message });
+      dispatch({ type: 'SET_ERROR', payload: error.message });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
       dispatch({ type: 'SET_LOADING_STATUS', payload: null });
