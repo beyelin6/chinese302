@@ -146,29 +146,33 @@ export const useStep5Output = () => {
           return chunk;
         }),
         
-        // PART C (🌟 生字勾選雙重變數防呆過濾)
+// PART C (🌟 生字勾選雙重變數防呆過濾 - 跨資料表對接版)
         ...vocabulary.flatMap((v: any) => {
-          // 🛡️ 容錯防禦：只要不是「明確被取消大勾勾」，就放行
-          if (v.isSelected === false) return [];
+          // 🔍 1. 去老師確認過的 coreVocabulary 中，找出這個字的「打勾狀態」
+          const coreVocabList = analysisData?.coreVocabulary || [];
+          const uiFlags = coreVocabList.find((cv: any) => cv.word === v.word) || {};
+
+          // 🛡️ 2. 容錯防禦：只要不是「明確被取消大勾勾」，就放行
+          if (uiFlags.isSelected === false) return [];
           
           const vocabSlides = [];
           
-          // 🌟 變數名稱校準：同時支援 wantsXXX (新版) 與 isXXXSelected (舊版)
-          const wantWriting = v.wantsWritingTips || v.isWritingTipsSelected;
-          const wantShape = v.wantsShapeSimilar || v.isShapeSimilarSelected;
-          const wantPoly = v.wantsPolyphonic || v.isPolyphonicSelected;
+          // 🌟 3. 從 uiFlags 讀取真正的開關狀態
+          const wantWriting = uiFlags.wantsWritingTips || uiFlags.isWritingTipsSelected;
+          const wantShape = uiFlags.wantsShapeSimilar || uiFlags.isShapeSimilarSelected;
+          const wantPoly = uiFlags.wantsPolyphonic || uiFlags.isPolyphonicSelected;
 
-          // 🛡️ JSON.stringify 確保不會回傳物件導致 React Error #31
+          // 📝 4. 根據開關狀態，將 AI 找出的細節 (v) 推入投影片
           if (wantWriting) {
             vocabSlides.push({ 
               part: 'PART C', type: 'VocabLoop', title: `生字辨析：${v.word}`, 
-              word: String(v.word), writingTips: v.writingTips 
+              word: String(v.word), writingTips: uiFlags.writingTips || "請注意字形比例與重心。" 
             });
           }
           if (wantShape && v.shapeSimilar && v.shapeSimilar.length > 0) {
             vocabSlides.push({ 
               part: 'PART C', type: 'ShapeSimilar', title: `形近辨析：${v.word}`, 
-              details: JSON.stringify(v.shapeSimilar), mnemonic: v.mnemonic 
+              details: JSON.stringify(v.shapeSimilar), mnemonic: v.mnemonic || uiFlags.mnemonic 
             });
           }
           if (wantPoly && v.polyphonic && v.polyphonic.length > 0) {
@@ -180,7 +184,7 @@ export const useStep5Output = () => {
           
           return vocabSlides;
         }),
-
+        
         ...idioms.map((i: any) => ({ part: 'PART C', type: 'IdiomLoop', title: `成語解析：${i.word}`, idiom: i })),
         { part: 'PART C', type: 'Assessment', title: '全課綜合評量' },
         
