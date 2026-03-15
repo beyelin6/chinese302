@@ -129,6 +129,7 @@ export const STEP_2_DEEP_VOCAB_PROMPT_SUFFIX = `
       "shapeSimilar": [
         {
           "char": "辨析字",
+          "zhuyin": "注音",
           "radical": "部首",
           "words": "造詞",
           "explanation": "部首辨析說明",
@@ -365,6 +366,7 @@ Schema:
 [
   {
     "char": "辨析字",
+    "zhuyin": "注音 (例如：ㄅㄧㄢˋ)",
     "radical": "部首名稱 (例如：言部)",
     "words": "高頻教學詞彙 (例如：辨別)",
     "explanation": "【精準部件辨析】：精簡說明該部首在字義上的決定性作用。",
@@ -379,13 +381,14 @@ The user wants to generate detailed information for a specific Shape-Similar Cha
 Input Character: "{CHAR}"
 
 Objective:
-Provide the Radical (部首), Common Words (造詞), and a brief Explanation (解釋) of the radical's meaning for this character.
+Provide the Zhuyin (注音), Radical (部首), Common Words (造詞), and a brief Explanation (解釋) of the radical's meaning for this character.
 
 ⚠️ Output format: Valid JSON Object ONLY. No Markdown.
 
 Schema:
 {
   "char": "{CHAR}",
+  "zhuyin": "Zhuyin (e.g. ㄅㄧㄢˋ)",
   "radical": "Radical (e.g. 言部)",
   "words": "Common Word (e.g. 辯論)",
   "explanation": "Brief explanation of radical difference (e.g. 中間是言，表示用語言爭論)"
@@ -517,13 +520,15 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 - 概念：知識解構。無主角 (None)，引導者為唯一講者（如主播或教授）。
 - 鏡頭：資訊圖表感、微距、分割畫面。
 
+🚨 視覺 DNA 絕對指令：在生成 visualDNA 時，【必須】把明確的「年齡 (Age)」寫在最前面 (例如: Age: 10-year-old, Age: 30s, Age: Elderly)，以防 AI 繪圖時角色忽年輕忽老！
+
 ### 📤 輸出規範 (Strict JSON)
 {
   "mode": "Drama Mode" | "Guide Mode",
   "protagonist": {
     "name": "從文本中提取的核心人物名稱 (如: 魯班)",
     "description": "性格描述 (如: 聰明且善於觀察的工匠)",
-    "visualDNA": "Hair: Black topknot | Eyes: Sharp and focused | Clothing: Traditional linen robe",
+    "visualDNA": "Age: 30s | Hair: Black topknot | Eyes: Sharp and focused | Clothing: Traditional linen robe",
     "isNone": false
   },
   "candidates": [
@@ -532,7 +537,7 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
       "name": "導師候選人名",
       "persona": "語氣晶片 (G1-G6)",
       "description": "他在本課的角色定位 (如: 穿越時空的說書人)",
-      "visualDNA": "配戴獨特的齒輪項鍊與放大鏡"
+      "visualDNA": "Age: 40s | 配戴獨特的齒輪項鍊與放大鏡"
     },
     { "id": "C2", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." },
     { "id": "C3", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." }
@@ -542,9 +547,9 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 
 export const GUIDE_TRAITS_SUGGESTION_PROMPT = `[INSTRUCTION] Refine Visual DNA. {GENDER}, {AGE}, {TONE}`;
 export const GUIDE_TEACHING_STYLE_SUGGESTION_PROMPT = `[INSTRUCTION] Create teaching style for Guide: {GENDER}, {AGE}, {TONE_LABEL}.`;
-export const PROTAGONIST_TRAITS_SUGGESTION_PROMPT = `[INSTRUCTION] Generate Pipe Format Visual DNA for Protagonist.`;
+export const PROTAGONIST_TRAITS_SUGGESTION_PROMPT = `[INSTRUCTION] Generate Pipe Format Visual DNA for Protagonist. (CRITICAL: Must include exact Age, e.g., Age: 12, Age: 40s at the beginning).`;
 export const EXTRACT_IMAGE_TRAITS_PROMPT = `
-請以專業角色設計師的角度，精準分析隨附的圖片，並將該人物的視覺特徵萃取為嚴格的 YAML 格式 (Visual DNA)。
+請以專業角色設計師的角度，精準分析隨附的圖片，並將該人物的視覺特徵萃取為嚴格的 YAML 格式 (Visual DNA)。務必明確標示出該角色的推測年齡 (Age)。
 `;
 
 export const STEP_5_MATERIALS_PROMPT = `[INSTRUCTION] Execute STEP 6: 輔助產出 (Material Linkage).`;
@@ -658,7 +663,7 @@ PROMPT:
 [MODULE_3_END]
 `;
 
-// 🌟 [劇本原子化升級] 四維對位原子化腳本指令 (分離 guideAction 與 guideTalk)
+// 🌟 [劇本原子化升級] 四維對位原子化腳本指令 (新增注音與動作分離)
 export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 # ROLE: V-MAX System Master Kernel v59.0 (The DNA & Purity Kernel)
 # MISSION: 扮演嚴格的「視覺執行導演」，根據藍圖生成四維對位腳本。
@@ -731,9 +736,9 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 [type: ShapeSimilar] (形近字)
 - lens: "分割畫面/網格"
 - visual_prompt: "Subject: {導師 DNA} presenting comparison. Context: Split items. Composition: Split Screen. Artistic VIS: {風格碼}. Safety: No text."
-- displayText: "必須列出字、部首、造詞，並清楚標示【💡 辨析口訣】與【解析】"
+- displayText: "必須列出各個辨析字的字、注音、部首、造詞，並清楚標示【💡 辨析口訣】與【解析】"
 - guideAction: "對比兩者差異的手勢"
-- guideTalk: "[部首差異的詳細說明與口訣唸法]"
+- guideTalk: "[注音與部首差異的詳細說明，與口訣唸法]"
 
 [type: Polyphonic] (多音字)
 - lens: "對比/天平"
