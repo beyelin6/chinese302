@@ -620,23 +620,23 @@ export const GENERATE_LANGUAGE_ACTIVITY_PROMPT = `
 請只輸出純 JSON。
 `;
 
-// 🌟 [簡報介面專用版] NotebookLM 工作室驅動指南
+// 🌟 [實戰淬鍊版] NotebookLM 工作室驅動指南
 export const PROMPT_GENERATE_NOTEBOOKLM_GUIDE = `
 [INSTRUCTION]
 你現在是 V-MAX 系統架構師。請撰寫一份「NotebookLM 教師工作室驅動指南」。
 ⚠️ 絕對禁令：禁止在指南中印出具體的腳本 P1-P30 內容！
 
 [MODULE_1_START]
-TITLE: 🚀 模組一：自動簡報生成指令 (Slide Generation)
+TITLE: 🚀 模組一：分段簡報生成指令 (Segmented Slide Generation)
 LOCATION: NotebookLM 點擊【Slide Guide (簡報)】按鈕 -> 右側的 ✏️ 編輯指令框
 PROMPT:
 請讀取我上傳的 \`VMAX_SCRIPT_UNIFIED.txt\`。
-這份檔案已經是完整的「簡報分鏡腳本」。請你嚴格按照 \`slides\` 陣列中的每一筆資料，為我依序生成完整的投影片。
+這份檔案已經是完整的「簡報分鏡腳本」。請你嚴格按照 \`slides\` 陣列中的資料，為我依序生成【第 1 頁到第 5 頁】的投影片。（💡 提示老師：產出完成後，請繼續輸入「請接續產出第 6 頁到第 10 頁」分段生成，避免 AI 中斷）
 
 ⚠️ 投影片生成最高準則：
-1. 畫面生成：嚴格遵循 \`visual_prompt\` 與 \`VMAX_STRUCTURE_YAML\` 裡的設定，確保角色 DNA 與畫風絕對一致。
+1. 畫面生成：嚴格遵循 \`visual_prompt\`、\`guideAction\` (導師動作) 以及 \`VMAX_STRUCTURE_YAML\` 裡的設定來構圖。注意：動作指令僅供畫面生成參考，絕對禁止印成文字。
 2. 標題與文字：投影片畫面上的文字，必須 100% 一字不漏地複製 \`title\` 與 \`displayText\` 欄位，絕對禁止自行刪減、潤飾或總結。
-3. 講者備忘錄 (Speaker Notes)：請將 \`guideAction\` (動作) 與 \`guideTalk\` (台詞) 完整放入講者備忘錄中。
+3. 講者備忘錄 (Speaker Notes)：講者備忘錄中【只能】放入 \`guideTalk\` (純講者台詞)，方便講者直接朗讀。
 [MODULE_1_END]
 
 [MODULE_2_START]
