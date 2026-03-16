@@ -12,6 +12,37 @@ import { useWorkflowContext } from '../context/WorkflowContext';
 import { sendMessageToGemini } from '../services/gemini';
 import { EXTRACT_IMAGE_TRAITS_PROMPT } from '../constants';
 
+// 🚀 核心優化：客戶端圖片預壓縮工具 (Canvas Compression)
+const compressImage = (imageFile: File, maxWidth = 800, quality = 0.7): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(imageFile);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        // 計算等比例縮放後的新尺寸
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        canvas.width = width;
+        canvas.height = height;
+
+        // 畫上 Canvas 並匯出壓縮後的 JPEG base64 (去除前綴)
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        const compressedBase64 = canvas.toDataURL('image/jpeg', quality).split(',')[1];
+        resolve(compressedBase64);
+      };
+      img.onerror = (error) => reject(error);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 // 🌟 獨立的引導者編輯彈窗元件
 const GuideEditModal = ({ 
   isOpen, 
@@ -81,61 +112,32 @@ const GuideEditModal = ({
     }
   };
 
-  // 🖼️ 🌟 升級版：圖片上傳與 Canvas 客戶端預壓縮
+  // 🖼️ 🚀 優化版：圖片上傳與 Canvas 客戶端預壓縮
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
-
     try {
-      // 1. 建立一個 Promise 來處理 Canvas 壓縮
-      const compressImage = (imageFile: File, maxWidth = 800, quality = 0.7): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(imageFile);
-          reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target?.result as string;
-            img.onload = () => {
-              // 計算等比例縮放後的新尺寸
-              const canvas = document.createElement('canvas');
-              let { width, height } = img;
-              if (width > maxWidth) {
-                height = Math.round((height * maxWidth) / width);
-                width = maxWidth;
-              }
-              canvas.width = width;
-              canvas.height = height;
-
-              // 畫上 Canvas 並匯出壓縮後的 JPEG base64
-              const ctx = canvas.getContext('2d');
-              ctx?.drawImage(img, 0, 0, width, height);
-              const compressedBase64 = canvas.toDataURL('image/jpeg', quality).split(',')[1];
-              resolve(compressedBase64);
-            };
-            img.onerror = (error) => reject(error);
-          };
-        });
-      };
-
-      // 2. 執行壓縮 (無論原圖多大，都會被壓到 800px 以內)
-      const base64Data = await compressImage(file);
-
-      // 3. 送給 Gemini (現在傳輸極快，且不會卡死瀏覽器)
+      // 1. 執行 Canvas 壓縮 (自動限制寬度 800px)
+      const compressedBase64 = await compressImage(file);
+      
+      // 2. 將輕量化後的圖片送給 Gemini
       const result = await sendMessageToGemini(EXTRACT_IMAGE_TRAITS_PROMPT, [{
-        data: base64Data, mimeType: 'image/jpeg' // 統一標示為 jpeg
+        inlineData: { data: compressedBase64, mimeType: 'image/jpeg' }
       }]);
       
+      // 3. 將 AI 解析出的特徵塞入 Visual DNA 框
       setFormData(prev => ({ 
         ...prev, 
         visualDNA: result.replace(/```yaml|```/g, '').trim() 
       }));
     } catch (error) {
       console.error('圖片解析或壓縮失敗:', error);
-      alert('圖片解析失敗，請確保圖片格式正確。');
+      alert('圖片解析失敗，請確保圖片格式正確或稍後再試。');
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -347,9 +349,6 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
       ...data,
       candidates: updatedCandidates
     });
-
-    // Also update global state if needed, but Step4Casting usually manages local 'data' 
-    // and only calls onConfirmCasting at the end.
   };
 
   const handleConfirm = () => {
@@ -360,28 +359,30 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
     }
   };
 
+  // 🚀 優化版：故事主角的圖片上傳與 Canvas 壓縮
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !handleExtractImageTraits) return;
 
     setIsExtracting(true);
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Data = (reader.result as string).split(',')[1];
-        const media: MediaData = {
-          mimeType: file.type,
-          data: base64Data,
-          name: file.name
-        };
-        const traits = await handleExtractImageTraits(media);
-        if (traits) {
-          setCustomProtagonist(traits.replace(/```yaml|```/g, '').trim());
-        }
+      // 1. 執行 Canvas 壓縮
+      const compressedBase64 = await compressImage(file);
+      
+      const media: MediaData = {
+        mimeType: 'image/jpeg',
+        data: compressedBase64,
+        name: file.name
       };
-      reader.readAsDataURL(file);
+      
+      // 2. 將輕量化後的圖片送出
+      const traits = await handleExtractImageTraits(media);
+      if (traits) {
+        setCustomProtagonist(traits.replace(/```yaml|```/g, '').trim());
+      }
     } catch (error) {
       console.error("萃取圖片特徵失敗", error);
+      alert('圖片解析失敗，請確保圖片格式正確或稍後再試。');
     } finally {
       setIsExtracting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
