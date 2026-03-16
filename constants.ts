@@ -764,19 +764,25 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 
 == PART C: 原子語文迴圈 (Atomic Language Loop) ==
 [type: ShapeSimilar] (形近字)
-- lens: "分割畫面/網格"
-- visual_prompt: "Subject: {導師 DNA} presenting comparison. Context: Split items. Composition: Split Screen. Artistic VIS: {風格碼}. Safety: No text."
+- lens: "左右分割對比排版 (Split Screen)"
+- visual_prompt: "Subject: {導師 DNA} pointing at the scene. Context: 必須視覺化呈現這些辨析字『部首』代表的具體意義（例如：手部畫出動作、水部畫出水流的具體情境）. Composition: Split Screen showing clear contrast. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "必須列出各個辨析字的字、注音、部首、造詞，並清楚標示【💡 辨析口訣】與【解析】"
 - guideAction: "對比兩者差異的手勢"
 - guideTalk: "[注音與部首差異的詳細說明，與口訣唸法]"
 
 [type: Polyphonic] (多音字)
-- lens: "對比/天平"
+- lens: "天平對比排版 (Balance/Split Screen)"
+- visual_prompt: "Subject: {導師 DNA} observing. Context: 必須視覺化呈現該多音字『兩個不同讀音所對應的不同造詞情境』(例如：長大 vs 長度). Composition: Split screen showing distinct meanings. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "讀音A (造詞) vs 讀音B (造詞)"
+- guideAction: "展示兩種不同情境的動作"
+- guideTalk: "[說明同一個字在不同語境下的讀音與意義變化]"
 
 [type: IdiomLoop] (成語)
-- lens: "情境演繹"
+- lens: "滿版情境演繹 (Cinematic Full Screen)"
+- visual_prompt: "Subject: {導師 DNA} observing or interacting. Context: 必須完美演繹該成語的『字面意義或背後隱喻的具體情境』(例如：班門弄斧必須畫出在大師門前拿著斧頭的人). Composition: Wide cinematic shot. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "[成語]\\n釋義 | 近反義 | 例句"
+- guideAction: "生動演繹該成語情境的動作"
+- guideTalk: "[用生活化的例子解釋成語的意思]"
 
 [type: Assessment] (綜合評量)
 - lens: "資訊中心"
