@@ -239,22 +239,27 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
       }
   };
 
-  const handleRewriteQuestionClick = async (segmentIdx: number, questionIdx: number) => {
+  const handleRewriteQuestionClick = async (segmentIdx: number, questionIdx: number, type: 'dok' | 'reading' = 'dok') => {
       if (!data) return;
       const segment = data.segments[segmentIdx];
-      const dok = segment.dokQuestions?.[questionIdx];
-      if (!dok) return;
+      const questionObj = type === 'dok' 
+        ? segment.dokQuestions?.[questionIdx] 
+        : segment.readingQuestions?.[questionIdx];
+      
+      if (!questionObj) return;
 
-      const key = `${segmentIdx}-${questionIdx}`;
+      const key = `${type}-${segmentIdx}-${questionIdx}`;
       setRewritingQuestion(key);
       try {
-          const result = await onRewriteQuestion(segment.summary, dok.question);
+          const result = await onRewriteQuestion(segment.summary, questionObj.question);
           if (result) {
               const newData = { ...data };
-              if (newData.segments[segmentIdx].dokQuestions) {
+              if (type === 'dok' && newData.segments[segmentIdx].dokQuestions) {
                   newData.segments[segmentIdx].dokQuestions[questionIdx].question = result;
-                  setData(newData);
+              } else if (type === 'reading' && newData.segments[segmentIdx].readingQuestions) {
+                  newData.segments[segmentIdx].readingQuestions[questionIdx].question = result;
               }
+              setData(newData);
           }
       } catch (error) {
           console.error("Failed to rewrite question", error);
@@ -617,7 +622,7 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                         {item.dokQuestions && item.dokQuestions.length > 0 && (
                                           <div className="mt-4 grid grid-cols-1 gap-3">
                                             {item.dokQuestions.map((dok: any, dIdx: number) => {
-                                              const isRewriting = rewritingQuestion === `${idx}-${dIdx}`;
+                                              const isRewriting = rewritingQuestion === `dok-${idx}-${dIdx}`;
                                               return (
                                               <div key={dIdx} className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 rounded-r-2xl group hover:shadow-md transition-all">
                                                 <div className="flex items-start gap-3">
@@ -633,12 +638,12 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                                         <span className="text-[10px] text-slate-400 font-medium">DOK Level 3-4</span>
                                                       </div>
                                                       <button 
-                                                        onClick={() => handleRewriteQuestionClick(idx, dIdx)}
+                                                        onClick={() => handleRewriteQuestionClick(idx, dIdx, 'dok')}
                                                         disabled={isRewriting || isEditingAny}
-                                                        className={`p-1.5 rounded-lg transition-all ${isRewriting ? 'text-amber-600 bg-amber-50' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100'}`}
-                                                        title="AI 換個更棒的問法"
+                                                        className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${isRewriting ? 'text-amber-600 bg-amber-50' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100'}`}
                                                       >
-                                                        {isRewriting ? <RefreshCw size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                                                        {isRewriting ? <RefreshCw size={12} className="animate-spin" /> : <Wand2 size={12} />}
+                                                        {isRewriting ? '正在換問法...' : 'AI 換問法'}
                                                       </button>
                                                     </div>
                                                     <p className="text-sm font-bold text-slate-800 leading-relaxed">
@@ -731,17 +736,35 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                               <h4 className="text-sm font-bold text-amber-900">閱讀理解提問</h4>
                                             </div>
                                             <ul className="space-y-3">
-                                              {item.readingQuestions.map((q, qIdx) => (
-                                                <li key={qIdx} className="text-sm bg-white p-3 rounded-lg border border-amber-100 shadow-sm">
+                                              {item.readingQuestions.map((q, qIdx) => {
+                                                const isRewriting = rewritingQuestion === `reading-${idx}-${qIdx}`;
+                                                return (
+                                                <li key={qIdx} className="text-sm bg-white p-3 rounded-lg border border-amber-100 shadow-sm group/reading">
                                                   <div className="flex items-start gap-2">
                                                     <span className="font-bold text-amber-600 shrink-0">[{q.type}]</span>
-                                                    <span className="text-slate-900 font-medium">{q.question}</span>
-                                                  </div>
-                                                  <div className="mt-2 ml-10 text-slate-600 italic text-xs">
-                                                    答：{q.answer}
+                                                    <div className="flex-1">
+                                                      <div className="flex items-center justify-between mb-1">
+                                                        <span className="text-slate-900 font-medium">
+                                                          {isRewriting ? (
+                                                            <span className="text-amber-600 animate-pulse">AI 正在重新設計問法...</span>
+                                                          ) : q.question}
+                                                        </span>
+                                                        <button 
+                                                          onClick={() => handleRewriteQuestionClick(idx, qIdx, 'reading')}
+                                                          disabled={isRewriting || isEditingAny}
+                                                          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${isRewriting ? 'text-amber-600 bg-amber-50' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover/reading:opacity-100'}`}
+                                                        >
+                                                          {isRewriting ? <RefreshCw size={12} className="animate-spin" /> : <Wand2 size={12} />}
+                                                          {isRewriting ? '正在換問法...' : 'AI 換問法'}
+                                                        </button>
+                                                      </div>
+                                                      <div className="mt-2 text-slate-600 italic text-xs">
+                                                        答：{q.answer}
+                                                      </div>
+                                                    </div>
                                                   </div>
                                                 </li>
-                                              ))}
+                                              )})}
                                             </ul>
                                           </div>
                                         )}
