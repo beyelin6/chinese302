@@ -124,7 +124,7 @@ const GuideEditModal = ({
       
       // 2. 將輕量化後的圖片送給 Gemini
       const result = await sendMessageToGemini(EXTRACT_IMAGE_TRAITS_PROMPT, [{
-        inlineData: { data: compressedBase64, mimeType: 'image/jpeg' }
+        data: compressedBase64, mimeType: 'image/jpeg'
       }]);
       
       // 3. 將 AI 解析出的特徵塞入 Visual DNA 框

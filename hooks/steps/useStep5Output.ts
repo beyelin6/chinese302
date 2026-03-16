@@ -236,7 +236,7 @@ export const useStep5Output = () => {
         dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: updatedScript } });
       }
 
-      const guide = generateNotebookLMGuide(castingData, vocabulary);
+      const guide = generateNotebookLMGuide(castingData, vocabulary, analysisData, visualData);
       dispatch({ type: 'SET_OUTPUTS', payload: { outputNotebookLMGuide: guide } });
       
       dispatch({ type: 'SET_STEP', payload: AppStep.STEP_6_OUTPUT });
@@ -250,19 +250,47 @@ export const useStep5Output = () => {
     }
   };
 
-  const generateNotebookLMGuide = (castingData: any, vocab: any[]) => {
+  // 🌟 [史詩級升級] 動態注入版指南生成器
+  const generateNotebookLMGuide = (castingData: any, vocab: any[], analysisData: any, visualData: any) => {
     const guide = castingData?.guide || {};
-    const mnemonic = vocab.filter(v => v.isSelected).find(v => v.mnemonic && v.mnemonic !== "無")?.mnemonic || "本課無特定口訣";
     
-    let guideText = PROMPT_GENERATE_NOTEBOOKLM_GUIDE
-      .replace('{Guide_Name}', guide.name || '導師')
-      .replace('{TONE}', guide.persona || '專業');
-      
-    if (guideText.includes('{Mnemonic}')) {
-      guideText = guideText.replace('{Mnemonic}', mnemonic);
-    } else {
-      guideText += `\n\n📌 **V-MAX 系統附加提示**：\n對話中請自然地唸出這份辨析口訣：『${mnemonic}』`;
+    // 1. 萃取基本資訊
+    const grade = analysisData?.basicInfo?.grade || '';
+    const unitName = analysisData?.basicInfo?.unitName || '未命名課文';
+    const today = new Date().toISOString().split('T')[0];
+    const visualStyle = visualData?.style?.name || visualData?.style?.code || '預設風格';
+    const visualMetaphor = visualData?.metaphor?.name || visualData?.metaphor?.label || '預設隱喻';
+
+    // 2. 萃取語音精準打擊焦點 (Audio Focus)
+    const selectedVocabs = vocab.filter(v => v.isSelected).map(v => v.word).join('、');
+    const rhetoricsList = analysisData?.segments
+      ?.flatMap((s: any) => s.rhetorics?.map((r: any) => r.name) || [])
+      .filter(Boolean) || [];
+    const uniqueRhetorics = Array.from(new Set(rhetoricsList)).join('、');
+    
+    let audioFocus = '';
+    if (selectedVocabs) audioFocus += `1. 深入辨析以下生字的部首與形近字口訣：${selectedVocabs}\n`;
+    if (uniqueRhetorics) audioFocus += `2. 探討本課使用的寫作手法與修辭效果：${uniqueRhetorics}\n`;
+    if (!audioFocus) audioFocus = '深入探討本課的段落大意與核心主旨。';
+
+    // 3. 處理導師視覺 DNA (防空值)
+    let guideDNA = guide.visualDNA || "";
+    if (!guideDNA || guideDNA.includes("預設")) {
+      guideDNA = "身穿俐落的現代教學套裝，帶著親切且自信的微笑，常以手勢指示畫面的重點。";
     }
+
+    // 4. 動態替換模板
+    let guideText = PROMPT_GENERATE_NOTEBOOKLM_GUIDE
+      .replace('{KERNEL_VERSION}', "v10.0-DNA-Purity")
+      .replace('{GRADE}', grade)
+      .replace('{UNIT_NAME}', unitName)
+      .replace('{GUIDE_NAME}', guide.name || '導師')
+      .replace('{GUIDE_PERSONA}', guide.persona || '專業')
+      .replace('{VISUAL_STYLE}', visualStyle)
+      .replace('{VISUAL_METAPHOR}', visualMetaphor)
+      .replace('{DATE}', today)
+      .replace(/{GUIDE_DNA}/g, guideDNA) // 使用正則替換多個出現的地方
+      .replace('{AUDIO_FOCUS}', audioFocus);
 
     return guideText;
   };
