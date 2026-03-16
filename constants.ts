@@ -524,12 +524,16 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 
 ### 📤 輸出規範 (Strict JSON)
 ⚠️ 警告：下方 JSON 僅為「格式範例」，請務必根據【當前實際課文】進行提取與腦力激盪，【絕對禁止】輸出「魯班」等無關內容！
+
+💡 【主角提取邏輯防呆 (CRITICAL)】：
+如果課文是「人類觀察動物/大自然而得到啟發」的故事（例如：工程師觀察田鼠），【故事主角 protagonist】必須是那位「面臨困難並解決問題的人類（如：工程師皮爾森）」，絕對不可以把被觀察的動物或死物當成主角！
+
 {
   "mode": "Drama Mode" | "Guide Mode",
   "protagonist": {
-    "name": "從當前文本中提取的核心人物名稱 (如無具體主角請填 None)",
-    "description": "性格與背景描述 (例如: 勇敢的探險家)",
-    "visualDNA": "Age: [年齡] | Hair: [髮型] | Clothing: [服裝] (請符合該課文的時代與背景設定)",
+    "name": "從當前文本中提取的『推動劇情核心人物』名稱 (注意：請抓取真正面臨挑戰的主人翁，如皮爾森。如無具體主角請填 None)",
+    "description": "性格與背景描述 (例如: 面臨沼澤挑戰的英國工程師)",
+    "visualDNA": "Age: [明確年齡數字] | Hair: [髮型] | Clothing: [服裝] (請符合該課文的時代與背景設定)",
     "isNone": false
   },
   "candidates": [
@@ -537,8 +541,8 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
       "id": "C1",
       "name": "為本課量身設計的導師名",
       "persona": "語氣晶片 (G1-G6)",
-      "description": "他在本課的角色定位 (例如: 森林裡的植物學家)",
-      "visualDNA": "Age: [年齡] | [配件與服裝] (請設計契合本課主題的外觀)"
+      "description": "他在本課的角色定位 (例如: 穿越時空的歷史觀察家)",
+      "visualDNA": "Age: [明確年齡數字] | [配件與服裝] (請設計契合本課主題的外觀)"
     },
     { "id": "C2", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." },
     { "id": "C3", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." }

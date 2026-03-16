@@ -250,10 +250,10 @@ export const useStep5Output = () => {
     }
   };
 
-  // 🌟 [史詩級升級] 動態注入版指南生成器
+  // 🌟 [史詩級升級] 動態注入版指南生成器 (包含智能分批目錄)
   const generateNotebookLMGuide = (castingData: any, vocab: any[], analysisData: any, visualData: any, slides: any[]) => {
     const guide = castingData?.guide || {};
-    
+
     // 1. 萃取基本資訊
     const grade = analysisData?.basicInfo?.grade || '';
     const unitName = analysisData?.basicInfo?.unitName || '未命名課文';
@@ -265,37 +265,52 @@ export const useStep5Output = () => {
     const selectedVocabs = vocab.filter(v => v.isSelected).map(v => v.word).join('、');
     const rhetoricsList = analysisData?.segments
       ?.flatMap((s: any) => s.rhetorics?.map((r: any) => r.name) || [])
-      .filter(Boolean) || [];
+      .filter((name: any) => name) || [];
     const uniqueRhetorics = Array.from(new Set(rhetoricsList)).join('、');
-    
+
     let audioFocus = '';
     if (selectedVocabs) audioFocus += `1. 深入辨析以下生字的部首與形近字口訣：${selectedVocabs}\n`;
     if (uniqueRhetorics) audioFocus += `2. 探討本課使用的寫作手法與修辭效果：${uniqueRhetorics}\n`;
     if (!audioFocus) audioFocus = '深入探討本課的段落大意與核心主旨。';
 
-    // 3. 處理導師視覺 DNA (防空值)
+    // 3. 處理導師視覺 DNA
     let guideDNA = guide.visualDNA || "";
     if (!guideDNA || guideDNA.includes("預設")) {
       guideDNA = "身穿俐落的現代教學套裝，帶著親切且自信的微笑，常以手勢指示畫面的重點。";
     }
 
-    // 4. 🌟 [新增] 智能分批目錄生成器 (Batching Directory Generator)
-    const totalSlides = slides.length;
-    const chunkSize = 5;
-    let batchingDirectory = "";
-    const batchNames = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
-    
-    for (let i = 0; i < totalSlides; i += chunkSize) {
-      const start = i + 1;
-      const end = Math.min(i + chunkSize, totalSlides);
-      const batchIdx = Math.floor(i / chunkSize);
-      const batchName = batchNames[batchIdx] || (batchIdx + 1).toString();
-      batchingDirectory += `第${batchName}批：第 ${start}-${end} 頁\n`;
-    }
-    if (!batchingDirectory) batchingDirectory = "第1批：第 1 頁起";
+    // 🌟 4. [神級優化] 動態分批目錄生成 (Dynamic Batching Directory)
+    let batchingDirectory = '';
+    const batches: Record<string, { title: string, pages: string[] }> = {
+      'PART A': { title: '第一批｜導航與結構', pages: [] },
+      'PART B': { title: '第二批｜課文深究迴圈', pages: [] },
+      'PART C': { title: '第三批｜語文百寶箱 (生字/成語)', pages: [] },
+      'PART D': { title: '第四批｜策略活動', pages: [] },
+      'PART E': { title: '第五批｜評量與結尾', pages: [] }
+    };
+
+    // 將投影片自動分類到對應的批次
+    slides.forEach(slide => {
+      const partLabel = slide.part_label || 'PART A';
+      if (batches[partLabel]) {
+        batches[partLabel].pages.push(`  P${slide.page_number} ${slide.title}`);
+      } else {
+        batches['PART D'].pages.push(`  P${slide.page_number} ${slide.title}`);
+      }
+    });
+
+    // 組裝精美的目錄字串
+    Object.values(batches).forEach(batch => {
+      if (batch.pages.length > 0) {
+        const firstP = batch.pages[0].match(/P(\d+)/)?.[1] || "";
+        const lastP = batch.pages[batch.pages.length - 1].match(/P(\d+)/)?.[1] || "";
+        batchingDirectory += `\n【${batch.title}】 (建議複製指令：請接續產出 P${firstP} 到 P${lastP} 的投影片)\n`;
+        batchingDirectory += batch.pages.join('\n') + '\n';
+      }
+    });
 
     // 5. 動態替換模板
-    let guideText = PROMPT_GENERATE_NOTEBOOKLM_GUIDE
+    return PROMPT_GENERATE_NOTEBOOKLM_GUIDE
       .replace('{KERNEL_VERSION}', "v10.0-DNA-Purity")
       .replace('{GRADE}', grade)
       .replace('{UNIT_NAME}', unitName)
@@ -304,11 +319,9 @@ export const useStep5Output = () => {
       .replace('{VISUAL_STYLE}', visualStyle)
       .replace('{VISUAL_METAPHOR}', visualMetaphor)
       .replace('{DATE}', today)
-      .replace(/{GUIDE_DNA}/g, guideDNA) // 使用正則替換多個出現的地方
+      .replace(/{GUIDE_DNA}/g, guideDNA)
       .replace('{AUDIO_FOCUS}', audioFocus)
       .replace('{BATCHING_DIRECTORY}', batchingDirectory);
-
-    return guideText;
   };
 
   const handleManualModule = async (moduleKey: string) => {
