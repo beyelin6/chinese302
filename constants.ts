@@ -766,42 +766,47 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 
 == PART C: 原子語文迴圈 (Atomic Language Loop) ==
 [type: ShapeSimilar] (形近字)
-- lens: "⚠️ 動態判斷：若為2字請填『左右分割對比大字 (2-Way Split, Large Text)』；若為3字請填『三格並列大字 (3-Way Split, Large Text)』；若為4字請填『四宮格大字 (4-Way Grid, Large Text)』"
-- visual_prompt: "Subject: {導師 DNA} pointing at the scene. Context: 必須分別視覺化呈現【每一個】辨析字『部首』代表的具體意義（例如：手部畫動作、水部畫水流）. Composition: Dynamic Split screen matching the number of characters. Artistic VIS: {風格碼}. Safety: No text."
+- lens: "[Layout: Split-Screen] (動態切分：依據辨析字數量自動分割為 2格/3格/4格)"
+- visual_prompt: "Subject: None (🚨禁止引導者出現). Context: 【視覺語意化】必須為每個字格畫出對應『部首』的真實情境（例如：手部畫動作、水部畫水流）。要求：學生不看文字，光看插圖就能猜出部首含意。 Composition: Split screen. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "必須列出各個辨析字的字、注音、部首、造詞，並清楚標示【💡 辨析口訣】與【解析】"
-- guideAction: "引導學生觀察各個字體差異的手勢"
+- guideAction: "引導學生觀察各個字體差異的語氣動作 (不印出)"
 - guideTalk: "[注音與部首差異的詳細說明，與口訣唸法]"
 
 [type: Polyphonic] (多音字)
-- lens: "⚠️ 動態判斷：若為2音請填『天平對比大字 (Balance Screen, Large Text)』；若為3音請填『三格並列大字 (3-Way Split, Large Text)』"
-- visual_prompt: "Subject: {導師 DNA} observing. Context: 必須分別視覺化呈現該多音字『每一個不同讀音所對應的造詞情境』. Composition: Dynamic Split screen matching the number of pronunciations. Artistic VIS: {風格碼}. Safety: No text."
+- lens: "[Layout: Balance-Screen] (動態對稱：依據讀音數量分割)"
+- visual_prompt: "Subject: None (🚨禁止引導者出現). Context: 【視覺語意化】必須分別畫出該字『不同讀音所對應的真實造詞情境』。要求：對比強烈，一目了然。 Composition: Split screen matching pronunciations. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "讀音A (造詞) vs 讀音B (造詞)...依此類推"
-- guideAction: "展示不同情境變化的動作"
+- guideAction: "展示不同情境變化的語氣動作 (不印出)"
 - guideTalk: "[說明同一個字在不同語境下的讀音與意義變化]"
 
 [type: IdiomLoop] (成語)
-- lens: "單一滿版大圖配大字 (Single Full Image, Huge Text Overlay)"
-- visual_prompt: "Subject: {導師 DNA} observing or interacting. Context: 必須完美演繹該成語的『字面意義或背後隱喻的具體情境』. Composition: Wide cinematic single shot. Artistic VIS: {風格碼}. Safety: No text."
+- lens: "[Layout: Scene-Overlay] (單一張滿版大圖，搭配巨大清晰文字浮層)"
+- visual_prompt: "Subject: None (🚨禁止引導者出現，讓插圖自己說話). Context: 【視覺語意化】必須完美演繹該成語的『完整故事情境（包含人物、動作、情緒）』。要求：學生不看文字，只看圖就能感受成語的意義. Composition: Wide cinematic single shot. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "[成語]\\n釋義 | 近反義 | 例句"
-- guideAction: "生動演繹該成語情境的動作"
+- guideAction: "生動演繹該成語情境的語氣動作 (不印出)"
 - guideTalk: "[用生活化的例子解釋成語的意思]"
 
 [type: Assessment] (綜合評量)
-- lens: "單圖資訊板 (Single Info Board)"
+- lens: "[Layout: Info-Board] (單圖資訊板)"
+- visual_prompt: "Subject: {導師 DNA}. Context: 站在巨大的全息投影黑板或羊皮紙旁，準備揭曉答案。 Composition: Medium shot. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "【測驗題型】：{題型}\\n❓ 題目：{題目}\\n🔘 (A) {選項}\\n🔘 (B) {選項}\\n🔘 (C) {選項}\\n🔘 (D) {選項}"
-- guideAction: "鼓勵學生作答的動作"
+- guideAction: "鼓勵學生作答的動作 (不印出)"
 - guideTalk: "孩子們，準備好要公佈答案了嗎？..."
 
 == PART D: 策略與活動 (Strategy & Activity) ==
 [type: LanguageActivity] (語文活動)
-- lens: "單圖大字互動舞台 (Single Image, Large Text)"
-- visual_prompt: "Subject: {導師 DNA} leading an activity. Context: Classroom interaction. Composition: Wide shot. Artistic VIS: {風格碼}. Safety: No text."
+- lens: "[Layout: Dynamic-Stage] (依活動性質變換：若為對話請用 Speech-Stage，若為流程請用 Step-Flow，若為描述請用 Phrase-Demo)"
+- visual_prompt: "Subject: {導師 DNA} leading the activity. Context: 視覺化該活動的核心學習動作（例如：拿著麥克風、搬動積木、指著連結線）。要求：插圖必須傳達出該活動的互動感。 Composition: Wide shot. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "【活動名稱】：{活動標題}\\n{活動內容}"
+- guideAction: "主持活動的互動手勢 (不印出)"
+- guideTalk: "[帶領學生進行活動的台詞]"
 
 [type: Strategy] (教學策略)
-- lens: "單圖大字百寶箱 (Single Box Focus, Large Text)"
-- visual_prompt: "Subject: A magical treasure box opening. Context: Glowing wisdom. Composition: Close-up. Artistic VIS: {風格碼}. Safety: No text."
+- lens: "[Layout: Treasure-Box] (單圖大字百寶箱)"
+- visual_prompt: "Subject: {導師 DNA} opening a magical treasure box. Context: 發出智慧的光芒，展示策略核心。 Composition: Close-up. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "【教學策略】：{策略標題}"
+- guideAction: "展示魔法寶物的動作 (不印出)"
+- guideTalk: "[引導學生使用該策略的台詞]"
 
 == PART E: 結尾 (Ending) ==
 [type: Ending] (結尾道別)
