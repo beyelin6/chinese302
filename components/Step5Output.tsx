@@ -150,37 +150,43 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-slate-900 text-slate-200 overflow-hidden">
+    <div className="flex flex-col h-screen bg-slate-50 text-slate-800 overflow-hidden animate-fade-in">
       
-      {/* 頂部控制列 */}
-      <div className="h-16 border-b border-slate-700 bg-slate-800 flex items-center justify-between px-6 flex-shrink-0 z-10 shadow-lg">
+      {/* 🌟 頂部導覽列 (Header)：純白底色 + 底部輕微陰影 */}
+      <div className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 flex-shrink-0 z-10 shadow-sm">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+          <button onClick={onBack} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors">
             <ArrowLeft size={20} />
           </button>
           <div className="flex flex-col">
-            <h2 className="font-black text-lg tracking-tight flex items-center gap-2">
-              <Sparkles className="text-indigo-400" size={18} />
+            <h2 className="font-black text-lg tracking-tight flex items-center gap-2 text-slate-800">
+              <Sparkles className="text-indigo-600" size={18} />
               V-MAX UNIFIED TERMINAL
             </h2>
-            <div className="text-[10px] text-slate-500 font-mono">
+            <div className="text-[10px] font-bold tracking-widest text-indigo-400 uppercase font-mono">
               MODE: {activeTab === 'script' ? 'ENGINE_YAML_ACTIVE' : 'DOCUMENT_PREVIEW'}
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {modules.map(mod => (
-            <button
-              key={mod.id}
-              onClick={() => { setActiveTab(mod.id); if(!mod.data) mod.action(); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeTab === mod.id ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
-            >
-              <mod.icon size={14} /> {mod.title}
-            </button>
-          ))}
-          <div className="w-px h-6 bg-slate-700 mx-2" />
-          <button onClick={handleDownload} className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
+          <div className="flex bg-slate-100 p-1 rounded-xl mr-2">
+            {modules.map(mod => (
+              <button
+                key={mod.id}
+                onClick={() => { setActiveTab(mod.id); if(!mod.data) mod.action(); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                  activeTab === mod.id 
+                    ? 'bg-white text-indigo-700 shadow-sm' 
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                <mod.icon size={14} /> {mod.title}
+              </button>
+            ))}
+          </div>
+          <div className="w-px h-6 bg-slate-200 mx-2" />
+          <button onClick={handleDownload} className="bg-teal-600 hover:bg-teal-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-colors flex items-center gap-2">
             <Download size={14} /> 匯出
           </button>
         </div>
@@ -188,71 +194,75 @@ const Step5Output: React.FC<Step5OutputProps> = ({
 
       <div className="flex-1 flex overflow-hidden">
         
-        {/* 左側：編輯區 */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-950/30">
+        {/* 左側：編輯區 (明亮版卡片設計) */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50">
           <div className="max-w-3xl mx-auto space-y-6 pb-20">
             {activeTab === 'script' ? (
               editableSlides.length > 0 ? (
                 editableSlides.map((slide, idx) => (
-                  <div key={idx} className="bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden focus-within:border-indigo-500/50 transition-all">
-                    <div className="bg-slate-800/80 px-4 py-2 border-b border-slate-700 text-[10px] font-mono text-slate-500 flex justify-between items-center">
+                  <div key={idx} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden focus-within:border-indigo-300 transition-all">
+                    <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 text-xs font-mono text-slate-500 flex justify-between items-center">
                       <span>UNIT_SLIDE_{idx + 1} // {slide.type}</span>
-                      <span className="flex items-center gap-1 text-emerald-500"><Check size={10}/> DNA_SYNCED</span>
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
+                        <Check size={12}/> DNA_SYNCED
+                      </span>
                     </div>
-                    <div className="p-4 space-y-3">
+                    <div className="p-5 space-y-4">
                       <div className="flex gap-2">
-                         <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/30">鏡頭: {slide.lens || "中景"}</span>
+                         <span className="inline-block text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-1 rounded-md">鏡頭: {slide.lens || "中景"}</span>
                       </div>
                       <textarea 
                         value={slide.displayText} 
                         onChange={(e) => updateSlide(idx, 'displayText', e.target.value)}
-                        className="w-full bg-slate-900/80 border border-slate-700 rounded-lg p-3 text-sm font-bold text-white focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
+                        className="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm font-bold text-slate-800 focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
                         placeholder="投影片顯示文字 (100% 原文鎖定)..."
                         rows={2}
                       />
-                      <textarea 
-                        value={slide.guideTalk} 
-                        onChange={(e) => updateSlide(idx, 'guideTalk', e.target.value)}
-                        className="w-full bg-slate-900/40 border border-slate-700 rounded-lg p-3 text-xs text-slate-400 italic focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
-                        placeholder="導師引導語腳本..."
-                        rows={2}
-                      />
-                      <div className="text-[9px] text-slate-600 font-mono break-all line-clamp-1 hover:line-clamp-none transition-all">
+                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                        <textarea 
+                          value={slide.guideTalk} 
+                          onChange={(e) => updateSlide(idx, 'guideTalk', e.target.value)}
+                          className="w-full bg-transparent border-none p-0 text-sm text-slate-700 leading-relaxed font-medium focus:ring-0 outline-none resize-none italic"
+                          placeholder="導師引導語腳本..."
+                          rows={2}
+                        />
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-400 break-all line-clamp-1 hover:line-clamp-none transition-all">
                         IMAGE_PROMPT: {slide.visual_prompt}
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-600">
+                <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                   <Loader2 size={40} className="animate-spin mb-4 text-indigo-500" />
                   <p className="font-bold text-sm tracking-widest uppercase">Executing Digital Twin Protocol...</p>
                 </div>
               )
             ) : (
-              <div className="bg-slate-800/20 rounded-2xl p-8 border border-slate-800 prose prose-invert max-w-none shadow-inner">
+              <div className="bg-white rounded-2xl p-8 border border-slate-200 prose prose-slate max-w-none shadow-sm">
                 <ReactMarkdown>{syncRawCode}</ReactMarkdown>
               </div>
             )}
           </div>
         </div>
 
-        {/* 右側：即時碼 (即時包含完整的四大核心記錄細節) */}
-        <div className="w-[480px] border-l border-slate-700 bg-slate-900 flex flex-col">
-          <div className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
-            <span className="text-[10px] font-black text-indigo-400 flex items-center gap-2 tracking-widest uppercase">
-              <Code size={12} /> {activeTab === 'script' ? 'Unified JSON Engine' : 'Raw Documentation'}
+        {/* 右側：即時碼 (明亮版 GitHub Light 風格) */}
+        <div className="w-[480px] border-l border-slate-200 bg-slate-50 flex flex-col">
+          <div className="px-4 py-3 bg-white border-b border-slate-200 flex justify-between items-center">
+            <span className="text-xs font-bold text-slate-500 font-mono flex items-center gap-2 tracking-widest uppercase">
+              <Code size={14} /> {activeTab === 'script' ? 'Unified JSON Engine' : 'Raw Documentation'}
             </span>
-            <button onClick={() => { navigator.clipboard.writeText(syncRawCode); setIsCopied(true); setTimeout(()=>setIsCopied(false), 2000); }} className="text-slate-400 hover:text-white">
-              {isCopied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+            <button onClick={() => { navigator.clipboard.writeText(syncRawCode); setIsCopied(true); setTimeout(()=>setIsCopied(false), 2000); }} className="text-slate-400 hover:text-indigo-600 transition-colors">
+              {isCopied ? <Check size={16} className="text-emerald-600" /> : <Copy size={16} />}
             </button>
           </div>
-          <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto custom-scrollbar bg-black/20">
-            <pre className="text-emerald-500/70 whitespace-pre-wrap leading-relaxed">
+          <div className="flex-1 p-4 font-mono text-xs leading-relaxed text-slate-700 overflow-y-auto custom-scrollbar bg-[#f8fafc]">
+            <pre className="whitespace-pre-wrap break-words">
               <code>{syncRawCode}</code>
             </pre>
           </div>
-          <div className="p-3 bg-indigo-600/10 border-t border-slate-700 text-[9px] text-indigo-400/60 font-mono">
+          <div className="p-3 bg-indigo-50 border-t border-slate-200 text-[9px] text-indigo-400 font-bold font-mono">
             VMAX_PROTOCOL: {activeTab === 'script' ? 'SYNCED_WITH_DNA_ANCHOR' : 'READY_TO_COPY'}
           </div>
         </div>

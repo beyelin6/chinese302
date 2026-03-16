@@ -658,7 +658,9 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
    投影片畫面上的文字，必須 100% 一字不漏地複製 displayText 欄位。
    禁止自行刪減、潤飾或翻譯。禁止加入英文標籤。
 
-3. 【講者備忘錄｜僅放台詞】
+3. 🚨排版與字體 (Layout Layout)：特別是【成語】與【形近字】頁面，請強制使用「單一張大圖」搭配「巨大清晰字體」的排版。絕對禁止使用多圖拼貼 (Collage) 或網格導致字體縮小。
+
+4. 【講者備忘錄｜僅放台詞】
    請將 guideTalk 完整放入講者備忘錄，guideAction (動作提示) 僅供畫面生成參考，絕對不可印成文字。
 
 ───────────────────────────────────────────────────────────────
@@ -764,40 +766,40 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 
 == PART C: 原子語文迴圈 (Atomic Language Loop) ==
 [type: ShapeSimilar] (形近字)
-- lens: "左右分割對比排版 (Split Screen)"
+- lens: "左右分割對比大字排版 (Split Screen, Large Text)"
 - visual_prompt: "Subject: {導師 DNA} pointing at the scene. Context: 必須視覺化呈現這些辨析字『部首』代表的具體意義（例如：手部畫出動作、水部畫出水流的具體情境）. Composition: Split Screen showing clear contrast. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "必須列出各個辨析字的字、注音、部首、造詞，並清楚標示【💡 辨析口訣】與【解析】"
 - guideAction: "對比兩者差異的手勢"
 - guideTalk: "[注音與部首差異的詳細說明，與口訣唸法]"
 
 [type: Polyphonic] (多音字)
-- lens: "天平對比排版 (Balance/Split Screen)"
-- visual_prompt: "Subject: {導師 DNA} observing. Context: 必須視覺化呈現該多音字『兩個不同讀音所對應的不同造詞情境』(例如：長大 vs 長度). Composition: Split screen showing distinct meanings. Artistic VIS: {風格碼}. Safety: No text."
+- lens: "天平對比大字排版 (Balance Screen, Large Text)"
+- visual_prompt: "Subject: {導師 DNA} observing. Context: 必須視覺化呈現該多音字『兩個不同讀音所對應的不同造詞情境』. Composition: Split screen showing distinct meanings. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "讀音A (造詞) vs 讀音B (造詞)"
 - guideAction: "展示兩種不同情境的動作"
 - guideTalk: "[說明同一個字在不同語境下的讀音與意義變化]"
 
 [type: IdiomLoop] (成語)
-- lens: "滿版情境演繹 (Cinematic Full Screen)"
-- visual_prompt: "Subject: {導師 DNA} observing or interacting. Context: 必須完美演繹該成語的『字面意義或背後隱喻的具體情境』(例如：班門弄斧必須畫出在大師門前拿著斧頭的人). Composition: Wide cinematic shot. Artistic VIS: {風格碼}. Safety: No text."
+- lens: "單一滿版大圖配大字 (Single Full Image, Huge Text Overlay)"
+- visual_prompt: "Subject: {導師 DNA} observing or interacting. Context: 必須完美演繹該成語的『字面意義或背後隱喻的具體情境』. Composition: Wide cinematic single shot. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "[成語]\\n釋義 | 近反義 | 例句"
 - guideAction: "生動演繹該成語情境的動作"
 - guideTalk: "[用生活化的例子解釋成語的意思]"
 
 [type: Assessment] (綜合評量)
-- lens: "資訊中心"
+- lens: "單圖資訊板 (Single Info Board)"
 - displayText: "【測驗題型】：{題型}\\n❓ 題目：{題目}\\n🔘 (A) {選項}\\n🔘 (B) {選項}\\n🔘 (C) {選項}\\n🔘 (D) {選項}"
 - guideAction: "鼓勵學生作答的動作"
 - guideTalk: "孩子們，準備好要公佈答案了嗎？..."
 
 == PART D: 策略與活動 (Strategy & Activity) ==
 [type: LanguageActivity] (語文活動)
-- lens: "互動舞台"
+- lens: "單圖大字互動舞台 (Single Image, Large Text)"
 - visual_prompt: "Subject: {導師 DNA} leading an activity. Context: Classroom interaction. Composition: Wide shot. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "【活動名稱】：{活動標題}\\n{活動內容}"
 
 [type: Strategy] (教學策略)
-- lens: "百寶箱"
+- lens: "單圖大字百寶箱 (Single Box Focus, Large Text)"
 - visual_prompt: "Subject: A magical treasure box opening. Context: Glowing wisdom. Composition: Close-up. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "【教學策略】：{策略標題}"
 
