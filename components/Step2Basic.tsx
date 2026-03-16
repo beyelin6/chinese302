@@ -1,12 +1,98 @@
 // 檔案路徑: src/components/Step2Basic.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { 
   BookOpen, Check, X, ArrowRight, ArrowLeft, 
   PenTool, CheckSquare, Square, Type, Layers, 
   Hash, Info, Sparkles, MessageSquare, Tag 
 } from 'lucide-react';
 import { AnalysisData, VocabularyItem } from '../types';
+
+// --------------------------------------------------------
+// 🛡️ 步驟一：將單一「卡片」抽成獨立元件，並用 React.memo 包覆
+// 這樣只要這個字 (item) 的資料沒變，React 就絕對不會重畫它！
+// --------------------------------------------------------
+const VocabCard = memo(({ 
+  item, 
+  onToggleFocus,
+  onUpdateOption
+}: { 
+  item: VocabularyItem; 
+  onToggleFocus: (word: string) => void;
+  onUpdateOption: (word: string, key: 'wantsWritingTips' | 'wantsShapeSimilar' | 'wantsPolyphonic') => void;
+}) => {
+  return (
+    <div 
+      className={`group p-1 rounded-[2rem] border-2 transition-all duration-300 ${
+        item.isFocused ? 'border-teal-500 bg-teal-50/30 shadow-xl scale-[1.02]' : 'border-slate-100 bg-white hover:border-slate-200'
+      }`}
+    >
+      <div onClick={() => onToggleFocus(item.word)} className="flex items-center gap-4 p-5 cursor-pointer relative">
+        {/* 🌟 認讀字標籤：即使是認讀字，勾選後 AI 也會抓取形近/多音數據 */}
+        {item.type?.includes("認讀") && (
+          <span className="absolute top-3 right-3 text-[9px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-black border border-amber-200 flex items-center gap-1 shadow-sm">
+            <Tag size={10} /> 認讀
+          </span>
+        )}
+        
+        <div className={item.isFocused ? 'text-teal-600' : 'text-slate-300'}>
+          {item.isFocused ? <CheckSquare size={26} className="fill-teal-50" /> : <Square size={26} />}
+        </div>
+        <div className="flex-1">
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black text-slate-800 tracking-tighter">{item.word}</span>
+            <span className="text-xs font-bold text-slate-400">{item.radical}部 / {item.zhuyin}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 🌟 展開配置：處理「不教寫法，只教形近」的關鍵區域 */}
+      {item.isFocused && (
+        <div className="px-5 pb-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          
+          {/* 字形說明框：根據 wantsWritingTips 開關連動顯示/隱藏 */}
+          {item.wantsWritingTips && (
+            <div className="p-3.5 bg-white rounded-2xl border border-teal-100 text-xs font-bold text-slate-600 flex items-start gap-3 shadow-inner">
+              <div className="p-1 bg-teal-50 rounded-lg text-teal-600 mt-0.5"><PenTool size={14} /></div>
+              <div className="flex-1">
+                <span className="text-teal-700 font-black block mb-0.5 text-[10px] uppercase">寫法提醒：</span>
+                <p className="leading-relaxed opacity-80">{item.writingTips}</p>
+              </div>
+            </div>
+          )}
+
+          {/* 教學意圖三色按鈕 */}
+          <div className="flex gap-2">
+            <button 
+              onClick={(e) => { e.stopPropagation(); onUpdateOption(item.word, 'wantsWritingTips'); }}
+              className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-2xl text-[10px] font-black border-2 transition-all duration-200 ${
+                item.wantsWritingTips ? 'bg-teal-600 border-teal-600 text-white shadow-md' : 'bg-slate-50 border-slate-100 text-slate-400'
+              }`}
+            >
+              <PenTool size={16} /> 教字形
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onUpdateOption(item.word, 'wantsShapeSimilar'); }}
+              className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-2xl text-[10px] font-black border-2 transition-all duration-200 ${
+                item.wantsShapeSimilar ? 'bg-orange-500 border-orange-500 text-white shadow-md' : 'bg-slate-50 border-slate-100 text-slate-400'
+              }`}
+            >
+              <Layers size={16} /> 教形近
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onUpdateOption(item.word, 'wantsPolyphonic'); }}
+              className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-2xl text-[10px] font-black border-2 transition-all duration-200 ${
+                item.wantsPolyphonic ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-slate-50 border-slate-100 text-slate-400'
+              }`}
+            >
+              <Hash size={16} /> 教多音
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
 
 interface Step2BasicProps {
   analysis: string | null; 
@@ -49,20 +135,30 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
     }
   }, [analysis]);
 
-  const toggleFocus = (idx: number) => {
-    if (!data) return;
-    const newList = [...data.coreVocabulary];
-    newList[idx].isFocused = !newList[idx].isFocused;
-    setData({ ...data, coreVocabulary: newList });
-  };
+  // 🌟 使用 useCallback 確保這個函數的記憶體位置不會每次都改變
+  const toggleFocus = useCallback((word: string) => {
+    setData(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        coreVocabulary: prev.coreVocabulary.map(v => 
+          v.word === word ? { ...v, isFocused: !v.isFocused } : v
+        )
+      };
+    });
+  }, []);
 
-  const updateOption = (e: React.MouseEvent, idx: number, key: 'wantsWritingTips' | 'wantsShapeSimilar' | 'wantsPolyphonic') => {
-    e.stopPropagation();
-    if (!data) return;
-    const newList = [...data.coreVocabulary];
-    newList[idx][key] = !newList[idx][key];
-    setData({ ...data, coreVocabulary: newList });
-  };
+  const updateOption = useCallback((word: string, key: 'wantsWritingTips' | 'wantsShapeSimilar' | 'wantsPolyphonic') => {
+    setData(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        coreVocabulary: prev.coreVocabulary.map(v => 
+          v.word === word ? { ...v, [key]: !v[key] } : v
+        )
+      };
+    });
+  }, []);
 
   if (!data) return null;
 
@@ -105,77 +201,13 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.coreVocabulary.map((item, idx) => (
-            <div 
-              key={idx}
-              className={`group p-1 rounded-[2rem] border-2 transition-all duration-300 ${
-                item.isFocused ? 'border-teal-500 bg-teal-50/30 shadow-xl scale-[1.02]' : 'border-slate-100 bg-white hover:border-slate-200'
-              }`}
-            >
-              <div onClick={() => toggleFocus(idx)} className="flex items-center gap-4 p-5 cursor-pointer relative">
-                {/* 🌟 認讀字標籤：即使是認讀字，勾選後 AI 也會抓取形近/多音數據 */}
-                {item.type?.includes("認讀") && (
-                  <span className="absolute top-3 right-3 text-[9px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-black border border-amber-200 flex items-center gap-1 shadow-sm">
-                    <Tag size={10} /> 認讀
-                  </span>
-                )}
-                
-                <div className={item.isFocused ? 'text-teal-600' : 'text-slate-300'}>
-                  {item.isFocused ? <CheckSquare size={26} className="fill-teal-50" /> : <Square size={26} />}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-black text-slate-800 tracking-tighter">{item.word}</span>
-                    <span className="text-xs font-bold text-slate-400">{item.radical}部 / {item.zhuyin}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 🌟 展開配置：處理「不教寫法，只教形近」的關鍵區域 */}
-              {item.isFocused && (
-                <div className="px-5 pb-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                  
-                  {/* 字形說明框：根據 wantsWritingTips 開關連動顯示/隱藏 */}
-                  {item.wantsWritingTips && (
-                    <div className="p-3.5 bg-white rounded-2xl border border-teal-100 text-xs font-bold text-slate-600 flex items-start gap-3 shadow-inner">
-                      <div className="p-1 bg-teal-50 rounded-lg text-teal-600 mt-0.5"><PenTool size={14} /></div>
-                      <div className="flex-1">
-                        <span className="text-teal-700 font-black block mb-0.5 text-[10px] uppercase">寫法提醒：</span>
-                        <p className="leading-relaxed opacity-80">{item.writingTips}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 教學意圖三色按鈕 */}
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={(e) => updateOption(e, idx, 'wantsWritingTips')}
-                      className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-2xl text-[10px] font-black border-2 transition-all duration-200 ${
-                        item.wantsWritingTips ? 'bg-teal-600 border-teal-600 text-white shadow-md' : 'bg-slate-50 border-slate-100 text-slate-400'
-                      }`}
-                    >
-                      <PenTool size={16} /> 教字形
-                    </button>
-                    <button 
-                      onClick={(e) => updateOption(e, idx, 'wantsShapeSimilar')}
-                      className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-2xl text-[10px] font-black border-2 transition-all duration-200 ${
-                        item.wantsShapeSimilar ? 'bg-orange-500 border-orange-500 text-white shadow-md' : 'bg-slate-50 border-slate-100 text-slate-400'
-                      }`}
-                    >
-                      <Layers size={16} /> 教形近
-                    </button>
-                    <button 
-                      onClick={(e) => updateOption(e, idx, 'wantsPolyphonic')}
-                      className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-2xl text-[10px] font-black border-2 transition-all duration-200 ${
-                        item.wantsPolyphonic ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-slate-50 border-slate-100 text-slate-400'
-                      }`}
-                    >
-                      <Hash size={16} /> 教多音
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+          {data.coreVocabulary.map((item) => (
+            <VocabCard 
+              key={item.word}
+              item={item}
+              onToggleFocus={toggleFocus}
+              onUpdateOption={updateOption}
+            />
           ))}
         </div>
       </section>

@@ -3,10 +3,259 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   User, Users, Check, AlertCircle, Play, 
-  Info, Edit2, X, ArrowLeft, Sparkles, ImagePlus, Loader2 
+  Info, Edit2, X, ArrowLeft, Sparkles, ImagePlus, Loader2,
+  CheckCircle, Wand2, Upload, Image as ImageIcon
 } from 'lucide-react';
 import { CastingData, GuideCandidate, MediaData } from '../types';
 import ReactMarkdown from 'react-markdown';
+import { useWorkflowContext } from '../context/WorkflowContext';
+import { sendMessageToGemini } from '../services/gemini';
+import { EXTRACT_IMAGE_TRAITS_PROMPT } from '../constants';
+
+// 🌟 獨立的引導者編輯彈窗元件
+const GuideEditModal = ({ 
+  isOpen, 
+  onClose, 
+  initialData, 
+  onSave 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  initialData: any; 
+  onSave: (updatedData: any) => void; 
+}) => {
+  const [formData, setFormData] = useState({
+    name: initialData?.name || '',
+    role: initialData?.description || '',
+    gender: initialData?.gender || '未指定',
+    age: initialData?.age || '30s',
+    persona: initialData?.persona || '專業溫暖',
+    visualDNA: initialData?.visualDNA || ''
+  });
+  
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync state when initialData changes or modal opens
+  useEffect(() => {
+    if (isOpen && initialData) {
+      setFormData({
+        name: initialData.name || '',
+        role: initialData.description || '',
+        gender: initialData.gender || '未指定',
+        age: initialData.age || '30s',
+        persona: initialData.persona || '專業溫暖',
+        visualDNA: initialData.visualDNA || ''
+      });
+    }
+  }, [isOpen, initialData]);
+
+  if (!isOpen) return null;
+
+  // 🪄 AI 一鍵發想 Visual DNA
+  const handleAIBrainstorm = async () => {
+    setIsGenerating(true);
+    try {
+      const prompt = `
+        請扮演專業的角色設計師。根據以下設定，為教學引導者設計一段精確的 Visual DNA 提示詞：
+        - 姓名：${formData.name}
+        - 職業/定位：${formData.role}
+        - 性別：${formData.gender}
+        - 年齡：${formData.age}
+        - 個性/語氣：${formData.persona}
+        
+        ⚠️ 嚴格規範：
+        1. 必須以英文輸出，特徵之間用 Pipe (|) 分隔。
+        2. 開頭【必須】是明確的年齡與性別鎖定 (例如: Age: ${formData.age}, ${formData.gender === '男' ? 'Male' : formData.gender === '女' ? 'Female' : 'Person'})。
+        3. 包含髮型、眼神、代表性服裝或配件。
+        絕對不要輸出 markdown 外框或任何解釋廢話。
+      `;
+      const result = await sendMessageToGemini(prompt, [], 0.7);
+      setFormData(prev => ({ ...prev, visualDNA: result.replace(/`/g, '').trim() }));
+    } catch (error) {
+      console.error('AI 發想失敗:', error);
+      alert('發想失敗，請稍後再試');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // 🖼️ 🌟 升級版：圖片上傳與 Canvas 客戶端預壓縮
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+
+    try {
+      // 1. 建立一個 Promise 來處理 Canvas 壓縮
+      const compressImage = (imageFile: File, maxWidth = 800, quality = 0.7): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(imageFile);
+          reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target?.result as string;
+            img.onload = () => {
+              // 計算等比例縮放後的新尺寸
+              const canvas = document.createElement('canvas');
+              let { width, height } = img;
+              if (width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+              }
+              canvas.width = width;
+              canvas.height = height;
+
+              // 畫上 Canvas 並匯出壓縮後的 JPEG base64
+              const ctx = canvas.getContext('2d');
+              ctx?.drawImage(img, 0, 0, width, height);
+              const compressedBase64 = canvas.toDataURL('image/jpeg', quality).split(',')[1];
+              resolve(compressedBase64);
+            };
+            img.onerror = (error) => reject(error);
+          };
+        });
+      };
+
+      // 2. 執行壓縮 (無論原圖多大，都會被壓到 800px 以內)
+      const base64Data = await compressImage(file);
+
+      // 3. 送給 Gemini (現在傳輸極快，且不會卡死瀏覽器)
+      const result = await sendMessageToGemini(EXTRACT_IMAGE_TRAITS_PROMPT, [{
+        data: base64Data, mimeType: 'image/jpeg' // 統一標示為 jpeg
+      }]);
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        visualDNA: result.replace(/```yaml|```/g, '').trim() 
+      }));
+    } catch (error) {
+      console.error('圖片解析或壓縮失敗:', error);
+      alert('圖片解析失敗，請確保圖片格式正確。');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+          <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <Edit2 className="text-blue-600" size={24} />
+            客製化引導者設定
+          </h3>
+          <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Body (Scrollable) */}
+        <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-slate-50/50 custom-scrollbar">
+          
+          {/* 基礎屬性區 (4宮格) */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-slate-600">人名</label>
+              <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="例如: 墨語" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-slate-600">角色/職業</label>
+              <input type="text" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="例如: 創意觀察家" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-slate-600">性別</label>
+              <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                <option value="未指定">未指定</option>
+                <option value="男">男 (Male)</option>
+                <option value="女">女 (Female)</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-slate-600">年齡設定 (Age)</label>
+              <input type="text" value={formData.age} onChange={e => setFormData({...formData, age: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="例如: 30s, Elderly, 12" />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-semibold text-slate-600">語氣與性格 (Persona)</label>
+            <input type="text" value={formData.persona} onChange={e => setFormData({...formData, persona: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="例如: 專業、溫暖且具啟發性" />
+          </div>
+
+          {/* 視覺 DNA 區塊 */}
+          <div className="p-5 bg-white border border-indigo-100 rounded-2xl shadow-sm space-y-4">
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-bold text-indigo-900 flex items-center gap-2">
+                <ImageIcon size={18} className="text-indigo-500"/>
+                Visual DNA (外觀提示詞)
+              </label>
+              
+              <div className="flex gap-2">
+                {/* 圖片上傳按鈕 */}
+                <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
+                <button 
+                  onClick={() => fileInputRef.current?.click()} 
+                  disabled={isUploading}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm rounded-lg transition-colors font-medium disabled:opacity-50"
+                >
+                  {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                  上傳圖片萃取
+                </button>
+
+                {/* AI 一鍵發想按鈕 */}
+                <button 
+                  onClick={handleAIBrainstorm} 
+                  disabled={isGenerating}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm rounded-lg transition-colors font-medium disabled:opacity-50"
+                >
+                  {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                  AI 根據上方設定發想
+                </button>
+              </div>
+            </div>
+            
+            <textarea 
+              value={formData.visualDNA} 
+              onChange={e => setFormData({...formData, visualDNA: e.target.value})} 
+              rows={3} 
+              className="w-full p-3 border border-indigo-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50 font-mono text-sm leading-relaxed" 
+              placeholder="Age: 30s | Hair: Black topknot | Eyes: Sharp and focused..."
+            />
+          </div>
+
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-100 flex justify-end gap-3 bg-white rounded-b-2xl">
+          <button onClick={onClose} className="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-xl transition-colors">取消</button>
+          <button 
+            onClick={() => {
+              onSave({
+                ...initialData,
+                name: formData.name,
+                description: formData.role,
+                gender: formData.gender,
+                age: formData.age,
+                persona: formData.persona,
+                visualDNA: formData.visualDNA
+              });
+              onClose();
+            }} 
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2"
+          >
+            <CheckCircle size={18} />
+            儲存設定
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+};
 
 interface Step4CastingProps {
   castingResult: string | null;
@@ -36,12 +285,12 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
   isLoading, 
   onBack 
 }) => {
+  const { state, dispatch } = useWorkflowContext();
   const [data, setData] = useState<CastingData | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
   
   const [selectedGuide, setSelectedGuide] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState<string | null>(null);
-  const [editingGuide, setEditingGuide] = useState<GuideCandidate | null>(null);
+  const [editingCandidate, setEditingCandidate] = useState<GuideCandidate | null>(null);
   const [customProtagonist, setCustomProtagonist] = useState<string>('');
   
   const [isExtracting, setIsExtracting] = useState(false);
@@ -85,16 +334,22 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
 
   const handleEditClick = (guide: GuideCandidate, e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsEditing(guide.id);
-    setEditingGuide({ ...guide });
+    setEditingCandidate({ ...guide });
   };
 
-  const handleSaveEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!data || !editingGuide) return;
-    const updatedCandidates = data.candidates.map(g => g.id === editingGuide.id ? editingGuide : g);
-    setData({ ...data, candidates: updatedCandidates });
-    setIsEditing(null);
+  const handleSaveGuide = (updatedGuide: any) => {
+    if (!data) return;
+    const updatedCandidates = data.candidates.map((c: any) => 
+      c.id === updatedGuide.id ? updatedGuide : c
+    );
+    
+    setData({
+      ...data,
+      candidates: updatedCandidates
+    });
+
+    // Also update global state if needed, but Step4Casting usually manages local 'data' 
+    // and only calls onConfirmCasting at the end.
   };
 
   const handleConfirm = () => {
@@ -133,7 +388,7 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
     }
   };
 
-  const isEditingAny = isEditing !== null;
+  const isEditingAny = !!editingCandidate;
 
   if (parseError) {
     return (
@@ -230,7 +485,7 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
                      isSelected 
                        ? 'border-teal-500 bg-teal-50/30 shadow-md' 
                        : 'border-slate-200 hover:border-teal-300 hover:shadow-sm bg-white'
-                   } ${isEditingAny && isEditing !== guide.id ? 'opacity-50 pointer-events-none' : ''}`}
+                   } ${isEditingAny ? 'opacity-50 pointer-events-none' : ''}`}
                  >
                    {/* 右上角核取圈圈 */}
                    <div className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
@@ -238,103 +493,64 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
                    }`}>
                      {isSelected && <Check size={14} className="text-white" />}
                    </div>
- 
-                   {isEditing === guide.id ? (
-                     <div className="space-y-4 animate-in fade-in duration-300" onClick={e => e.stopPropagation()}>
-                       <div className="grid grid-cols-2 gap-4">
-                         <div>
-                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">角色名稱</label>
-                           <input 
-                             type="text" 
-                             value={editingGuide?.name || ''} 
-                             onChange={(e) => setEditingGuide({...editingGuide!, name: e.target.value})}
-                             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
-                           />
-                         </div>
-                         <div>
-                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">語氣晶片</label>
-                           <select 
-                             value={editingGuide?.persona || ''} 
-                             onChange={(e) => setEditingGuide({...editingGuide!, persona: e.target.value})}
-                             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
-                           >
-                             {TONE_OPTIONS.map(opt => (
-                               <option key={opt.code} value={opt.code}>{opt.code} {opt.label}</option>
-                             ))}
-                           </select>
-                         </div>
-                       </div>
 
-                       <textarea
-                         value={editingGuide?.description || ''}
-                         onChange={(e) => setEditingGuide({...editingGuide!, description: e.target.value})}
-                         className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600 shadow-inner outline-none focus:ring-2 focus:ring-teal-500"
-                         rows={2}
-                         placeholder="教學風格描述..."
-                       />
-
-                       <textarea
-                         value={editingGuide?.visualDNA || ''}
-                         onChange={(e) => setEditingGuide({...editingGuide!, visualDNA: e.target.value})}
-                         className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 shadow-inner outline-none focus:ring-2 focus:ring-teal-500"
-                         rows={3}
-                         placeholder="Visual DNA 特徵..."
-                       />
-                       
-                       <div className="flex gap-2">
-                         <button onClick={handleSaveEdit} className="flex-1 bg-slate-900 text-white py-2 rounded-lg text-xs font-bold shadow-lg hover:bg-slate-800 transition-colors">儲存設定</button>
-                         <button onClick={() => setIsEditing(null)} className="px-4 py-2 border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50 transition-colors">取消</button>
-                       </div>
+                   <div className="flex justify-between items-start mb-3">
+                     <div>
+                       <h4 className="font-black text-slate-800 text-lg">{guide.name}</h4>
+                       <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold ${
+                         TONE_OPTIONS.find(t => t.code === guide.persona)?.color.split(' ').slice(1, 3).join(' ') || 'bg-slate-100 text-slate-500'
+                       }`}>
+                         {TONE_OPTIONS.find(t => t.code === guide.persona)?.label || guide.persona}
+                       </span>
                      </div>
-                   ) : (
-                     <>
-                       <div className="flex justify-between items-start mb-3">
-                         <div>
-                           <h4 className="font-black text-slate-800 text-lg">{guide.name}</h4>
-                           <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold ${
-                             TONE_OPTIONS.find(t => t.code === guide.persona)?.color.split(' ').slice(1, 3).join(' ') || 'bg-slate-100 text-slate-500'
-                           }`}>
-                             {TONE_OPTIONS.find(t => t.code === guide.persona)?.label || guide.persona}
-                           </span>
-                         </div>
-                         <button 
-                           onClick={(e) => handleEditClick(guide, e)}
-                           className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-md transition-colors"
-                         >
-                           <Edit2 size={16} />
-                         </button>
-                       </div>
-                       
-                       <p className="text-xs text-slate-600 mb-4 leading-relaxed line-clamp-3">
-                         {guide.description}
+                     <button 
+                       onClick={(e) => handleEditClick(guide, e)}
+                       className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-md transition-colors"
+                     >
+                       <Edit2 size={16} />
+                     </button>
+                   </div>
+                   
+                   <p className="text-xs text-slate-600 mb-4 leading-relaxed line-clamp-3">
+                     {guide.description}
+                   </p>
+
+                   {/* 🌟 核心優化：顯示適配邏輯 */}
+                   <div className="flex flex-wrap gap-2 mb-4">
+                     {guide.gender && <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200">性別: {guide.gender}</span>}
+                     {guide.age && <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200">年齡: {guide.age}</span>}
+                   </div>
+
+                   {guide.whyFit && (
+                     <div className="bg-teal-50/50 p-3 rounded-xl border border-dashed border-teal-200 mb-4">
+                       <p className="text-[10px] text-teal-600 flex items-center gap-1 font-bold mb-1">
+                         <Sparkles size={10} /> 為什麼適合這課？
                        </p>
- 
-                       {/* 🌟 核心優化：顯示適配邏輯 */}
-                       {guide.whyFit && (
-                         <div className="bg-teal-50/50 p-3 rounded-xl border border-dashed border-teal-200 mb-4">
-                           <p className="text-[10px] text-teal-600 flex items-center gap-1 font-bold mb-1">
-                             <Sparkles size={10} /> 為什麼適合這課？
-                           </p>
-                           <p className="text-[10px] text-slate-500 italic leading-tight">
-                             {guide.whyFit}
-                           </p>
-                         </div>
-                       )}
- 
-                       <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Visual DNA</div>
-                         <div className="text-xs font-mono text-slate-600 truncate" title={guide.visualDNA}>
-                           {guide.visualDNA}
-                         </div>
-                       </div>
-                     </>
+                       <p className="text-[10px] text-slate-500 italic leading-tight">
+                         {guide.whyFit}
+                       </p>
+                     </div>
                    )}
+
+                   <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Visual DNA</div>
+                     <div className="text-xs font-mono text-slate-600 truncate" title={guide.visualDNA}>
+                       {guide.visualDNA}
+                     </div>
+                   </div>
                  </div>
                );
              })}
            </div>
         </div>
       </div>
+
+      <GuideEditModal 
+        isOpen={!!editingCandidate}
+        initialData={editingCandidate}
+        onClose={() => setEditingCandidate(null)}
+        onSave={handleSaveGuide}
+      />
 
       {/* Confirm Footer */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 flex justify-center gap-4 z-10 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
