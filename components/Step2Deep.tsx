@@ -31,6 +31,10 @@ const Step2Deep: React.FC<Step2DeepProps> = (props) => {
 
   const [data, setData] = useState<AnalysisData | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
+
+  // 🌟 [防呆提取]：確保這兩個列表絕對是陣列
+  const vocabList = data?.vocabulary || [];
+  const idiomList = data?.deepIdiomsDetails || [];
   
   // 狀態管理
   const [isGeneratingMnemonic, setIsGeneratingMnemonic] = useState(false);
@@ -307,7 +311,7 @@ const Step2Deep: React.FC<Step2DeepProps> = (props) => {
        <div className="flex-1 overflow-y-auto pb-40 px-1 custom-scrollbar">
           {/* 生字循環渲染 (略，同前) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            {data.vocabulary.map((vocabItem, vIdx) => {
+            {vocabList.map((vocabItem, vIdx) => {
                 if (!vocabItem.isFocused) return null;
                 if (editingIndex === vIdx) return <React.Fragment key={`edit-${vIdx}`}>{renderVocabEditor()}</React.Fragment>;
                 return (
@@ -326,7 +330,7 @@ const Step2Deep: React.FC<Step2DeepProps> = (props) => {
           <div className="space-y-6 mt-16 pb-20">
              <h3 className="text-xl font-black text-slate-800 flex items-center gap-3 px-4"><div className="p-2 bg-indigo-100 rounded-xl text-indigo-600"><BookOpen size={20} /></div> 成語深度解析</h3>
              <div className="grid grid-cols-1 gap-6">
-               {(data.deepIdiomsDetails || []).map((idiom, idx) => {
+               {idiomList.map((idiom, idx) => {
                  if (editingIdiomIndex === idx) return <React.Fragment key={`edit-idiom-${idx}`}>{renderIdiomEditor()}</React.Fragment>;
                  return (
                    <div key={`idiom-${idx}`} className="bg-white border-2 border-slate-100 rounded-[3rem] p-10 relative group hover:border-indigo-200 transition-all">
@@ -346,7 +350,7 @@ const Step2Deep: React.FC<Step2DeepProps> = (props) => {
                  );
                })}
                {/* 🌟 關鍵修正：渲染「正在新增」的空白卡編輯器 */}
-               {editingIdiomIndex !== -1 && editingIdiomIndex === (data.deepIdiomsDetails || []).length && (
+               {editingIdiomIndex !== -1 && editingIdiomIndex === idiomList.length && (
                  <div className="animate-in slide-in-from-bottom-4 duration-300">
                     {renderIdiomEditor()}
                  </div>

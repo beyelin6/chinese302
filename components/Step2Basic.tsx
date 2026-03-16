@@ -7,6 +7,7 @@ import {
   Hash, Info, Sparkles, MessageSquare, Tag 
 } from 'lucide-react';
 import { AnalysisData, VocabularyItem } from '../types';
+import { useWorkflowContext } from '../context/WorkflowContext';
 
 // --------------------------------------------------------
 // 🛡️ 步驟一：將單一「卡片」抽成獨立元件，並用 React.memo 包覆
@@ -102,7 +103,15 @@ interface Step2BasicProps {
 }
 
 const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoading, onBack }) => {
+  const { state, dispatch } = useWorkflowContext();
   const [data, setData] = useState<AnalysisData | null>(null);
+
+  // 🌟 [防呆提取]：確保即使資料尚未解析完成，元件也不會崩潰
+  const vocabList = data?.coreVocabulary || [];
+  const activityList = data?.languageActivities || [];
+
+  // 下面要怎麼 filter 都不會壞掉了！
+  const selectedVocabs = vocabList.filter((v: any) => v.isFocused);
 
   useEffect(() => {
     if (!analysis) return;
@@ -196,12 +205,12 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
             <PenTool size={20} className="text-orange-500" /> 生字與認讀字決策
           </h3>
           <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full uppercase">
-            已選中 {data.coreVocabulary.filter(v => v.isFocused).length} 項
+            已選中 {selectedVocabs.length} 項
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.coreVocabulary.map((item) => (
+          {vocabList.map((item) => (
             <VocabCard 
               key={item.word}
               item={item}

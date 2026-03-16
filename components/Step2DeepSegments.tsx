@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Brain, Edit2, Trash2, Check, X, Plus, RefreshCw, Layers, ArrowRight, Sparkles, AlertCircle, Wand2, Zap, ArrowLeft, Tag } from 'lucide-react';
 import { AnalysisData, SegmentItem, StrategyItem } from '../types';
 import { Step2WritingFocus } from './Step2WritingFocus';
+import { useWorkflowContext } from '../context/WorkflowContext';
 
 // 🛡️ [防崩潰裝甲]：確保所有送入 JSX 渲染的變數絕對是「字串」
 const safeRender = (val: any): string => {
@@ -98,7 +99,13 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
     onRewriteQuestion,
     onBack
 }) => {
+  const { state, dispatch } = useWorkflowContext();
   const [data, setData] = useState<AnalysisData | null>(null);
+
+  // 🌟 [防呆提取]：確保這兩個列表絕對是陣列
+  const vocabList = data?.coreVocabulary || currentData?.coreVocabulary || [];
+  const activityList = data?.languageActivities || currentData?.languageActivities || [];
+  
   const [parseError, setParseError] = useState<string | null>(null);
   
   // Loading states
@@ -788,24 +795,23 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
             </div>
 
             {/* 🌟 1.5 Writing Focus Section */}
-            <Step2WritingFocus vocabulary={currentData.coreVocabulary} />
+            <Step2WritingFocus vocabulary={vocabList} />
 
             {/* 🌟 新增：語文活動輻射看板 */}
-            {currentData.languageActivities && currentData.languageActivities.length > 0 && (
+            {activityList.length > 0 && (
               <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4">
                 <div className="flex items-center gap-2 text-indigo-600 font-black px-2">
                   <Sparkles size={20} />
                   <h3>課本語文活動（延伸技能）</h3>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {currentData.languageActivities.map((activity: any, idx: number) => (
+                  {activityList.map((activity: any, idx: number) => (
                     <LanguageActivityCard 
                       key={idx}
                       activity={activity}
                       idx={idx}
                       onGenerateExtraActivity={onGenerateExtraActivity}
-                      grade={currentData.grade || '小學三年級'}
+                      grade={data?.grade || currentData?.grade || '小學三年級'}
                     />
                   ))}
                 </div>
