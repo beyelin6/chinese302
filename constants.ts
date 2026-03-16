@@ -766,17 +766,17 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 
 == PART C: 原子語文迴圈 (Atomic Language Loop) ==
 [type: ShapeSimilar] (形近字)
-- lens: "左右分割對比大字排版 (Split Screen, Large Text)"
-- visual_prompt: "Subject: {導師 DNA} pointing at the scene. Context: 必須視覺化呈現這些辨析字『部首』代表的具體意義（例如：手部畫出動作、水部畫出水流的具體情境）. Composition: Split Screen showing clear contrast. Artistic VIS: {風格碼}. Safety: No text."
+- lens: "⚠️ 動態判斷：若為2字請填『左右分割對比大字 (2-Way Split, Large Text)』；若為3字請填『三格並列大字 (3-Way Split, Large Text)』；若為4字請填『四宮格大字 (4-Way Grid, Large Text)』"
+- visual_prompt: "Subject: {導師 DNA} pointing at the scene. Context: 必須分別視覺化呈現【每一個】辨析字『部首』代表的具體意義（例如：手部畫動作、水部畫水流）. Composition: Dynamic Split screen matching the number of characters. Artistic VIS: {風格碼}. Safety: No text."
 - displayText: "必須列出各個辨析字的字、注音、部首、造詞，並清楚標示【💡 辨析口訣】與【解析】"
-- guideAction: "對比兩者差異的手勢"
+- guideAction: "引導學生觀察各個字體差異的手勢"
 - guideTalk: "[注音與部首差異的詳細說明，與口訣唸法]"
 
 [type: Polyphonic] (多音字)
-- lens: "天平對比大字排版 (Balance Screen, Large Text)"
-- visual_prompt: "Subject: {導師 DNA} observing. Context: 必須視覺化呈現該多音字『兩個不同讀音所對應的不同造詞情境』. Composition: Split screen showing distinct meanings. Artistic VIS: {風格碼}. Safety: No text."
-- displayText: "讀音A (造詞) vs 讀音B (造詞)"
-- guideAction: "展示兩種不同情境的動作"
+- lens: "⚠️ 動態判斷：若為2音請填『天平對比大字 (Balance Screen, Large Text)』；若為3音請填『三格並列大字 (3-Way Split, Large Text)』"
+- visual_prompt: "Subject: {導師 DNA} observing. Context: 必須分別視覺化呈現該多音字『每一個不同讀音所對應的造詞情境』. Composition: Dynamic Split screen matching the number of pronunciations. Artistic VIS: {風格碼}. Safety: No text."
+- displayText: "讀音A (造詞) vs 讀音B (造詞)...依此類推"
+- guideAction: "展示不同情境變化的動作"
 - guideTalk: "[說明同一個字在不同語境下的讀音與意義變化]"
 
 [type: IdiomLoop] (成語)
