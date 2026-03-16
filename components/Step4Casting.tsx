@@ -296,7 +296,9 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
   const [customProtagonist, setCustomProtagonist] = useState<string>('');
   
   const [isExtracting, setIsExtracting] = useState(false);
+  const [extractingGuideId, setExtractingGuideId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const guideFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!castingResult && !isLoading) {
@@ -389,6 +391,41 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
     }
   };
 
+  // 🚀 [新增] 引導者的圖片上傳與 Canvas 壓縮
+  const handleGuideFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !handleExtractImageTraits || !extractingGuideId || !data) return;
+
+    setIsExtracting(true);
+    try {
+      const compressedBase64 = await compressImage(file);
+      
+      const media: MediaData = {
+        mimeType: 'image/jpeg',
+        data: compressedBase64,
+        name: file.name
+      };
+      
+      const traits = await handleExtractImageTraits(media);
+      if (traits) {
+        const updatedCandidates = data.candidates.map(c => 
+          c.id === extractingGuideId ? { ...c, visualDNA: traits.replace(/```yaml|```/g, '').trim() } : c
+        );
+        setData({
+          ...data,
+          candidates: updatedCandidates
+        });
+      }
+    } catch (error) {
+      console.error("萃取引導者圖片特徵失敗", error);
+      alert('圖片解析失敗，請確保圖片格式正確或稍後再試。');
+    } finally {
+      setIsExtracting(false);
+      setExtractingGuideId(null);
+      if (guideFileInputRef.current) guideFileInputRef.current.value = '';
+    }
+  };
+
   const isEditingAny = !!editingCandidate;
 
   if (parseError) {
@@ -475,8 +512,12 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
            <p className="text-sm text-slate-500 mb-6">請選擇一位最適合本課文風的引導角色。AI 已根據課文靈魂為您編織了專屬人設。</p>
  
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+             {/* 隱藏的引導者圖片上傳 input */}
+             <input type="file" ref={guideFileInputRef} onChange={handleGuideFileUpload} accept="image/*" className="hidden" />
+             
              {data.candidates.map((guide) => {
                const isSelected = selectedGuide === guide.id;
+               const isExtractingThis = extractingGuideId === guide.id;
                
                return (
                  <div 
@@ -504,12 +545,27 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
                          {TONE_OPTIONS.find(t => t.code === guide.persona)?.label || guide.persona}
                        </span>
                      </div>
-                     <button 
-                       onClick={(e) => handleEditClick(guide, e)}
-                       className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-md transition-colors"
-                     >
-                       <Edit2 size={16} />
-                     </button>
+                     <div className="flex gap-1">
+                       <button 
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setExtractingGuideId(guide.id);
+                           guideFileInputRef.current?.click();
+                         }}
+                         disabled={isExtracting || isLoading}
+                         className={`p-1.5 rounded-md transition-colors ${isExtractingThis ? 'text-teal-600 bg-teal-50' : 'text-slate-400 hover:text-teal-600 hover:bg-teal-50'}`}
+                         title="上傳圖片萃取 DNA"
+                       >
+                         {isExtractingThis ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
+                       </button>
+                       <button 
+                         onClick={(e) => handleEditClick(guide, e)}
+                         className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-md transition-colors"
+                         title="編輯設定"
+                       >
+                         <Edit2 size={16} />
+                       </button>
+                     </div>
                    </div>
                    
                    <p className="text-xs text-slate-600 mb-4 leading-relaxed line-clamp-3">
