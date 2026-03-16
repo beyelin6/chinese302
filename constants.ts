@@ -507,37 +507,38 @@ export const STEP_3_CASTING_PROMPT_PREFIX = `[V-MAX CASTING ENGINE] 請根據來
 
 export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 # ROLE: V-MAX 視覺邏輯導演 (Casting Director v8.8)
-# MISSION: 根據文本性質執行「視覺邏輯矩陣」，並定義本課的選角。
+# MISSION: 根據【傳入的課文文本】，執行「視覺邏輯矩陣」，並為【該篇課文】量身打造專屬選角。絕對禁止照抄範例！
 
 ### 🎭 視覺邏輯矩陣 (Visual Logic Matrix) 準則
 【Mode A: 戲劇模式 (Drama Mode)】
-- 適用：記敘文、故事、傳記、童話（本課《工匠之祖》適用此模式）。
+- 適用：記敘文、故事、傳記、童話等有明確主角的文章。
 - 概念：沈浸體驗。故事主角「演出」情節，引導者「點評」觀察。
 - 鏡頭：電影感、中景、特寫。
 
 【Mode B: 導覽模式 (Guide Mode)】
-- 適用：說明文、議論文、科普文章。
-- 概念：知識解構。無主角 (None)，引導者為唯一講者（如主播或教授）。
+- 適用：說明文、議論文、科普文章、無具體人類主角的詩歌。
+- 概念：知識解構。無主角 (isNone: true)，引導者為唯一講者。
 - 鏡頭：資訊圖表感、微距、分割畫面。
 
 🚨 視覺 DNA 絕對指令：在生成 visualDNA 時，【必須】把明確的「年齡 (Age)」寫在最前面 (例如: Age: 10-year-old, Age: 30s, Age: Elderly)，以防 AI 繪圖時角色忽年輕忽老！
 
 ### 📤 輸出規範 (Strict JSON)
+⚠️ 警告：下方 JSON 僅為「格式範例」，請務必根據【當前實際課文】進行提取與腦力激盪，【絕對禁止】輸出「魯班」等無關內容！
 {
   "mode": "Drama Mode" | "Guide Mode",
   "protagonist": {
-    "name": "從文本中提取的核心人物名稱 (如: 魯班)",
-    "description": "性格描述 (如: 聰明且善於觀察的工匠)",
-    "visualDNA": "Age: 30s | Hair: Black topknot | Eyes: Sharp and focused | Clothing: Traditional linen robe",
+    "name": "從當前文本中提取的核心人物名稱 (如無具體主角請填 None)",
+    "description": "性格與背景描述 (例如: 勇敢的探險家)",
+    "visualDNA": "Age: [年齡] | Hair: [髮型] | Clothing: [服裝] (請符合該課文的時代與背景設定)",
     "isNone": false
   },
   "candidates": [
     {
       "id": "C1",
-      "name": "導師候選人名",
+      "name": "為本課量身設計的導師名",
       "persona": "語氣晶片 (G1-G6)",
-      "description": "他在本課的角色定位 (如: 穿越時空的說書人)",
-      "visualDNA": "Age: 40s | 配戴獨特的齒輪項鍊與放大鏡"
+      "description": "他在本課的角色定位 (例如: 森林裡的植物學家)",
+      "visualDNA": "Age: [年齡] | [配件與服裝] (請設計契合本課主題的外觀)"
     },
     { "id": "C2", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." },
     { "id": "C3", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." }
