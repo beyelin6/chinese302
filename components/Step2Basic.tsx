@@ -169,6 +169,19 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
     });
   }, []);
 
+  // 🛡️ 加上防呆保護，避免 undefined 造成 .filter 當機
+  const handleDeleteWord = (idx: number) => {
+    const currentWords = data.textbookDifficultWords || [];
+    const updated = currentWords.filter((_, i) => i !== idx);
+    setData({ ...data, textbookDifficultWords: updated });
+  };
+
+  const handleDeleteIdiom = (idx: number) => {
+    const currentIdioms = data.idioms || [];
+    const updated = currentIdioms.filter((_, i) => i !== idx);
+    setData({ ...data, idioms: updated });
+  };
+
   if (!data) return null;
 
   return (
@@ -228,19 +241,14 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
             <MessageSquare size={18} className="text-blue-500" /> 難詞管理 (將注入 STEP 2.75 段落深究)
           </h3>
           <div className="flex flex-wrap gap-2">
-            {data.textbookDifficultWords?.map((item, idx) => (
+            {(data.textbookDifficultWords || []).map((item, idx) => (
               <button 
                 key={idx} 
-                onClick={() => {
-                  const updated = [...data.textbookDifficultWords];
-                  updated[idx].isSelected = !updated[idx].isSelected;
-                  setData({ ...data, textbookDifficultWords: updated });
-                }}
-                className={`px-5 py-2 rounded-full text-xs font-bold transition-all border-2 ${
-                  item.isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-slate-50 border-slate-100 text-slate-400'
-                }`}
+                onClick={() => handleDeleteWord(idx)}
+                className="px-5 py-2 rounded-full text-xs font-bold transition-all border-2 bg-slate-50 border-slate-100 text-slate-400 hover:border-rose-200 hover:text-rose-500 flex items-center gap-2"
               >
                 {item.word}
+                <X size={12} />
               </button>
             ))}
           </div>
@@ -251,19 +259,14 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
             <Sparkles size={18} className="text-indigo-500" /> 成語管理 (將注入 STEP 2.5 深度解析)
           </h3>
           <div className="flex flex-wrap gap-2">
-            {data.idioms?.map((item, idx) => (
+            {(data.idioms || []).map((item, idx) => (
               <button 
                 key={idx} 
-                onClick={() => {
-                  const updated = [...data.idioms];
-                  updated[idx].isSelected = !updated[idx].isSelected;
-                  setData({ ...data, idioms: updated });
-                }}
-                className={`px-5 py-2 rounded-full text-xs font-bold transition-all border-2 ${
-                  item.isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400'
-                }`}
+                onClick={() => handleDeleteIdiom(idx)}
+                className="px-5 py-2 rounded-full text-xs font-bold transition-all border-2 bg-white border-slate-100 text-slate-400 hover:border-rose-200 hover:text-rose-500 flex items-center gap-2"
               >
                 {item.word}
+                <X size={12} />
               </button>
             ))}
           </div>

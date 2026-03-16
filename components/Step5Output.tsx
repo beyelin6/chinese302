@@ -32,6 +32,9 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   const [editableSlides, setEditableSlides] = useState<any[]>([]);
   const prevSlidesLength = useRef(0);
 
+  // 🌟 視角切換開關
+  const [viewMode, setViewMode] = useState<'json' | 'human'>('human'); // 預設為人類閱讀模式
+
   // 1. 初始化與自動觸發
   useEffect(() => {
     if (!outputScript && !isLoading) {
@@ -247,20 +250,65 @@ const Step5Output: React.FC<Step5OutputProps> = ({
           </div>
         </div>
 
-        {/* 右側：即時碼 (明亮版 GitHub Light 風格) */}
+        {/* 右側：即時碼 / 劇本預覽 (明亮版) */}
         <div className="w-[480px] border-l border-slate-200 bg-slate-50 flex flex-col">
           <div className="px-4 py-3 bg-white border-b border-slate-200 flex justify-between items-center">
-            <span className="text-xs font-bold text-slate-500 font-mono flex items-center gap-2 tracking-widest uppercase">
-              <Code size={14} /> {activeTab === 'script' ? 'Unified JSON Engine' : 'Raw Documentation'}
-            </span>
-            <button onClick={() => { navigator.clipboard.writeText(syncRawCode); setIsCopied(true); setTimeout(()=>setIsCopied(false), 2000); }} className="text-slate-400 hover:text-indigo-600 transition-colors">
-              {isCopied ? <Check size={16} className="text-emerald-600" /> : <Copy size={16} />}
+            
+            {/* 🌟 視角切換開關 */}
+            <div className="flex bg-slate-100 p-1 rounded-lg">
+              <button 
+                onClick={() => setViewMode('human')}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'human' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                劇本模式
+              </button>
+              <button 
+                onClick={() => setViewMode('json')}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'json' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                JSON 程式碼
+              </button>
+            </div>
+
+            <button onClick={() => { navigator.clipboard.writeText(syncRawCode); setIsCopied(true); setTimeout(()=>setIsCopied(false), 2000); }} className="text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 text-xs font-bold bg-slate-100 px-2 py-1 rounded-md">
+              {isCopied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+              複製全文
             </button>
           </div>
           <div className="flex-1 p-4 font-mono text-xs leading-relaxed text-slate-700 overflow-y-auto custom-scrollbar bg-[#f8fafc]">
-            <pre className="whitespace-pre-wrap break-words">
-              <code>{syncRawCode}</code>
-            </pre>
+            {viewMode === 'json' ? (
+              <pre className="whitespace-pre-wrap break-words">
+                <code>{syncRawCode}</code>
+              </pre>
+            ) : (
+              <div className="space-y-6 font-sans">
+                {editableSlides.map((slide, idx) => (
+                  <div key={idx} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+                      <span className="font-black text-indigo-700 text-sm">#{slide.page_number || idx + 1} {slide.title}</span>
+                      <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-md font-mono">{slide.lens}</span>
+                    </div>
+                    <div className="space-y-3 text-sm">
+                      <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <span className="font-bold text-slate-500 text-xs block mb-1">🖼️ 畫面提示 (Visual)</span>
+                        <span className="text-slate-600">{slide.visual_prompt}</span>
+                      </div>
+                      <div>
+                        <span className="font-bold text-slate-500 text-xs block mb-1">📝 顯示文字 (Text)</span>
+                        <div className="text-slate-800 font-medium whitespace-pre-wrap">{slide.displayText}</div>
+                      </div>
+                      <div className="bg-indigo-50/50 p-2 rounded-lg border border-indigo-100">
+                        <span className="font-bold text-indigo-400 text-xs block mb-1">🧑‍🏫 導師台詞 (Speech)</span>
+                        <span className="text-indigo-900 font-medium">
+                          {slide.guideAction ? <span className="text-indigo-500 italic mr-1">({slide.guideAction})</span> : null}
+                          {slide.guideTalk}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="p-3 bg-indigo-50 border-t border-slate-200 text-[9px] text-indigo-400 font-bold font-mono">
             VMAX_PROTOCOL: {activeTab === 'script' ? 'SYNCED_WITH_DNA_ANCHOR' : 'READY_TO_COPY'}

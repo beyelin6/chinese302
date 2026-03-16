@@ -236,7 +236,7 @@ export const useStep5Output = () => {
         dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: updatedScript } });
       }
 
-      const guide = generateNotebookLMGuide(castingData, vocabulary, analysisData, visualData);
+      const guide = generateNotebookLMGuide(castingData, vocabulary, analysisData, visualData, accumulatedSlides);
       dispatch({ type: 'SET_OUTPUTS', payload: { outputNotebookLMGuide: guide } });
       
       dispatch({ type: 'SET_STEP', payload: AppStep.STEP_6_OUTPUT });
@@ -251,7 +251,7 @@ export const useStep5Output = () => {
   };
 
   // 🌟 [史詩級升級] 動態注入版指南生成器
-  const generateNotebookLMGuide = (castingData: any, vocab: any[], analysisData: any, visualData: any) => {
+  const generateNotebookLMGuide = (castingData: any, vocab: any[], analysisData: any, visualData: any, slides: any[]) => {
     const guide = castingData?.guide || {};
     
     // 1. 萃取基本資訊
@@ -279,7 +279,22 @@ export const useStep5Output = () => {
       guideDNA = "身穿俐落的現代教學套裝，帶著親切且自信的微笑，常以手勢指示畫面的重點。";
     }
 
-    // 4. 動態替換模板
+    // 4. 🌟 [新增] 智能分批目錄生成器 (Batching Directory Generator)
+    const totalSlides = slides.length;
+    const chunkSize = 5;
+    let batchingDirectory = "";
+    const batchNames = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+    
+    for (let i = 0; i < totalSlides; i += chunkSize) {
+      const start = i + 1;
+      const end = Math.min(i + chunkSize, totalSlides);
+      const batchIdx = Math.floor(i / chunkSize);
+      const batchName = batchNames[batchIdx] || (batchIdx + 1).toString();
+      batchingDirectory += `第${batchName}批：第 ${start}-${end} 頁\n`;
+    }
+    if (!batchingDirectory) batchingDirectory = "第1批：第 1 頁起";
+
+    // 5. 動態替換模板
     let guideText = PROMPT_GENERATE_NOTEBOOKLM_GUIDE
       .replace('{KERNEL_VERSION}', "v10.0-DNA-Purity")
       .replace('{GRADE}', grade)
@@ -290,7 +305,8 @@ export const useStep5Output = () => {
       .replace('{VISUAL_METAPHOR}', visualMetaphor)
       .replace('{DATE}', today)
       .replace(/{GUIDE_DNA}/g, guideDNA) // 使用正則替換多個出現的地方
-      .replace('{AUDIO_FOCUS}', audioFocus);
+      .replace('{AUDIO_FOCUS}', audioFocus)
+      .replace('{BATCHING_DIRECTORY}', batchingDirectory);
 
     return guideText;
   };
