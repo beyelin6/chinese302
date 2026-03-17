@@ -97,10 +97,10 @@ export const useStep4VisualsAndCasting = () => {
         【待判定文本資訊】
         文體：${genre}
         主題：${subject}
-        課文摘要：${state.analysisData.basicInfo?.mainIdea}
+        課文原文：${state.analysisData.fullText}
       `;
 
-      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.6 });
+      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.1 });
       const parsed = sanitizeAndParseJSON(response);
 
       // 🛡️ [防崩潰檢查]：確保 candidates 存在
