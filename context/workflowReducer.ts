@@ -64,6 +64,18 @@ export function workflowReducer(state: WorkflowState, action: WorkflowAction): W
       return { ...state, apiKeys: action.payload };
     case 'SET_SHOW_API_KEY_MODAL':
       return { ...state, showApiKeyModal: action.payload };
+    case 'ADD_LANGUAGE_ACTIVITIES':
+      if (!state.analysisData) return state;
+      return {
+        ...state,
+        analysisData: {
+          ...state.analysisData,
+          languageActivities: [
+            ...(state.analysisData.languageActivities || []),
+            ...action.payload
+          ]
+        }
+      };
     default: 
       return state;
   }

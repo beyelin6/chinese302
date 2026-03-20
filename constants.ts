@@ -17,6 +17,26 @@ export const VMAX_KERNEL_VERSION = "v59.0-DNA-Purity-Kernel";
 export const GEMINI_MODEL = "gemini-3-flash-preview";
 
 // 🛡️ [核心防護裝甲]：強化 FAITHFULNESS_GROUNDING
+export const PROMPT_GENERATE_ADDITIONAL_ACTIVITIES = `
+# ROLE: 國語文教學設計專家
+# MISSION: 根據提供的【課文內容】與【年級】，設計 3 個額外的「語文活動」。
+
+### 🎯 設計準則
+1. **適齡性**：活動難度必須符合該年級的認知發展。
+2. **多樣性**：包含「詞彙擴展」、「句型仿寫」、「創意寫作」或「口說表達」等不同面向。
+3. **具體性**：每個活動必須提供明確的「練習內容」或「題目範例」。
+
+### 📤 輸出規範 (Strict JSON)
+請只輸出純 JSON 陣列，格式如下：
+[
+  {
+    "title": "活動名稱 (例如：小小觀察家 - 詞彙擴展)",
+    "content": "具體的練習內容或引導文字"
+  },
+  ...
+]
+`;
+
 export const SYSTEM_PROMPT = `
 # ROLE: V-MAX v37-Omega (Omni-Architect Engine)
 # Core: Master Kernel v59.0-DNA-Purity

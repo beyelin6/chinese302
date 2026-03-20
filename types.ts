@@ -259,7 +259,8 @@ export type WorkflowAction =
   | { type: 'SET_OUTPUTS', payload: Partial<WorkflowState> }
   | { type: 'RESET_WORKFLOW' }
   | { type: 'SET_API_KEYS', payload: string[] }
-  | { type: 'SET_SHOW_API_KEY_MODAL', payload: boolean };
+  | { type: 'SET_SHOW_API_KEY_MODAL', payload: boolean }
+  | { type: 'ADD_LANGUAGE_ACTIVITIES', payload: { title: string, content: string }[] };
 
 export interface StyleOption {
   code: string;

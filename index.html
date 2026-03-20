@@ -4,7 +4,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>V-MAX Omni-Architect</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
       
@@ -31,20 +30,7 @@
       .glass-card { background: var(--ui-bg); border: 1px solid var(--ui-border); transition: all 0.2s; }
       .glass-card:hover { transform: translateY(-2px); box-shadow: var(--ui-shadow-hover); }
     </style>
-
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@^19.2.4",
-        "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-        "react/": "https://esm.sh/react@^19.2.4/",
-        "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
-        "lucide-react": "https://esm.sh/lucide-react@^0.564.0",
-        "react-markdown": "https://esm.sh/react-markdown@^10.1.0"
-      }
-    }
-    </script>
-    </head>
+  </head>
 <body>
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script> 

@@ -9,7 +9,8 @@ import {
   SYSTEM_PROMPT, 
   STEP_1_BASIC_PROMPT_SUFFIX, 
   STEP_1_FAST_PROMPT_SUFFIX,
-  STEP_1_FAST_SCAN_PROMPT
+  STEP_1_FAST_SCAN_PROMPT,
+  PROMPT_GENERATE_ADDITIONAL_ACTIVITIES
 } from '../../constants';
 import { extractTextFromPDFBase64 } from '../../utils.ts';
 import { sanitizeAndParseJSON } from '../../utils/jsonParser';
@@ -201,5 +202,39 @@ export const useStep1Analysis = () => {
     }
   };
 
-  return { handleStep1Analyze };
+  /**
+   * 🌟 [新增] AI 語文活動擴充引擎
+   * 根據課文內容與年級，生成 3 個額外的語文活動建議
+   */
+  const handleGenerateAdditionalActivities = async (fullText: string, grade: string) => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_LOADING_STATUS', payload: 'AI 正在為您構思額外的語文活動建議...' });
+
+    try {
+      const prompt = `
+        ${PROMPT_GENERATE_ADDITIONAL_ACTIVITIES}
+        
+        【課文內容】
+        ${fullText}
+        
+        【年級】
+        ${grade}
+      `;
+
+      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.7 });
+      const additionalActivities = sanitizeAndParseJSON(response);
+
+      if (Array.isArray(additionalActivities)) {
+        dispatch({ type: 'ADD_LANGUAGE_ACTIVITIES', payload: additionalActivities });
+      }
+    } catch (error: any) {
+      console.error("生成語文活動失敗", error);
+      dispatch({ type: 'SET_ERROR', payload: '生成語文活動失敗：' + error.message });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+      dispatch({ type: 'SET_LOADING_STATUS', payload: null });
+    }
+  };
+
+  return { handleStep1Analyze, handleGenerateAdditionalActivities };
 };
