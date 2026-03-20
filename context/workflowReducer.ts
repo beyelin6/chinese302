@@ -51,14 +51,14 @@ export function workflowReducer(state: WorkflowState, action: WorkflowAction): W
     case 'SET_SEGMENTS_RESULT':
       return { ...state, deepSegmentsResult: action.payload };
     case 'SET_DEEP_SEGMENTS_RESULT':
-      const segmentsData = typeof action.payload === 'string' ? JSON.parse(action.payload) : action.payload;
+      // 🌟 [神級修復]：合併資料，絕不覆蓋，保留全文 (fullText)！
+      const finalData = typeof action.payload === 'string' ? JSON.parse(action.payload) : action.payload;
       return { 
         ...state, 
         deepSegmentsResult: action.payload,
-        // 🌟 關鍵修正：使用合併方式，保留原本的 basicInfo, fullText 等重要資料
         analysisData: {
-          ...state.analysisData,
-          ...segmentsData
+          ...(state.analysisData || {}),
+          ...finalData
         }
       };
     case 'SET_VISUAL_RESULT':
@@ -85,7 +85,7 @@ export function workflowReducer(state: WorkflowState, action: WorkflowAction): W
           ]
         }
       };
-    default: 
+    default:
       return state;
   }
 }

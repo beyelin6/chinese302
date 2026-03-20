@@ -80,11 +80,16 @@ export const useStep4VisualsAndCasting = () => {
   };
 
   /**
-   * 🌟 [新增] 執行「靈魂選角」動態生成
+   * 🌟 [升級] 執行「靈魂選角」動態生成 (包含美學連動引擎)
    */
   const handleGenerateCastingOptions = async () => {
     // 🌟 優化：多重備援抓取課文原文
     const sourceText = state.analysisData?.fullText || state.basicAnalysisResult || "";
+
+    // 🌟 [核心新增]：讀取 Step 3 老師選定的視覺風格，傳遞給 AI
+    const visualData = typeof state.visualResult === 'string' ? JSON.parse(state.visualResult) : state.visualResult;
+    const styleName = visualData?.style?.name || '未指定風格';
+    const styleDesc = visualData?.style?.description || '';
 
     if (!sourceText || sourceText.length < 10) {
       console.error("找不到課文原文，無法執行選角分析");
@@ -93,13 +98,14 @@ export const useStep4VisualsAndCasting = () => {
     }
 
     dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_LOADING_STATUS', payload: '正在根據課文靈魂，尋找最適合的引導者...' });
+    dispatch({ type: 'SET_LOADING_STATUS', payload: '正在根據課文靈魂與視覺風格，量身打造專屬引導者...' });
 
     try {
       const prompt = `
         ${SYSTEM_PROMPT}
-        [任務目標]：執行 v9.0 視覺邏輯矩陣判定。
-        [課文原文]：${sourceText}
+        [任務目標]：執行 v12.0 萬用選角矩陣。
+        【老師已選定的全域視覺風格】：${styleName} (${styleDesc})
+        【課文原文參考】：${sourceText.substring(0, 1500)}
         
         ${STEP_4_DYNAMIC_CASTING_PROMPT}
       `;
@@ -123,7 +129,7 @@ export const useStep4VisualsAndCasting = () => {
   };
 
   /**
-   * 2. 🌟 [核心修改] 根據 性別、年齡 與 語氣 重新構思角色特徵
+   * 2. 🌟 根據 性別、年齡 與 語氣 重新構思角色特徵
    */
   const handleSuggestTraits = async (gender: string, age: string, toneLabel: string): Promise<string> => {
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -148,7 +154,7 @@ export const useStep4VisualsAndCasting = () => {
   };
 
   /**
-   * 3. 🌟 [新增] 根據 性別、年齡 與 語氣 重新構思教學風格與對白
+   * 3. 🌟 根據 性別、年齡 與 語氣 重新構思教學風格與對白
    */
   const handleSuggestTeachingStyle = async (gender: string, age: string, toneLabel: string): Promise<string> => {
     dispatch({ type: 'SET_LOADING', payload: true });

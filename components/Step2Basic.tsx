@@ -172,16 +172,16 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
   // 🛡️ 加上防呆保護，避免 undefined 造成 .filter 當機
   const handleDeleteWord = (idx: number) => {
     // 👈 確保絕對是陣列，防止 filter 報錯
-    const currentWords = data.textbookDifficultWords || []; 
+    const currentWords = data?.textbookDifficultWords || []; 
     const updated = currentWords.filter((_, i) => i !== idx);
-    setData({ ...data, textbookDifficultWords: updated });
+    setData({ ...data!, textbookDifficultWords: updated });
   };
 
   const handleDeleteIdiom = (idx: number) => {
     // 👈 確保絕對是陣列，防止 filter 報錯
-    const currentIdioms = data.idioms || []; 
+    const currentIdioms = data?.idioms || []; 
     const updated = currentIdioms.filter((_, i) => i !== idx);
-    setData({ ...data, idioms: updated });
+    setData({ ...data!, idioms: updated });
   };
 
   if (!data) return null;

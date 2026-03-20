@@ -4,7 +4,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { 
   Layout, FileText, Check, Download, ArrowLeft, Loader2, 
-  Sparkles, BookOpen, Database, Copy, Code, Zap, MessageSquare
+  Sparkles, BookOpen, Database, Copy, Code, Zap, MessageSquare,
+  Image as ImageIcon, MessageCircle, CheckCircle // 🌟 修復：補齊缺少的 Icons
 } from 'lucide-react';
 import { useWorkflowContext } from '../context/WorkflowContext';
 
@@ -32,8 +33,8 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   const [editableSlides, setEditableSlides] = useState<any[]>([]);
   const prevSlidesLength = useRef(0);
 
-  // 🌟 視角切換開關
-  const [viewMode, setViewMode] = useState<'json' | 'human'>('human'); // 預設為人類閱讀模式
+  // 🌟 視角切換開關 (右側面板使用)
+  const [viewMode, setViewMode] = useState<'json' | 'human'>('human'); 
 
   // 1. 初始化與自動觸發
   useEffect(() => {
@@ -60,14 +61,14 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   }, [outputScript]);
 
   /**
-   * 3. 🌟 [核心進化]：根據「4 大核心細節」即時封裝 Unified Data
-   * 這保證了即便在前端編輯過文字，匯出的 YAML 依然完整。
+   * 3. 🌟 核心引擎：根據當前分頁與狀態，即時封裝資料
    */
   const syncRawCode = useMemo(() => {
     if (activeTab !== 'script') {
       return activeTab === 'worksheet' ? outputWorksheet || "" : 
              activeTab === 'assessment' ? outputAssessment || "" : 
-             activeTab === 'kb' ? outputKb || "" : outputNotebookLMGuide || "";
+             activeTab === 'kb' ? outputKb || "" : 
+             activeTab === 'notebooklm' ? outputNotebookLMGuide || "" : outputGamifiedQuiz || "";
     }
 
     const safeParse = (data: any) => {
@@ -78,11 +79,9 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     const visual = safeParse(state.visualResult);
     const casting = safeParse(state.castingResult);
     const analysis = state.analysisData;
-    const vocabData = safeParse(state.deepVocabResult);
 
-    // 🌟 構建與「之前設定」完全對位的 YAML 核心結構
+    // 構建與「之前設定」完全對位的 YAML 核心結構
     const unifiedPayload = {
-      // ⚙️ NOTEBOOKLM DRIVER (系統級指令驅動)
       notebooklm_driver: {
         system_role: "You are the V-MAX Slide Architect. Generate slides based on the YAML constraints.",
         artistic_consistency: visual?.style?.code || "A",
@@ -92,40 +91,28 @@ const Step5Output: React.FC<Step5OutputProps> = ({
           guide: `${casting?.guide?.name || '導師'} | ${casting?.guide?.visualDNA || '標準人設'}`
         }
       },
-      // 🎬 第一部分：YAML 核心記錄細節 (四大細節)
       VMAX_STRUCTURE_YAML: {
-        // 1. 視覺執行協定
         global_visual_protocol: { 
           artistic_consistency: visual?.style?.code || "A", 
           image_ratio: "16:9",
           rendering_priority: "Visual DNA Consistency"
         },
-        // 2. 結構與隱喻選擇
         scaffolding_logic: {
           macro_structure: analysis?.visualStructureRecommendation || "N1 故事山",
-          micro_thinking: "C1 氣泡圖 (分析) / T1 對比圖 (辨析)",
-          visual_metaphor: visual?.metaphor?.label || "M3 故事絲帶",
-          visual_description: `必須在背景中使用「${visual?.metaphor?.label || '隱喻元素'}」串連全課。`
+          micro_thinking: "C1 氣泡圖 / T1 對比圖",
+          visual_metaphor: visual?.metaphor?.name || "隱喻設計",
+          visual_description: `必須在背景中使用「${visual?.metaphor?.name || '專屬隱喻'}」串連全課。`
         },
-        // 3. 角色視覺錨點
         visual_dna_anchor: {
           protagonist_dna: casting?.protagonist || "主角視覺 DNA",
           guide_dna: casting?.guide?.visualDNA || "導師視覺 DNA"
-        },
-        // 4. 簡報結構藍圖 (動態記錄)
-        slide_sequence_blueprint: {
-          PART_A: "導航與鷹架 (P1-P3)",
-          PART_B: "詳盡課文迴圈 (意義段解析)",
-          PART_C: "原子語文與評量 (C1-C4)",
-          PART_D_E: "策略、語文活動與結尾"
         }
       },
-      // 第三部分：原子化動態腳本
       slides: editableSlides
     };
 
     return JSON.stringify(unifiedPayload, null, 2);
-  }, [editableSlides, activeTab, state.visualResult, state.castingResult, state.analysisData, outputWorksheet, outputAssessment, outputKb, outputNotebookLMGuide]);
+  }, [editableSlides, activeTab, state.visualResult, state.castingResult, state.analysisData, outputWorksheet, outputAssessment, outputKb, outputNotebookLMGuide, outputGamifiedQuiz]);
 
   const updateSlide = (index: number, field: string, value: string) => {
     const newSlides = [...editableSlides];
@@ -145,17 +132,17 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   };
 
   const modules = [
-    { id: 'script', title: '一體化腳本', icon: Layout, data: outputScript, action: onScriptPipeline },
+    { id: 'script', title: '教學腳本', icon: Layout, data: outputScript, action: onScriptPipeline },
     { id: 'worksheet', title: '學習單', icon: FileText, data: outputWorksheet, action: () => onManualModule('worksheet') },
-    { id: 'assessment', title: '評量卷', icon: Check, data: outputAssessment, action: () => onManualModule('assessment') },
+    { id: 'assessment', title: '評量卷', icon: CheckCircle, data: outputAssessment, action: () => onManualModule('assessment') },
     { id: 'kb', title: '知識庫', icon: Database, data: outputKb, action: () => onManualModule('kb') },
-    { id: 'notebooklm', title: '操作指令', icon: BookOpen, data: outputNotebookLMGuide, action: () => onManualModule('notebooklm') },
+    { id: 'notebooklm', title: '生成指令', icon: BookOpen, data: outputNotebookLMGuide, action: () => onManualModule('notebooklm') },
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 text-slate-800 overflow-hidden animate-fade-in">
+    <div className="flex flex-col h-screen bg-slate-50 text-slate-800 overflow-hidden animate-in fade-in duration-500">
       
-      {/* 🌟 頂部導覽列 (Header)：純白底色 + 底部輕微陰影 */}
+      {/* 🌟 頂部導覽列 (Header) */}
       <div className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 flex-shrink-0 z-10 shadow-sm">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors">
@@ -197,7 +184,7 @@ const Step5Output: React.FC<Step5OutputProps> = ({
 
       <div className="flex-1 flex overflow-hidden">
         
-        {/* 左側：編輯區 (明亮版卡片設計) */}
+        {/* 左側：編輯區 / 文件閱讀區 */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50">
           <div className="max-w-3xl mx-auto space-y-6 pb-20">
             {activeTab === 'script' ? (
@@ -217,17 +204,15 @@ const Step5Output: React.FC<Step5OutputProps> = ({
                       <textarea 
                         value={slide.displayText} 
                         onChange={(e) => updateSlide(idx, 'displayText', e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm font-bold text-slate-800 focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
+                        className="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm font-bold text-slate-800 focus:ring-1 focus:ring-indigo-500 outline-none resize-none min-h-[60px]"
                         placeholder="投影片顯示文字 (100% 原文鎖定)..."
-                        rows={2}
                       />
                       <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
                         <textarea 
                           value={slide.guideTalk} 
                           onChange={(e) => updateSlide(idx, 'guideTalk', e.target.value)}
-                          className="w-full bg-transparent border-none p-0 text-sm text-slate-700 leading-relaxed font-medium focus:ring-0 outline-none resize-none italic"
+                          className="w-full bg-transparent border-none p-0 text-sm text-slate-700 leading-relaxed font-medium focus:ring-0 outline-none resize-none italic min-h-[60px]"
                           placeholder="導師引導語腳本..."
-                          rows={2}
                         />
                       </div>
                       <div className="text-[10px] font-mono text-slate-400 break-all line-clamp-1 hover:line-clamp-none transition-all">
@@ -237,70 +222,82 @@ const Step5Output: React.FC<Step5OutputProps> = ({
                   </div>
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                <div className="flex flex-col items-center justify-center py-32 text-slate-400">
                   <Loader2 size={40} className="animate-spin mb-4 text-indigo-500" />
                   <p className="font-bold text-sm tracking-widest uppercase">Executing Digital Twin Protocol...</p>
                 </div>
               )
             ) : (
-              <div className="bg-white rounded-2xl p-8 border border-slate-200 prose prose-slate max-w-none shadow-sm">
-                <ReactMarkdown>{syncRawCode}</ReactMarkdown>
+              // 🌟 其他模組 (學習單/測驗等) 的 Markdown 渲染
+              <div className="bg-white rounded-2xl p-8 border border-slate-200 prose prose-slate max-w-none shadow-sm min-h-[600px]">
+                {syncRawCode ? (
+                  <ReactMarkdown>{syncRawCode}</ReactMarkdown>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-slate-400 mt-20">
+                    <Loader2 size={40} className="animate-spin mb-4 text-indigo-500" />
+                    <p className="font-bold">AI 正在為您撰寫 {modules.find(m => m.id === activeTab)?.title}...</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* 右側：即時碼 / 劇本預覽 (明亮版) */}
-        <div className="w-[480px] border-l border-slate-200 bg-slate-50 flex flex-col">
+        {/* 右側：即時碼 / 劇本預覽 */}
+        <div className="w-[480px] border-l border-slate-200 bg-slate-50 flex flex-col shadow-[-10px_0_15px_-10px_rgba(0,0,0,0.05)] z-10">
           <div className="px-4 py-3 bg-white border-b border-slate-200 flex justify-between items-center">
             
-            {/* 🌟 視角切換開關 */}
-            <div className="flex bg-slate-100 p-1 rounded-lg">
-              <button 
-                onClick={() => setViewMode('human')}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'human' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                劇本模式
-              </button>
-    <button 
-      onClick={() => setViewMode('json')}
-      className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'json' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-    >
-      原始碼
-    </button>
-            </div>
+            {/* 🌟 只有在 script 頁籤才顯示「人類/JSON切換開關」 */}
+            {activeTab === 'script' ? (
+              <div className="flex bg-slate-100 p-1 rounded-lg">
+                <button 
+                  onClick={() => setViewMode('human')}
+                  className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'human' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  劇本預覽
+                </button>
+                <button 
+                  onClick={() => setViewMode('json')}
+                  className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'json' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  JSON 原始碼
+                </button>
+              </div>
+            ) : (
+              <div className="text-sm font-black text-slate-700 flex items-center gap-2">
+                <Code size={16} className="text-indigo-500" /> 純文字數據
+              </div>
+            )}
 
-            <button onClick={() => { navigator.clipboard.writeText(syncRawCode); setIsCopied(true); setTimeout(()=>setIsCopied(false), 2000); }} className="text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 text-xs font-bold bg-slate-100 px-2 py-1 rounded-md">
+            <button onClick={() => { navigator.clipboard.writeText(syncRawCode); setIsCopied(true); setTimeout(()=>setIsCopied(false), 2000); }} className="text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1 text-xs font-bold bg-slate-100 px-3 py-1.5 rounded-lg active:scale-95">
               {isCopied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
-              複製全文
+              {isCopied ? '已複製' : '複製全部'}
             </button>
           </div>
+          
           <div className="flex-1 p-4 overflow-y-auto custom-scrollbar bg-[#f8fafc]">
-            {viewMode === 'json' ? (
-              <pre className="whitespace-pre-wrap break-words font-mono text-xs text-slate-700">
-                <code>{syncRawCode}</code>
-              </pre>
-            ) : (
-              <div className="space-y-6 font-sans">
+            {activeTab === 'script' && viewMode === 'human' ? (
+              // 🌟 劇本卡片模式
+              <div className="space-y-4">
                 {editableSlides.map((slide, idx) => (
-                  <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div key={idx} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                     <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
                       <span className="font-black text-indigo-700 text-sm">P{slide.page_number || (idx+1)}: {slide.title}</span>
-                      <span className="text-[10px] bg-slate-100 text-slate-400 px-2 py-1 rounded font-mono uppercase tracking-tighter">{slide.type}</span>
+                      <span className="text-[9px] bg-slate-100 text-slate-400 px-2 py-0.5 rounded font-mono uppercase tracking-tighter">{slide.type}</span>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                        <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                          <span className="text-[10px] font-bold text-slate-400 block mb-1">🖼️ 視覺場景設定 (VISUAL_PROMPT)</span>
-                          <p className="text-xs text-slate-600 italic font-mono leading-relaxed">{slide.visual_prompt}</p>
+                          <span className="text-[10px] font-bold text-slate-400 block mb-1 flex items-center gap-1"><ImageIcon size={12}/> 場景提示 (Prompt)</span>
+                          <p className="text-[11px] text-slate-600 italic font-mono leading-relaxed line-clamp-2" title={slide.visual_prompt}>{slide.visual_prompt}</p>
                        </div>
                        <div>
-                          <span className="text-[10px] font-bold text-slate-400 block mb-1">📝 投影片文字 (DISPLAY_TEXT)</span>
-                          <p className="text-sm text-slate-800 font-bold whitespace-pre-wrap">{slide.displayText}</p>
+                          <span className="text-[10px] font-bold text-slate-500 block mb-1 flex items-center gap-1"><Layout size={12}/> 畫面文字 (Text)</span>
+                          <p className="text-sm text-slate-800 font-bold whitespace-pre-wrap leading-snug">{slide.displayText}</p>
                        </div>
                        <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
-                          <span className="text-[10px] font-bold text-indigo-400 block mb-1">🧑🏫 導師台詞 (GUIDE_TALK)</span>
-                          <p className="text-sm text-indigo-900 leading-relaxed font-medium">
-                            {slide.guideAction && <span className="text-indigo-500 italic mr-2 text-xs">({slide.guideAction})</span>}
+                          <span className="text-[10px] font-bold text-indigo-400 block mb-1 flex items-center gap-1"><MessageCircle size={12}/> 導師台詞 (Speech)</span>
+                          <p className="text-xs text-indigo-900 leading-relaxed font-medium">
+                            {slide.guideAction && <span className="text-indigo-500 italic mr-1">({slide.guideAction})</span>}
                             {slide.guideTalk}
                           </p>
                        </div>
@@ -308,6 +305,11 @@ const Step5Output: React.FC<Step5OutputProps> = ({
                   </div>
                 ))}
               </div>
+            ) : (
+              // 💻 JSON 原始碼 / 其他模組純文字模式
+              <pre className="whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-slate-600 bg-slate-100/50 p-4 rounded-xl border border-slate-200">
+                <code>{syncRawCode}</code>
+              </pre>
             )}
           </div>
           <div className="p-3 bg-indigo-50 border-t border-slate-200 text-[9px] text-indigo-400 font-bold font-mono">
