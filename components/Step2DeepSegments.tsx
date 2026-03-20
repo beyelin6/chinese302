@@ -5,6 +5,7 @@ import { Brain, Edit2, Trash2, Check, X, Plus, RefreshCw, Layers, ArrowRight, Sp
 import { AnalysisData, SegmentItem, StrategyItem } from '../types';
 import { Step2WritingFocus } from './Step2WritingFocus';
 import { useWorkflowContext } from '../context/WorkflowContext';
+import { sanitizeAndParseJSON } from '../utils/jsonParser';
 
 // 🛡️ [防崩潰裝甲]：確保所有送入 JSX 渲染的變數絕對是「字串」
 const safeRender = (val: any): string => {
@@ -77,7 +78,7 @@ const LanguageActivityCard = ({ activity, idx, onGenerateExtraActivity, grade }:
 interface Step2DeepSegmentsProps {
   currentData: AnalysisData; // Context (Basic + Vocab)
   deepSegmentsResult: string | null; // The raw JSON string from Step 2.75
-  onConfirmSegments: (refinedAnalysis: string) => void;
+  onConfirmSegments: (refinedAnalysis: AnalysisData) => void;
   isLoading: boolean;
   onRegenerateStrategies: (data: AnalysisData) => Promise<StrategyItem[]>;
   onGenerateSingleStrategy: (data: AnalysisData, existingStrategies: StrategyItem[], targetType?: string) => Promise<StrategyItem | null>;
@@ -130,14 +131,15 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
     try {
       if (!deepSegmentsResult) return;
 
-      let cleanJson = deepSegmentsResult;
-      if (cleanJson.includes('```json')) {
-        cleanJson = cleanJson.replace(/```json/g, '').replace(/```/g, '');
-      } else if (cleanJson.includes('```')) {
-        cleanJson = cleanJson.replace(/```/g, '');
-      }
+      // 🌟 [優化] 使用全域 JSON 解析工具，增加容錯與修復能力
+      const parsed = typeof deepSegmentsResult === 'object' 
+        ? deepSegmentsResult 
+        : sanitizeAndParseJSON(deepSegmentsResult);
       
-      const parsed = JSON.parse(cleanJson);
+      if (!parsed) {
+        setParseError("解析深度解構資料失敗：結果為空。");
+        return;
+      }
       
       // Merge Segments Data with Previous Data
       const mergedData: AnalysisData = {
@@ -166,8 +168,16 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
   }, [deepSegmentsResult, currentData]);
 
   const handleConfirm = () => {
-    const refinedAnalysisString = JSON.stringify(data, null, 2);
-    onConfirmSegments(refinedAnalysisString);
+    console.log("Confirming Deep Segments...", { isEditingAny, data });
+    if (isEditingAny) {
+      alert("請先完成所有編輯（點擊儲存按鈕）後再繼續。");
+      return;
+    }
+    if (!data) {
+      alert("資料尚未載入完成，請稍候。");
+      return;
+    }
+    onConfirmSegments(data);
   };
 
   // --- Handlers ---

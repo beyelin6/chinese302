@@ -51,7 +51,12 @@ export function workflowReducer(state: WorkflowState, action: WorkflowAction): W
     case 'SET_SEGMENTS_RESULT':
       return { ...state, deepSegmentsResult: action.payload };
     case 'SET_DEEP_SEGMENTS_RESULT':
-      return { ...state, deepSegmentsResult: action.payload };
+      const finalData = typeof action.payload === 'string' ? JSON.parse(action.payload) : action.payload;
+      return { 
+        ...state, 
+        deepSegmentsResult: action.payload,
+        analysisData: finalData 
+      };
     case 'SET_VISUAL_RESULT':
       return { ...state, visualResult: action.payload };
     case 'SET_CASTING_RESULT':

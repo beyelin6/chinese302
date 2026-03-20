@@ -7,6 +7,7 @@ import {
   Edit3, Loader2 
 } from 'lucide-react';
 import { VisualData, RecStyleItem, RecMetaphorItem } from '../types';
+import { sanitizeAndParseJSON } from '../utils/jsonParser';
 
 // 🌟 [SSOT 對齊] 載入 A-Y 全量風格庫
 const ALL_STYLE_OPTIONS: RecStyleItem[] = [
@@ -61,8 +62,12 @@ const Step3Visuals: React.FC<Step3VisualsProps> = ({ visualResult, onConfirmVisu
   useEffect(() => {
     if (!visualResult) return;
     try {
-      const cleanJson = visualResult.replace(/```json/g, '').replace(/```/g, '');
-      const parsed = JSON.parse(cleanJson);
+      // 🌟 [優化] 使用全域 JSON 解析工具，增加容錯與修復能力
+      const parsed = typeof visualResult === 'object' 
+        ? visualResult 
+        : sanitizeAndParseJSON(visualResult);
+      
+      if (!parsed) return;
       
       // 🌟 [修復對齊]：正確抓取 AI 推薦的隱喻
       const recommendations = parsed.recommendations || [];

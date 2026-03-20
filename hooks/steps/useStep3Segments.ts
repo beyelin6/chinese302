@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { useWorkflowContext } from '../../context/WorkflowContext';
-import { AppStep } from '../../types';
+import { AppStep, AnalysisData } from '../../types';
 import { sendMessageToGemini } from '../../services/gemini';
 import { sanitizeAndParseJSON } from '../../utils/jsonParser';
 import { 
@@ -122,14 +122,10 @@ export const useStep3Segments = () => {
     }
   };
 
-  const handleStep2DeepSegmentsConfirm = async (finalDataString: string) => {
-    if (isProcessing.current) return;
-    isProcessing.current = true;
-    
-    dispatch({ type: 'SET_DEEP_SEGMENTS_RESULT', payload: finalDataString });
-    dispatch({ type: 'SET_SEGMENTS_RESULT', payload: finalDataString });
+  const handleStep2DeepSegmentsConfirm = (finalData: AnalysisData) => {
+    // 🌟 直接傳遞物件，減少序列化開銷
+    dispatch({ type: 'SET_DEEP_SEGMENTS_RESULT', payload: finalData });
     dispatch({ type: 'SET_STEP', payload: AppStep.STEP_4_VISUALS });
-    isProcessing.current = false;
   };
 
   const handleRegenerateStrategies = async (currentSegments: any) => {

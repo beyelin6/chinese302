@@ -24,6 +24,7 @@ export const useStep4VisualsAndCasting = () => {
    * 從原始文本中掃描視覺 DNA
    */
   const handleGenerateVisualOptions = async () => {
+    console.log("Generating Visual Options...", { currentStep: state.currentStep, visualResult: state.visualResult });
     // 核心：抓取最初上傳的 rawText (最精準的資料來源)
     const sourceText = state.analysisData?.fullText || state.basicAnalysisResult; 
 

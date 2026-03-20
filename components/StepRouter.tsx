@@ -4,6 +4,7 @@ import React, { Suspense, lazy, useMemo } from 'react';
 import { AppStep } from '../types';
 import { useWorkflowContext } from '../context/WorkflowContext';
 import { Loader2 } from 'lucide-react';
+import { sanitizeAndParseJSON } from '../utils/jsonParser';
 
 // 🌟 [優化 1] 延遲載入所有組件，解決 429 請求過載問題
 const Step1Input = lazy(() => import('./Step1Input'));
@@ -53,17 +54,12 @@ export default function StepRouter() {
   } = useStep4VisualsAndCasting();
   const { handleScriptPipeline, handleManualModule } = useStep5Output();
 
-  // 🌟 [保留] 您的原始 JSON 解析邏輯
-  const parseJSON = (json: string | null) => {
+  // 🌟 [優化] 使用全域 JSON 解析工具，增加容錯與修復能力
+  const parseJSON = (json: any) => {
     if (!json) return null;
+    if (typeof json === 'object') return json;
     try {
-      let cleanJson = json;
-      if (cleanJson.includes('```json')) {
-        cleanJson = cleanJson.replace(/```json/g, '').replace(/```/g, '');
-      } else if (cleanJson.includes('```')) {
-        cleanJson = cleanJson.replace(/```/g, '');
-      }
-      return JSON.parse(cleanJson);
+      return sanitizeAndParseJSON(json);
     } catch (e) {
       console.error("StepRouter JSON 解析失敗:", e);
       return null;
