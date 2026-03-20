@@ -51,11 +51,15 @@ export function workflowReducer(state: WorkflowState, action: WorkflowAction): W
     case 'SET_SEGMENTS_RESULT':
       return { ...state, deepSegmentsResult: action.payload };
     case 'SET_DEEP_SEGMENTS_RESULT':
-      const finalData = typeof action.payload === 'string' ? JSON.parse(action.payload) : action.payload;
+      const segmentsData = typeof action.payload === 'string' ? JSON.parse(action.payload) : action.payload;
       return { 
         ...state, 
         deepSegmentsResult: action.payload,
-        analysisData: finalData 
+        // 🌟 關鍵修正：使用合併方式，保留原本的 basicInfo, fullText 等重要資料
+        analysisData: {
+          ...state.analysisData,
+          ...segmentsData
+        }
       };
     case 'SET_VISUAL_RESULT':
       return { ...state, visualResult: action.payload };

@@ -7,6 +7,7 @@ import { sanitizeAndParseJSON } from '../../utils/jsonParser';
 
 // 確保這些 Prompt 已在 constants.ts 中定義
 import { 
+  SYSTEM_PROMPT,
   STEP_3_CASTING_PROMPT_PREFIX as STEP_4_CASTING_PROMPT_PREFIX,
   EXTRACT_IMAGE_TRAITS_PROMPT,
   GUIDE_TEACHING_STYLE_SUGGESTION_PROMPT,
@@ -82,36 +83,39 @@ export const useStep4VisualsAndCasting = () => {
    * 🌟 [新增] 執行「靈魂選角」動態生成
    */
   const handleGenerateCastingOptions = async () => {
-    if (!state.analysisData) return;
-    
+    // 🌟 優化：多重備援抓取課文原文
+    const sourceText = state.analysisData?.fullText || state.basicAnalysisResult || "";
+
+    if (!sourceText || sourceText.length < 10) {
+      console.error("找不到課文原文，無法執行選角分析");
+      dispatch({ type: 'SET_ERROR', payload: '系統遺失課文原文，請嘗試返回第一步重新上傳。' });
+      return;
+    }
+
     dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_LOADING_STATUS', payload: '執行視覺邏輯矩陣判定中...' });
+    dispatch({ type: 'SET_LOADING_STATUS', payload: '正在根據課文靈魂，尋找最適合的引導者...' });
 
     try {
-      // 🌟 [對齊關鍵]：提供 Step 1 萃取出的文體資訊
-      const genre = state.analysisData.basicInfo?.genre || "未指定";
-      const subject = state.analysisData.basicInfo?.subject || "一般主題";
-
       const prompt = `
-        ${STEP_4_DYNAMIC_CASTING_PROMPT}
+        ${SYSTEM_PROMPT}
+        [任務目標]：執行 v9.0 視覺邏輯矩陣判定。
+        [課文原文]：${sourceText}
         
-        【待判定文本資訊】
-        文體：${genre}
-        主題：${subject}
-        課文原文：${state.analysisData.fullText}
+        ${STEP_4_DYNAMIC_CASTING_PROMPT}
       `;
 
-      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.1 });
-      const parsed = sanitizeAndParseJSON(response);
-
-      // 🛡️ [防崩潰檢查]：確保 candidates 存在
-      if (!parsed.candidates || parsed.candidates.length === 0) {
-        throw new Error("AI 未能產生導師候選人，請重試。");
+      const response = await sendMessageToGemini(prompt, [], 0);
+      const castingOptions = sanitizeAndParseJSON(response);
+      
+      // 檢查回傳結構是否完整
+      if (!castingOptions || !castingOptions.candidates) {
+        throw new Error("AI 回傳的資料結構不完整");
       }
 
-      dispatch({ type: 'SET_CASTING_RESULT', payload: JSON.stringify(parsed) });
+      dispatch({ type: 'SET_CASTING_RESULT', payload: JSON.stringify(castingOptions) });
     } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
+      console.error("Casting Analysis Error:", error);
+      dispatch({ type: 'SET_ERROR', payload: '選角分析失敗：' + error.message });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
       dispatch({ type: 'SET_LOADING_STATUS', payload: null });
