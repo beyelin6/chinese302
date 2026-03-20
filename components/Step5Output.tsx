@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { 
   Layout, FileText, Check, Download, ArrowLeft, Loader2, 
-  Sparkles, BookOpen, Database, Copy, Code, Zap
+  Sparkles, BookOpen, Database, Copy, Code, Zap, MessageSquare
 } from 'lucide-react';
 import { useWorkflowContext } from '../context/WorkflowContext';
 
@@ -262,12 +262,12 @@ const Step5Output: React.FC<Step5OutputProps> = ({
               >
                 劇本模式
               </button>
-              <button 
-                onClick={() => setViewMode('json')}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'json' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                JSON 程式碼
-              </button>
+    <button 
+      onClick={() => setViewMode('json')}
+      className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'json' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+    >
+      原始碼
+    </button>
             </div>
 
             <button onClick={() => { navigator.clipboard.writeText(syncRawCode); setIsCopied(true); setTimeout(()=>setIsCopied(false), 2000); }} className="text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 text-xs font-bold bg-slate-100 px-2 py-1 rounded-md">
@@ -275,35 +275,35 @@ const Step5Output: React.FC<Step5OutputProps> = ({
               複製全文
             </button>
           </div>
-          <div className="flex-1 p-4 font-mono text-xs leading-relaxed text-slate-700 overflow-y-auto custom-scrollbar bg-[#f8fafc]">
+          <div className="flex-1 p-4 overflow-y-auto custom-scrollbar bg-[#f8fafc]">
             {viewMode === 'json' ? (
-              <pre className="whitespace-pre-wrap break-words">
+              <pre className="whitespace-pre-wrap break-words font-mono text-xs text-slate-700">
                 <code>{syncRawCode}</code>
               </pre>
             ) : (
               <div className="space-y-6 font-sans">
                 {editableSlides.map((slide, idx) => (
-                  <div key={idx} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                  <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
-                      <span className="font-black text-indigo-700 text-sm">#{slide.page_number || idx + 1} {slide.title}</span>
-                      <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-md font-mono">{slide.lens}</span>
+                      <span className="font-black text-indigo-700 text-sm">P{slide.page_number || (idx+1)}: {slide.title}</span>
+                      <span className="text-[10px] bg-slate-100 text-slate-400 px-2 py-1 rounded font-mono uppercase tracking-tighter">{slide.type}</span>
                     </div>
-                    <div className="space-y-3 text-sm">
-                      <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                        <span className="font-bold text-slate-500 text-xs block mb-1">🖼️ 畫面提示 (Visual)</span>
-                        <span className="text-slate-600">{slide.visual_prompt}</span>
-                      </div>
-                      <div>
-                        <span className="font-bold text-slate-500 text-xs block mb-1">📝 顯示文字 (Text)</span>
-                        <div className="text-slate-800 font-medium whitespace-pre-wrap">{slide.displayText}</div>
-                      </div>
-                      <div className="bg-indigo-50/50 p-2 rounded-lg border border-indigo-100">
-                        <span className="font-bold text-indigo-400 text-xs block mb-1">🧑‍🏫 導師台詞 (Speech)</span>
-                        <span className="text-indigo-900 font-medium">
-                          {slide.guideAction ? <span className="text-indigo-500 italic mr-1">({slide.guideAction})</span> : null}
-                          {slide.guideTalk}
-                        </span>
-                      </div>
+                    <div className="space-y-4">
+                       <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                          <span className="text-[10px] font-bold text-slate-400 block mb-1">🖼️ 視覺場景設定 (VISUAL_PROMPT)</span>
+                          <p className="text-xs text-slate-600 italic font-mono leading-relaxed">{slide.visual_prompt}</p>
+                       </div>
+                       <div>
+                          <span className="text-[10px] font-bold text-slate-400 block mb-1">📝 投影片文字 (DISPLAY_TEXT)</span>
+                          <p className="text-sm text-slate-800 font-bold whitespace-pre-wrap">{slide.displayText}</p>
+                       </div>
+                       <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                          <span className="text-[10px] font-bold text-indigo-400 block mb-1">🧑🏫 導師台詞 (GUIDE_TALK)</span>
+                          <p className="text-sm text-indigo-900 leading-relaxed font-medium">
+                            {slide.guideAction && <span className="text-indigo-500 italic mr-2 text-xs">({slide.guideAction})</span>}
+                            {slide.guideTalk}
+                          </p>
+                       </div>
                     </div>
                   </div>
                 ))}

@@ -250,36 +250,19 @@ export const useStep5Output = () => {
     }
   };
 
-  // 🌟 [史詩級升級] 動態注入版指南生成器 (包含智能分批目錄)
+  // 🌟 史詩級升級：自動計算分批產出目錄的引擎
   const generateNotebookLMGuide = (castingData: any, vocab: any[], analysisData: any, visualData: any, slides: any[]) => {
     const guide = castingData?.guide || {};
-
-    // 1. 萃取基本資訊
     const grade = analysisData?.basicInfo?.grade || '';
     const unitName = analysisData?.basicInfo?.unitName || '未命名課文';
     const today = new Date().toISOString().split('T')[0];
-    const visualStyle = visualData?.style?.name || visualData?.style?.code || '預設風格';
-    const visualMetaphor = visualData?.metaphor?.name || visualData?.metaphor?.label || '預設隱喻';
 
-    // 2. 萃取語音精準打擊焦點 (Audio Focus)
+    // 1. 計算語音焦點
     const selectedVocabs = vocab.filter(v => v.isSelected).map(v => v.word).join('、');
-    const rhetoricsList = analysisData?.segments
-      ?.flatMap((s: any) => s.rhetorics?.map((r: any) => r.name) || [])
-      .filter((name: any) => name) || [];
-    const uniqueRhetorics = Array.from(new Set(rhetoricsList)).join('、');
+    let audioFocus = selectedVocabs ? `1. 深入辨析生字的部首與形近字口訣：${selectedVocabs}\n` : '';
+    audioFocus += `2. 探討本課的主旨、結構與寫作修辭手法。`;
 
-    let audioFocus = '';
-    if (selectedVocabs) audioFocus += `1. 深入辨析以下生字的部首與形近字口訣：${selectedVocabs}\n`;
-    if (uniqueRhetorics) audioFocus += `2. 探討本課使用的寫作手法與修辭效果：${uniqueRhetorics}\n`;
-    if (!audioFocus) audioFocus = '深入探討本課的段落大意與核心主旨。';
-
-    // 3. 處理導師視覺 DNA
-    let guideDNA = guide.visualDNA || "";
-    if (!guideDNA || guideDNA.includes("預設")) {
-      guideDNA = "身穿俐落的現代教學套裝，帶著親切且自信的微笑，常以手勢指示畫面的重點。";
-    }
-
-    // 🌟 4. [神級優化] 動態分批目錄生成 (Dynamic Batching Directory)
+    // 2. 🌟 關鍵優化：自動生成分批目錄
     let batchingDirectory = '';
     const batches: Record<string, { title: string, pages: string[] }> = {
       'PART A': { title: '第一批｜導航與結構', pages: [] },
@@ -289,37 +272,29 @@ export const useStep5Output = () => {
       'PART E': { title: '第五批｜評量與結尾', pages: [] }
     };
 
-    // 將投影片自動分類到對應的批次
     slides.forEach(slide => {
-      const partLabel = slide.part_label || 'PART A';
-      if (batches[partLabel]) {
-        batches[partLabel].pages.push(`  P${slide.page_number} ${slide.title}`);
-      } else {
-        batches['PART D'].pages.push(`  P${slide.page_number} ${slide.title}`);
-      }
+      const label = slide.part_label || 'PART A';
+      if (batches[label]) batches[label].pages.push(`  P${slide.page_number} ${slide.title}`);
     });
 
-    // 組裝精美的目錄字串
     Object.values(batches).forEach(batch => {
       if (batch.pages.length > 0) {
-        const firstP = batch.pages[0].match(/P(\d+)/)?.[1] || "";
-        const lastP = batch.pages[batch.pages.length - 1].match(/P(\d+)/)?.[1] || "";
-        batchingDirectory += `\n【${batch.title}】 (建議複製指令：請接續產出 P${firstP} 到 P${lastP} 的投影片)\n`;
-        batchingDirectory += batch.pages.join('\n') + '\n';
+        const first = batch.pages[0].match(/P(\d+)/)?.[1];
+        const last = batch.pages[batch.pages.length - 1].match(/P(\d+)/)?.[1];
+        batchingDirectory += `\n【${batch.title}】 (建議複製指令：請接續產出 P${first} 到 P${last} 的投影片)\n${batch.pages.join('\n')}\n`;
       }
     });
 
-    // 5. 動態替換模板
     return PROMPT_GENERATE_NOTEBOOKLM_GUIDE
-      .replace('{KERNEL_VERSION}', "v10.0-DNA-Purity")
+      .replace('{KERNEL_VERSION}', "v59.3-DNA-Purity")
       .replace('{GRADE}', grade)
       .replace('{UNIT_NAME}', unitName)
       .replace('{GUIDE_NAME}', guide.name || '導師')
       .replace('{GUIDE_PERSONA}', guide.persona || '專業')
-      .replace('{VISUAL_STYLE}', visualStyle)
-      .replace('{VISUAL_METAPHOR}', visualMetaphor)
+      .replace('{VISUAL_STYLE}', visualData?.style?.name || '預設')
+      .replace('{VISUAL_METAPHOR}', visualData?.metaphor?.name || '預設')
       .replace('{DATE}', today)
-      .replace(/{GUIDE_DNA}/g, guideDNA)
+      .replace(/{GUIDE_DNA}/g, guide.visualDNA || "")
       .replace('{AUDIO_FOCUS}', audioFocus)
       .replace('{BATCHING_DIRECTORY}', batchingDirectory);
   };

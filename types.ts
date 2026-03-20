@@ -211,6 +211,7 @@ export interface CastingData {
     description: string;
     visualDNA: string;
     isNone: boolean;
+    verification?: string; // 🌟 新增：AI 判定根據
     // Optional fields for backward compatibility
     gender?: string;
     age?: string;

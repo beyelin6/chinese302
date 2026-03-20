@@ -499,6 +499,19 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
                    className="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm font-mono text-slate-700 shadow-inner outline-none focus:ring-2 focus:ring-blue-500"
                    rows={4}
                  />
+                 {data.protagonist?.verification && (
+                   <div className="mt-3 flex gap-2 items-start p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+                     <div className="bg-indigo-100 p-1 rounded-md text-indigo-600 mt-0.5">
+                       <Sparkles size={12} />
+                     </div>
+                     <div className="flex-1">
+                       <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">AI 角色判定根據</div>
+                       <p className="text-[11px] text-indigo-700 leading-relaxed font-medium">
+                         {data.protagonist.verification}
+                       </p>
+                     </div>
+                   </div>
+                 )}
               </div>
             </div>
           </div>
