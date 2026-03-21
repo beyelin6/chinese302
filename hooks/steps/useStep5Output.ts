@@ -36,7 +36,7 @@ export const useStep5Output = () => {
     const metaphorLabel = visualDNA?.metaphor?.label || "主題隱喻";
     const metaphorDesc = visualDNA?.metaphor?.description || `在畫面背景與過場中，必須巧妙融入【${metaphorLabel}】的視覺元素，藉此串連全課情境。`;
 
-    // 2. 深度萃取角色 DNA (過濾掉無用的預設字眼)
+    // 2. 深度萃取角色 DNA
     const protagDNA = casting?.protagonist || "符合課文情境的核心人物，保持清晰的臉部特徵與連貫的服裝設定。";
     const guideName = casting?.guide?.name || "V-MAX 導師";
     const guidePersona = casting?.guide?.persona || "專業、溫暖、具啟發性";
@@ -46,7 +46,7 @@ export const useStep5Output = () => {
         guideDNA = "身穿俐落的現代教學套裝，帶著親切且自信的微笑，常以手勢指示畫面的重點。";
     }
 
-    // 3. 🌟 [新增] 絕對頁碼注入器 (Absolute Page Injector)
+    // 3. 🌟 [新增] 絕對頁碼注入器
     const numberedSlides = slides.map((slide, index) => {
       const { page_number, ...restProps } = slide; 
       return {
@@ -113,7 +113,7 @@ export const useStep5Output = () => {
       const languageActivities = analysisData?.languageActivities || [];
       const strategies = segmentsData?.strategies || [];
 
-      // 1. 🌟 [精準對位藍圖] 建立分段藍圖
+      // 1. 🌟 [精準對位藍圖] 建立分段藍圖 (加入 QuizCard 新版型邏輯)
       const blueprint = [
         { part: 'PART A', type: 'Cover', title: '封面' },
         { part: 'PART A', type: 'MissionNav', title: '任務導覽' },
@@ -131,8 +131,17 @@ export const useStep5Output = () => {
         
         ...segments.flatMap((s: any, idx: number) => {
           const chunk = [{ part: 'PART B', type: 'ContentFocus', title: `段落 ${idx+1}: 內容對焦`, segment: s }];
-          if (s.difficultWords?.length > 1 || s.questions?.length > 0 || s.rhetorics?.length > 0) {
-            chunk.push({ part: 'PART B', type: 'DeepDive', title: `段落 ${idx+1}: 深究特寫`, segment: s });
+          
+          // 🌟 根據您的新規格，拆分 DeepDive 與 QuizCard
+          const hasDeepDive = s.difficultWords?.length > 0 || s.rhetorics?.length > 0 || s.sentencePatterns?.length > 0;
+          const hasQuiz = s.readingQuestions?.length > 0 || s.dokQuestions?.length > 0 || s.questions?.length > 0;
+
+          if (hasDeepDive) {
+            chunk.push({ part: 'PART B', type: 'DeepDive', title: `段落 ${idx+1}: 深究特寫`, segment: { difficultWords: s.difficultWords, rhetorics: s.rhetorics, sentencePatterns: s.sentencePatterns } });
+          }
+          
+          if (hasQuiz) {
+            chunk.push({ part: 'PART B', type: 'QuizCard', title: `段落 ${idx+1}: 閱讀小挑戰`, segment: { readingQuestions: s.readingQuestions, dokQuestions: s.dokQuestions, questions: s.questions } });
           }
           return chunk;
         }),
@@ -186,6 +195,7 @@ export const useStep5Output = () => {
         const chunk = blueprint.slice(i, i + chunkSize);
         dispatch({ type: 'SET_LOADING_STATUS', payload: `正在產出 ${chunk[0].part} (進度: ${i}/${blueprint.length})` });
 
+        // 🌟🌟🌟 全面植入「排版與鏡頭 (Layout & Lens) 絕對領域」 🌟🌟🌟
         const prompt = `
           ${SYSTEM_PROMPT}
           ${FINAL_ATOMIC_SCRIPT_PROMPT}
@@ -196,11 +206,21 @@ export const useStep5Output = () => {
           # 任務：生成第 ${i+1} 至 ${Math.min(i+chunkSize, blueprint.length)} 頁
           ${chunk.map((b, idx) => `${i + idx + 1}. [${b.type}] ${b.title}`).join('\n')}
           
+          # 🚨 [CRITICAL] 視覺版面與鏡頭分配法則 (Layout & Lens Protocol)
+          你必須嚴格根據投影片的 \`type\`，在 JSON 中強制輸出對應的 \`layout\` 與 \`lens\` 屬性。請絕對遵守以下 1:1 映射表：
+          - [ContentFocus] => layout: "wide-scene", lens: "廣角 (Exhale)"
+          - [DeepDive] => layout: "close-tool", lens: "特寫 (Inhale)"
+          - [QuizCard] => layout: "quiz-card", lens: "單圖資訊板 (Single Info Board)"
+          - [ShapeSimilar] => lens: "左右分割對比大字排版 (Split Screen, Large Text)"。layout請判斷: 若為2字組用 "split-2", 3字組用 "grid-3", 4字組用 "grid-4"。
+          - [Polyphonic] => lens: "天平對比大字排版 (Balance Screen, Large Text)"。layout請判斷: 若為2讀音用 "compare-scale", 3讀音用 "triptych"。
+          - [IdiomLoop] => layout: "story-panel", lens: "單一滿版大圖配大字 (Single Full Image, Huge Text Overlay)"
+          - [LanguageActivity] => layout: "pattern-drill" 或 "punctuation-chart" 或 "phrase-demo", lens: "單圖大字互動舞台 (Single Image, Large Text)"
+          - [Strategy] => layout: "info-flow" 或 "step-flow", lens: "單圖大字百寶箱 (Single Box Focus, Large Text)"
+          - 其他 (Cover/Ending/MissionNav/Assessment) => 請自行判斷最適合的單圖或廣角版型。
+
           # 頁面特定邏輯說明：
-          - 若遇到 [FusionMap]：
-            1. 請務必利用資料中的 quickGrasp 清單。
-            2. 關鍵詞標籤必須精確對應段落。
-            3. 優先選擇『動詞』+『核心物件』，讓教師能一眼掌握段落意義。
+          - 若遇到 [FusionMap]：必須利用 quickGrasp 清單，關鍵詞標籤精確對應段落。
+          - 若遇到 [QuizCard]：請將題目分裝為【提取】(藍色標籤) 與【推論】(琥珀色標籤) 格式。
           
           # 參考數據：
           ${JSON.stringify(chunk)}
@@ -233,19 +253,17 @@ export const useStep5Output = () => {
     }
   };
 
-  // 🌟 史詩級升級：自動計算分批產出目錄的引擎
+  // 自動計算分批產出目錄的引擎
   const generateNotebookLMGuide = (castingData: any, vocab: any[], analysisData: any, visualData: any, slides: any[]) => {
     const guide = castingData?.guide || {};
     const grade = analysisData?.basicInfo?.grade || '';
     const unitName = analysisData?.basicInfo?.unitName || '未命名課文';
     const today = new Date().toISOString().split('T')[0];
 
-    // 1. 計算語音焦點 (相容 isSelected 或 isFocused)
     const selectedVocabs = vocab.filter((v: any) => v.isSelected || v.isFocused).map((v: any) => v.word).join('、');
     let audioFocus = selectedVocabs ? `1. 深入辨析生字的部首與形近字口訣：${selectedVocabs}\n` : '';
     audioFocus += `2. 探討本課的主旨、結構與寫作修辭手法。`;
 
-    // 2. 🌟 關鍵優化：自動生成分批目錄，防呆計算 page_number
     let batchingDirectory = '';
     const batches: Record<string, { title: string, pages: string[] }> = {
       'PART A': { title: '第一批｜導航與結構', pages: [] },
@@ -257,8 +275,6 @@ export const useStep5Output = () => {
 
     slides.forEach((slide: any, idx: number) => {
       let label = slide.part_label || 'PART A';
-      
-      // 防呆：如果 AI 回傳不標準的 PART 名稱，強制歸類
       if (!batches[label]) {
         if (label.includes('A')) label = 'PART A';
         else if (label.includes('B')) label = 'PART B';
@@ -267,8 +283,6 @@ export const useStep5Output = () => {
         else if (label.includes('E')) label = 'PART E';
         else label = 'PART A';
       }
-
-      // 🌟 [修復]：如果 AI 沒有給 page_number，自動用陣列索引推算！
       const pageNum = slide.page_number || (idx + 1);
       batches[label].pages.push(`  P${pageNum} ${slide.title}`);
     });
@@ -281,7 +295,6 @@ export const useStep5Output = () => {
       }
     });
 
-    // 🌟 [修復]：使用 /g 全域替換，確保檔案中所有的變數都會被換掉
     return PROMPT_GENERATE_NOTEBOOKLM_GUIDE
       .replace(/{KERNEL_VERSION}/g, "v59.3-DNA-Purity")
       .replace(/{GRADE}/g, grade)
@@ -299,7 +312,6 @@ export const useStep5Output = () => {
   const handleManualModule = async (moduleKey: string) => {
     if (isProcessing.current || !state.analysisData) return;
 
-    // 🌟 [修復]：如果點擊「操作指令 (notebooklm)」，自動讀取現有資料並生成，不再等待 API
     if (moduleKey === 'notebooklm') {
        const castingData = getSafeData(state.castingResult);
        const vocabData = getSafeData(state.deepVocabResult);

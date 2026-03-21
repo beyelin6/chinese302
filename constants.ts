@@ -734,18 +734,25 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 // 檔案路徑: src/constants.ts
 // 請直接用這段覆蓋掉原本的 FINAL_ATOMIC_SCRIPT_PROMPT
 
+// 檔案路徑: src/constants.ts
+// 🌟 將原有的 FINAL_ATOMIC_SCRIPT_PROMPT 完全替換為以下內容：
+
 export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 # ROLE: V-MAX System Master Kernel v60.0 (Layout & Content Director)
 # MISSION: 嚴格根據傳入的資料與【版面設計規格】，生成精準的四維對位腳本。
 
-### 📐 模組一：Layout 版面代碼庫 (SSOT)
-AI 必須為每一頁投影片指定最適合的 \`layout\` 與 \`lens\` 代碼：
-- [wide-scene] 廣角場景圖配摘要 (適用：ContentFocus, Ending) | Lens: 廣角 (Exhale)
-- [close-tool] 導師特寫配教學框 (適用：DeepDive, Cover) | Lens: 特寫 (Inhale)
-- [split-screen] 左右分割對比大字 (適用：ShapeSimilar, Polyphonic, Debate) | Lens: 左右分割
-- [story-panel] 上半滿版大圖＋四字浮層 (適用：IdiomLoop) | Lens: 單一滿版大圖
-- [info-flow] 單圖資訊板/流程圖 (適用：Assessment, Strategy, FusionMap) | Lens: 單圖資訊板
-- [pattern-drill] 單圖大字互動舞台 (適用：LanguageActivity) | Lens: 單圖大字舞台
+### 📐 模組一：Layout 與 Lens 版面代碼庫 (SSOT)
+AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` 代碼：
+- [ContentFocus] 課文內容對焦 -> layout: "wide-scene" | lens: "廣角 (Exhale)"
+- [DeepDive] 修辭與句型深究 -> layout: "close-tool" | lens: "特寫 (Inhale)"
+- [QuizCard] 閱讀小挑戰 -> layout: "quiz-card" | lens: "單圖資訊板 (Single Info Board)"
+- [ShapeSimilar] 形近字辨析 -> lens: "左右分割對比大字排版 (Split Screen, Large Text)"。layout 依字組數決定："split-2"(2字), "grid-3"(3字), "grid-4"(4字)。
+- [Polyphonic] 多音字辨析 -> lens: "天平對比大字排版 (Balance Screen, Large Text)"。layout 依讀音數決定："compare-scale"(2讀音), "triptych"(3讀音)。
+- [IdiomLoop] 成語解析 -> layout: "story-panel" | lens: "單一滿版大圖配大字 (Single Full Image, Huge Text Overlay)"
+- [LanguageActivity] 語文活動 -> layout: "pattern-drill", "punctuation-chart", "phrase-demo" 或 "speech-stage" | lens: "單圖大字互動舞台 (Single Image, Large Text)"
+- [Strategy/FusionMap] 教學策略 -> layout: "info-flow" 或 "step-flow" | lens: "單圖大字百寶箱 (Single Box Focus, Large Text)"
+- [Assessment] 綜合評量 -> layout: "single-board" | lens: "單圖資訊板 (Single Info Board)"
+- [Cover/MissionNav/Ending] 封面與結尾 -> 請自行判斷，推薦使用 "wide-scene" 或 "close-tool"。
 
 ### 🎨 模組二：插圖語意化絕對禁令 (CRITICAL)
 1. **禁止拼貼**：絕對禁止多圖拼貼 (Collage)，所有版型強制使用清晰單圖或分割畫面。
@@ -757,7 +764,7 @@ AI 必須為每一頁投影片指定最適合的 \`layout\` 與 \`lens\` 代碼�
 請輸出純 JSON 陣列。每個物件代表一頁投影片，必須嚴格包含以下欄位：
 [
   {
-    "page_number": "數字 (例如 1)",
+    "page_number": 數字 (例如 1),
     "part_label": "對應的 PART (如 PART A)",
     "type": "對應的投影片類型 (如 ContentFocus, ShapeSimilar)",
     "title": "投影片標題",
@@ -765,7 +772,7 @@ AI 必須為每一頁投影片指定最適合的 \`layout\` 與 \`lens\` 代碼�
     "lens": "填入【模組一】對應的 Lens 標準值",
     "illustration_note": "【中文】插圖設計筆記。請先在此描述插圖要傳達的核心概念與場景畫面，確認符合禁令規範。",
     "visual_prompt": "【英文】生圖提示詞。Subject: [根據 note 描述]. Context: ... Composition: [layout]. Artistic VIS: {風格碼}. Safety: No text.",
-    "displayText": "顯示文字 (嚴格繁體中文，支援 Markdown 換行排版，禁止自行刪減原文)",
+    "displayText": "顯示文字 (嚴格繁體中文，支援 Markdown 換行排版，包含【提取】與【推論】等標題，禁止自行刪減原文)",
     "guideAction": "導師的肢體動作或表情提示 (純描述，不可加括號。若該頁禁止引導者則填 null)",
     "guideTalk": "引導語/腳本 (導師純台詞，絕對不可包含任何動作括號)"
   }
@@ -774,8 +781,9 @@ AI 必須為每一頁投影片指定最適合的 \`layout\` 與 \`lens\` 代碼�
 ### 📜 模組四：版型內容填充指南
 - **[ContentFocus]**: 根據段落大意繪製場景。displayText: 【段落大意】+【難詞顯影】。
 - **[DeepDive]**: 視覺對焦教學情境。displayText: 【修辭】或【句型】的原文與解析。
+- **[QuizCard]**: 提問表情特寫。displayText: 分列 Q1（提取）與 Q2（推論）。
 - **[ShapeSimilar]**: 根據部首繪製原始意義。displayText: 列出各字注音/部首/造詞與【💡 辨析口訣】。
 - **[Polyphonic]**: 根據讀音繪製不同生活情境。displayText: 讀音A(造詞) vs 讀音B(造詞)。
-- **[IdiomLoop]**: 根據成語「例句」畫出故事場景。displayText: 成語＋釋義＋近反義＋例句。
-- **[LanguageActivity]**: 若為「句型仿寫」畫核心情緒；若為「口語表達」畫對話舞台；若為「拆字」畫積木。displayText: 活動標題＋內容。
+- **[IdiomLoop]**: 根據成語「例句」畫出故事場景。displayText: 成語大字＋釋義＋近反義＋例句。
+- **[LanguageActivity]**: 若為「句型仿寫」畫核心情緒；若為「口語表達」畫對話舞台。displayText: 活動標題＋內容。
 `;
