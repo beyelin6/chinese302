@@ -1,11 +1,9 @@
-// 檔案路徑: src/components/Step5Output.tsx
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { 
   Layout, FileText, Check, Download, ArrowLeft, Loader2, 
   Sparkles, BookOpen, Database, Copy, Code, Zap, MessageSquare,
-  Image as ImageIcon, MessageCircle, CheckCircle // 🌟 修復：補齊缺少的 Icons
+  Image as ImageIcon, MessageCircle, CheckCircle
 } from 'lucide-react';
 import { useWorkflowContext } from '../context/WorkflowContext';
 
@@ -120,13 +118,34 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     setEditableSlides(newSlides);
   };
 
+  /**
+   * 🌟 動態智慧命名匯出引擎
+   */
   const handleDownload = () => {
     if (!syncRawCode) return;
+
+    // 1. 取得當前時間，並格式化為 YYYYMMDD_HHMM
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const timeString = `${yyyy}${mm}${dd}_${hh}${min}`;
+
+    // 2. 嘗試從 Context (analysisData) 中獲取課文名稱，若無則給予預設值
+    // 考量到 analysisData 的結構可能是 title, lessonTitle 或 subject，我們做防呆處理
+    const lessonTitle = state.analysisData?.title || state.analysisData?.lessonTitle || state.analysisData?.subject || '未命名課文';
+
+    // 3. 組裝動態檔名: VMAX_課文名稱_模組名稱_年月日時分.txt
+    const dynamicFileName = `VMAX_${lessonTitle}_${activeTab.toUpperCase()}_${timeString}.txt`;
+
+    // 4. 執行下載動作
     const blob = new Blob(['\ufeff', syncRawCode], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `VMAX_${activeTab.toUpperCase()}_UNIFIED.txt`;
+    link.download = dynamicFileName; 
     link.click();
     URL.revokeObjectURL(url);
   };
