@@ -63,9 +63,9 @@ function AppContent() {
     { step: 3, label: '語文輻射' },
     { step: 4, label: '邏輯解構' },
     { step: 5, label: '視覺包裝' },
+    { step: 6, label: '選角中心' }, // 🌟 補上這行！讓進度條顯示出來
     { step: 7, label: '產出中心' }
   ];
-
   let activeStepIndex = 0;
   visualSteps.forEach((s, idx) => {
     if (currentStep >= s.step) activeStepIndex = idx;
