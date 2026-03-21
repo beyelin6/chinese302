@@ -74,7 +74,7 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     const visual = safeParse(state.visualResult);
     const casting = safeParse(state.castingResult);
     const analysis = state.analysisData;
-    const lessonTitle = analysis?.title || analysis?.lessonTitle || analysis?.subject || '未命名課文';
+    const lessonTitle = analysis?.basicInfo?.unitName || analysis?.title || analysis?.lessonTitle || analysis?.subject || '未命名課文';
 
     // 🌟 [人類視角]：將資料轉譯為乾淨的 Markdown 視覺化分鏡腳本
     if (viewMode === 'human') {
@@ -168,7 +168,7 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     const min = String(now.getMinutes()).padStart(2, '0');
     const timeString = `${mm}${dd}_${hh}${min}`;
 
-    const lessonTitle = state.analysisData?.title || state.analysisData?.lessonTitle || state.analysisData?.subject || '未命名課文';
+    const lessonTitle = state.analysisData?.basicInfo?.unitName || state.analysisData?.title || state.analysisData?.lessonTitle || state.analysisData?.subject || '未命名課文';
     const moduleName = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
     
     const extension = (activeTab === 'script' && viewMode === 'human') ? 'md' : 'txt';
