@@ -119,28 +119,29 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   };
 
   /**
-   * 🌟 動態智慧命名匯出引擎
+   * 🌟 動態智慧命名匯出引擎 (極簡版)
    */
   const handleDownload = () => {
     if (!syncRawCode) return;
 
-    // 1. 取得當前時間，並格式化為 YYYYMMDD_HHMM
+    // 1. 取得當前時間，精簡為 MMDD_HHMM (例如: 0321_1955)
     const now = new Date();
-    const yyyy = now.getFullYear();
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
     const hh = String(now.getHours()).padStart(2, '0');
     const min = String(now.getMinutes()).padStart(2, '0');
-    const timeString = `${yyyy}${mm}${dd}_${hh}${min}`;
+    const timeString = `${mm}${dd}_${hh}${min}`;
 
     // 2. 嘗試從 Context (analysisData) 中獲取課文名稱，若無則給予預設值
-    // 考量到 analysisData 的結構可能是 title, lessonTitle 或 subject，我們做防呆處理
     const lessonTitle = state.analysisData?.title || state.analysisData?.lessonTitle || state.analysisData?.subject || '未命名課文';
 
-    // 3. 組裝動態檔名: VMAX_課文名稱_模組名稱_年月日時分.txt
-    const dynamicFileName = `VMAX_${lessonTitle}_${activeTab.toUpperCase()}_${timeString}.txt`;
+    // 3. 模組名稱簡化 (例如: script -> Script)
+    const moduleName = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
 
-    // 4. 執行下載動作
+    // 4. 組裝極簡檔名: 課文名稱_模組_月日時分.txt
+    const dynamicFileName = `${lessonTitle}_${moduleName}_${timeString}.txt`;
+
+    // 5. 執行下載動作
     const blob = new Blob(['\ufeff', syncRawCode], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
