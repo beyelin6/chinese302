@@ -45,8 +45,8 @@ export default function StepRouter() {
     handleRewriteQuestion
   } = useStep3Segments();
   const { 
-    handleStep3Confirm, 
-    handleStep4Confirm, 
+    handleVisualsConfirm, 
+    handleCastingConfirm, 
     handleSuggestTraits, 
     handleExtractImageTraits,
     handleGenerateVisualOptions,
@@ -160,7 +160,7 @@ export default function StepRouter() {
             return (
               <Step3Visuals 
                 visualResult={state.visualResult}
-                onConfirmVisuals={handleStep3Confirm}
+                onConfirmVisuals={handleVisualsConfirm}
                 onGenerateOptions={handleGenerateVisualOptions}
                 isLoading={state.isLoading}
                 onBack={handleBack}
@@ -171,7 +171,7 @@ export default function StepRouter() {
             return (
               <Step4Casting 
                 castingResult={state.castingResult}
-                onConfirmCasting={handleStep4Confirm}
+                onConfirmCasting={handleCastingConfirm}
                 onSuggestTraits={handleSuggestTraits}
                 onGenerateCasting={handleGenerateCastingOptions}
                 handleExtractImageTraits={handleExtractImageTraits}

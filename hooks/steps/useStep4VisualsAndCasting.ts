@@ -52,7 +52,7 @@ export const useStep4VisualsAndCasting = () => {
   /**
    * 1. 確認視覺風格設定，準備進入選角
    */
-  const handleStep3Confirm = async (style: any, metaphor: any) => {
+  const handleVisualsConfirm = async (style: any, metaphor: any) => {
     if (!state.deepSegmentsResult) {
       dispatch({ type: 'SET_ERROR', payload: '系統錯誤：遺失段落資料。' });
       return;
@@ -69,6 +69,7 @@ export const useStep4VisualsAndCasting = () => {
       // 🌟 [重構] 執行「靈魂選角」動態生成
       await handleGenerateCastingOptions();
       
+      // 🌟 關鍵修復：這裡必須前往 CASTING (6)，把通往選角房間的門打開！
       dispatch({ type: 'SET_STEP', payload: AppStep.STEP_5_CASTING });
 
     } catch (error: any) {
@@ -210,7 +211,7 @@ export const useStep4VisualsAndCasting = () => {
    * 5. 🌟 [強化邏輯] 最終確認選角
    * 將性別與年齡完整打包進 guide 物件，確保 Step 6 的腳本能讀取到
    */
-  const handleStep4Confirm = (protagonistTraits: string, guide: any, customGuideVisuals?: string) => {
+  const handleCastingConfirm = (protagonistTraits: string, guide: any, customGuideVisuals?: string) => {
     // 封裝引導者的完整人設資料
     const finalGuide = {
       ...guide,
@@ -237,8 +238,8 @@ export const useStep4VisualsAndCasting = () => {
   return {
     handleGenerateVisualOptions,
     handleGenerateCastingOptions,
-    handleStep3Confirm,
-    handleStep4Confirm,
+    handleVisualsConfirm,
+    handleCastingConfirm,
     handleSuggestTraits,
     handleSuggestTeachingStyle,
     handleExtractImageTraits
