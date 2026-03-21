@@ -731,123 +731,51 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 ================================================================
 `;
 
-// 🌟 [劇本原子化升級] 四維對位原子化腳本指令 (新增注音與動作分離)
+// 檔案路徑: src/constants.ts
+// 請直接用這段覆蓋掉原本的 FINAL_ATOMIC_SCRIPT_PROMPT
+
 export const FINAL_ATOMIC_SCRIPT_PROMPT = `
-# ROLE: V-MAX System Master Kernel v59.0 (The DNA & Purity Kernel)
-# MISSION: 扮演嚴格的「視覺執行導演」，根據藍圖生成四維對位腳本。
+# ROLE: V-MAX System Master Kernel v60.0 (Layout & Content Director)
+# MISSION: 嚴格根據傳入的資料與【版面設計規格】，生成精準的四維對位腳本。
 
-### 🛡️ 0️⃣ System Core Protocol (最高指導原則)
-1. 視覺 DNA 鎖定：每一頁的 Image Prompt 必須以角色 DNA 為核心。DNA 特徵權重為 1.5x。
-2. 語言純淨：投影片顯示文字 (displayText) 嚴禁出現任何英文標籤。
-3. 劇本分離：導師的「動作」與「純台詞」必須分開存放，方便未來自定語音生成。
-4. 引導語規範 (Functional Guide Talk)：
-   - 必須具備「教學功能」，化為符合【導師人設】的台詞。
-   - 形近字必須唸出「辨析口訣」；深究特寫必須提出「啟發式問題」。
+### 📐 模組一：Layout 版面代碼庫 (SSOT)
+AI 必須為每一頁投影片指定最適合的 \`layout\` 與 \`lens\` 代碼：
+- [wide-scene] 廣角場景圖配摘要 (適用：ContentFocus, Ending) | Lens: 廣角 (Exhale)
+- [close-tool] 導師特寫配教學框 (適用：DeepDive, Cover) | Lens: 特寫 (Inhale)
+- [split-screen] 左右分割對比大字 (適用：ShapeSimilar, Polyphonic, Debate) | Lens: 左右分割
+- [story-panel] 上半滿版大圖＋四字浮層 (適用：IdiomLoop) | Lens: 單一滿版大圖
+- [info-flow] 單圖資訊板/流程圖 (適用：Assessment, Strategy, FusionMap) | Lens: 單圖資訊板
+- [pattern-drill] 單圖大字互動舞台 (適用：LanguageActivity) | Lens: 單圖大字舞台
 
-### 📥 1️⃣ JSON 輸出格式 (Strict Format Lock)
-你必須輸出「純 JSON 陣列 (JSON Array)」。陣列中的每一個物件代表一頁投影片，必須嚴格包含以下 8 個欄位：
+### 🎨 模組二：插圖語意化絕對禁令 (CRITICAL)
+1. **禁止拼貼**：絕對禁止多圖拼貼 (Collage)，所有版型強制使用清晰單圖或分割畫面。
+2. **形近字 (ShapeSimilar)**：必須呈現該部首的「原始含義場景」（如手部畫動作、水部畫水流）。🚨禁止引導者出現！禁止畫老師指著字！學生必須看圖就能猜出部首含義。
+3. **多音字 (Polyphonic)**：每個讀音必須有獨立的「生活情境插圖」。🚨嚴格禁止用天平、秤子或黑板等抽象道具代替場景！禁止引導者出現！
+4. **成語 (IdiomLoop)**：插圖必須呈現例句的「完整故事場景（人物、動作、情緒）」。🚨禁止引導者站在旁邊「介紹」成語！
+
+### 📥 模組三：輸出規範 (Strict JSON Array)
+請輸出純 JSON 陣列。每個物件代表一頁投影片，必須嚴格包含以下欄位：
 [
   {
-    "part_label": "對應的 PART 標籤 (如 PART A)",
-    "type": "對應的投影片類型 (如 Cover)",
+    "page_number": "數字 (例如 1)",
+    "part_label": "對應的 PART (如 PART A)",
+    "type": "對應的投影片類型 (如 ContentFocus, ShapeSimilar)",
     "title": "投影片標題",
-    "lens": "鏡頭視角 (參考下方模板)",
-    "visual_prompt": "視覺提示詞 (Internal_Image_Prompt，必須是英文描述)",
-    "displayText": "顯示文字 (嚴格繁體中文，支援 Markdown 換行排版)",
-    "guideAction": "導師的肢體動作或表情提示 (如: 溫暖地微笑並作揖，純描述，不可加括號)",
+    "layout": "填入【模組一】的 Layout 代碼",
+    "lens": "填入【模組一】對應的 Lens 標準值",
+    "illustration_note": "【中文】插圖設計筆記。請先在此描述插圖要傳達的核心概念與場景畫面，確認符合禁令規範。",
+    "visual_prompt": "【英文】生圖提示詞。Subject: [根據 note 描述]. Context: ... Composition: [layout]. Artistic VIS: {風格碼}. Safety: No text.",
+    "displayText": "顯示文字 (嚴格繁體中文，支援 Markdown 換行排版，禁止自行刪減原文)",
+    "guideAction": "導師的肢體動作或表情提示 (純描述，不可加括號。若該頁禁止引導者則填 null)",
     "guideTalk": "引導語/腳本 (導師純台詞，絕對不可包含任何動作括號)"
   }
 ]
 
-### 📐 2️⃣ 原子化動態腳本模板 (Format Templates)
-請根據傳入任務的 \`type\`，嚴格對照以下內容規範填寫 JSON 欄位：
-
-== PART A: 導航 (Navigation) ==
-[type: Cover] (封面)
-- lens: "中景"
-- visual_prompt: "Subject: {主角或導師 DNA} welcoming. Context: Title Screen. Composition: Center Focus. Artistic VIS: {風格碼}. Safety: No text."
-- guideAction: "符合設定語氣的開場動作"
-- guideTalk: "[純台詞，符合設定語氣的開場白]"
-
-[type: MissionNav] (任務導航)
-- lens: "網格系統"
-- visual_prompt: "Subject: {導師 DNA} presenting Mission Map. Context: 4 Icons floating. Composition: Flat Lay Grid. Artistic VIS: {風格碼}. Safety: No blurry text."
-- displayText: "本課任務：結構探索 | 修辭解析 | 詞彙寶庫 | 素養挑戰"
-- guideAction: "引導任務時的動作"
-
-[type: FusionMap] (結構視圖)
-- lens: "資訊圖表 (Infographic Map)"
-- visual_prompt: "Subject: A thematic map using {Visual Metaphor}. Context: Dynamic nodes connected by a path. Composition: Overview. Artistic VIS: {Style Code}."
-- displayText: 
-  "1. 📌 主標題: [填入標題]
-   2. 👤 核心人設: [人物名 + DNA]
-   3. 🗺️ 情節路徑: [起點 -> 節點1 -> 節點2 -> 終點]
-   4. 🔑 快速掌握 (關鍵詞): [根據輸入資料的 quickGrasp 清單，精準列出各段落的 4 個關鍵詞]
-   5. 💡 知識小學堂: [本課核心策略亮點]"
-- guideAction: "指向路徑的動作"
-   
-== PART B: 詳盡課文迴圈 (Detailed Text Loop) ==
-[type: ContentFocus] (內容對焦)
-- lens: "廣角 (Exhale)"
-- visual_prompt: "Subject: {故事角色}. Context: {該段落大意場景}. Composition: Wide shot. Artistic VIS: {風格碼}. Safety: No text."
-- displayText: "【段落大意】: {摘要}\\n【難詞顯影】: {難詞與解釋}"
-- guideAction: "生動的講故事動作"
-
-[type: DeepDive] (寫作與理解深究)
-- lens: "特寫 (Inhale)"
-- visual_prompt: "Subject: {導師 DNA}. Context: 視覺對焦修辭隱喻效果或教學情境道具. Composition: Close-up. Artistic VIS: {風格碼}. Safety: No text."
-- displayText: "包含【文意深究/修辭】或【🌟 閱讀小挑戰】"
-- guideAction: "拋出問題引導思考的動作"
-- guideTalk: "[提出啟發式問題的台詞]"
-
-== PART C: 原子語文迴圈 (Atomic Language Loop) ==
-[type: ShapeSimilar] (形近字)
-- lens: "[Layout: Split-Screen] (動態切分：依據辨析字數量自動分割為 2格/3格/4格)"
-- visual_prompt: "Subject: None (🚨禁止引導者出現). Context: 【視覺語意化】必須為每個字格畫出對應『部首』的真實情境（例如：手部畫動作、水部畫水流）。要求：學生不看文字，光看插圖就能猜出部首含意。 Composition: Split screen. Artistic VIS: {風格碼}. Safety: No text."
-- displayText: "必須列出各個辨析字的字、注音、部首、造詞，並清楚標示【💡 辨析口訣】與【解析】"
-- guideAction: "引導學生觀察各個字體差異的語氣動作 (不印出)"
-- guideTalk: "[注音與部首差異的詳細說明，與口訣唸法]"
-
-[type: Polyphonic] (多音字)
-- lens: "[Layout: Balance-Screen] (動態對稱：依據讀音數量分割)"
-- visual_prompt: "Subject: None (🚨禁止引導者出現). Context: 【視覺語意化】必須分別畫出該字『不同讀音所對應的真實造詞情境』。要求：對比強烈，一目了然。 Composition: Split screen matching pronunciations. Artistic VIS: {風格碼}. Safety: No text."
-- displayText: "讀音A (造詞) vs 讀音B (造詞)...依此類推"
-- guideAction: "展示不同情境變化的語氣動作 (不印出)"
-- guideTalk: "[說明同一個字在不同語境下的讀音與意義變化]"
-
-[type: IdiomLoop] (成語)
-- lens: "[Layout: Scene-Overlay] (單一張滿版大圖，搭配巨大清晰文字浮層)"
-- visual_prompt: "Subject: None (🚨禁止引導者出現，讓插圖自己說話). Context: 【視覺語意化】必須完美演繹該成語的『完整故事情境（包含人物、動作、情緒）』。要求：學生不看文字，只看圖就能感受成語的意義. Composition: Wide cinematic single shot. Artistic VIS: {風格碼}. Safety: No text."
-- displayText: "[成語]\\n釋義 | 近反義 | 例句"
-- guideAction: "生動演繹該成語情境的語氣動作 (不印出)"
-- guideTalk: "[用生活化的例子解釋成語的意思]"
-
-[type: Assessment] (綜合評量)
-- lens: "[Layout: Info-Board] (單圖資訊板)"
-- visual_prompt: "Subject: {導師 DNA}. Context: 站在巨大的全息投影黑板或羊皮紙旁，準備揭曉答案。 Composition: Medium shot. Artistic VIS: {風格碼}. Safety: No text."
-- displayText: "【測驗題型】：{題型}\\n❓ 題目：{題目}\\n🔘 (A) {選項}\\n🔘 (B) {選項}\\n🔘 (C) {選項}\\n🔘 (D) {選項}"
-- guideAction: "鼓勵學生作答的動作 (不印出)"
-- guideTalk: "孩子們，準備好要公佈答案了嗎？..."
-
-== PART D: 策略與活動 (Strategy & Activity) ==
-[type: LanguageActivity] (語文活動)
-- lens: "[Layout: Dynamic-Stage] (依活動性質變換：若為對話請用 Speech-Stage，若為流程請用 Step-Flow，若為描述請用 Phrase-Demo)"
-- visual_prompt: "Subject: {導師 DNA} leading the activity. Context: 視覺化該活動的核心學習動作（例如：拿著麥克風、搬動積木、指著連結線）。要求：插圖必須傳達出該活動的互動感。 Composition: Wide shot. Artistic VIS: {風格碼}. Safety: No text."
-- displayText: "【活動名稱】：{活動標題}\\n{活動內容}"
-- guideAction: "主持活動的互動手勢 (不印出)"
-- guideTalk: "[帶領學生進行活動的台詞]"
-
-[type: Strategy] (教學策略)
-- lens: "[Layout: Treasure-Box] (單圖大字百寶箱)"
-- visual_prompt: "Subject: {導師 DNA} opening a magical treasure box. Context: 發出智慧的光芒，展示策略核心。 Composition: Close-up. Artistic VIS: {風格碼}. Safety: No text."
-- displayText: "【教學策略】：{策略標題}"
-- guideAction: "展示魔法寶物的動作 (不印出)"
-- guideTalk: "[引導學生使用該策略的台詞]"
-
-== PART E: 結尾 (Ending) ==
-[type: Ending] (結尾道別)
-- lens: "遠景"
-- visual_prompt: "Subject: {導師 DNA} waving goodbye. Context: Sunset or peaceful background. Composition: Wide shot. Artistic VIS: {風格碼}. Safety: No text."
-- guideAction: "溫暖揮手道別的動作"
-- guideTalk: "[溫暖的結尾語與鼓勵]"
+### 📜 模組四：版型內容填充指南
+- **[ContentFocus]**: 根據段落大意繪製場景。displayText: 【段落大意】+【難詞顯影】。
+- **[DeepDive]**: 視覺對焦教學情境。displayText: 【修辭】或【句型】的原文與解析。
+- **[ShapeSimilar]**: 根據部首繪製原始意義。displayText: 列出各字注音/部首/造詞與【💡 辨析口訣】。
+- **[Polyphonic]**: 根據讀音繪製不同生活情境。displayText: 讀音A(造詞) vs 讀音B(造詞)。
+- **[IdiomLoop]**: 根據成語「例句」畫出故事場景。displayText: 成語＋釋義＋近反義＋例句。
+- **[LanguageActivity]**: 若為「句型仿寫」畫核心情緒；若為「口語表達」畫對話舞台；若為「拆字」畫積木。displayText: 活動標題＋內容。
 `;
