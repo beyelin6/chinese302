@@ -41,16 +41,13 @@ export const useStep5Output = () => {
     const guideName = casting?.guide?.name || "V-MAX 導師";
     const guidePersona = casting?.guide?.persona || "專業、溫暖、具啟發性";
     
-    // 若導師設定是空值或出現「預設」字眼，強制給予具體的 Prompt
     let guideDNA = casting?.guide?.visualDNA || "";
     if (!guideDNA || guideDNA.includes("預設")) {
         guideDNA = "身穿俐落的現代教學套裝，帶著親切且自信的微笑，常以手勢指示畫面的重點。";
     }
 
     // 3. 🌟 [新增] 絕對頁碼注入器 (Absolute Page Injector)
-    // 保證無論 AI 分幾段產出，組合起來的陣列都會有完美的 1 到 N 頁碼
     const numberedSlides = slides.map((slide, index) => {
-      // 確保 page_number 排在 JSON 物件的第一個屬性，方便人類閱讀
       const { page_number, ...restProps } = slide; 
       return {
         page_number: index + 1,
@@ -59,7 +56,6 @@ export const useStep5Output = () => {
     });
 
     const unifiedPayload = {
-      // ⚙️ NotebookLM 系統級最高權限指令
       notebooklm_driver: {
         system_role: "You are the V-MAX Slide Architect. Your absolute priority is to strictly follow the VMAX_STRUCTURE_YAML protocols and the dynamic slide blueprints.",
         artistic_consistency: styleCode,
@@ -69,7 +65,6 @@ export const useStep5Output = () => {
           guide: `[Name: ${guideName}] | [Persona: ${guidePersona}] | [Visual Prompt: ${guideDNA}]`
         }
       },
-      // 🎬 核心結構藍圖
       VMAX_STRUCTURE_YAML: {
         global_visual_protocol: {
           artistic_consistency: styleCode,
@@ -93,7 +88,6 @@ export const useStep5Output = () => {
           PART_D_E: "【策略與結尾】語文百寶箱活動與課程收尾"
         }
       },
-      // 📝 動態腳本內容 (帶入已注入頁碼的陣列)
       slides: numberedSlides
     };
     
@@ -119,16 +113,14 @@ export const useStep5Output = () => {
       const languageActivities = analysisData?.languageActivities || [];
       const strategies = segmentsData?.strategies || [];
 
-      // 1. 🌟 [精準對位藍圖] 建立分段藍圖，包含增量關鍵詞與防呆過濾
+      // 1. 🌟 [精準對位藍圖] 建立分段藍圖
       const blueprint = [
-        // PART A
         { part: 'PART A', type: 'Cover', title: '封面' },
         { part: 'PART A', type: 'MissionNav', title: '任務導覽' },
         { 
           part: 'PART A', 
           type: 'FusionMap', 
           title: '結構視圖',
-          // 🌟 [高密度封裝]：將關鍵詞提升至 4 個，確保掌握段落神韻
           quickGrasp: segments.map((s: any, idx: number) => ({
             label: `段落 ${idx + 1}`,
             keywords: s.keywords?.slice(0, 4).join('、') || "重點萃取中"
@@ -137,7 +129,6 @@ export const useStep5Output = () => {
           visualMetaphor: visualData?.metaphor?.label
         },
         
-        // PART B (深究拆分)
         ...segments.flatMap((s: any, idx: number) => {
           const chunk = [{ part: 'PART B', type: 'ContentFocus', title: `段落 ${idx+1}: 內容對焦`, segment: s }];
           if (s.difficultWords?.length > 1 || s.questions?.length > 0 || s.rhetorics?.length > 0) {
@@ -146,23 +137,17 @@ export const useStep5Output = () => {
           return chunk;
         }),
         
-// PART C (🌟 生字勾選雙重變數防呆過濾 - 跨資料表對接版)
         ...vocabulary.flatMap((v: any) => {
-          // 🔍 1. 去老師確認過的 coreVocabulary 中，找出這個字的「打勾狀態」
           const coreVocabList = analysisData?.coreVocabulary || [];
           const uiFlags = coreVocabList.find((cv: any) => cv.word === v.word) || {};
 
-          // 🛡️ 2. 容錯防禦：只要不是「明確被取消大勾勾」，就放行
           if (uiFlags.isSelected === false) return [];
           
           const vocabSlides = [];
-          
-          // 🌟 3. 從 uiFlags 讀取真正的開關狀態
           const wantWriting = uiFlags.wantsWritingTips || uiFlags.isWritingTipsSelected;
           const wantShape = uiFlags.wantsShapeSimilar || uiFlags.isShapeSimilarSelected;
           const wantPoly = uiFlags.wantsPolyphonic || uiFlags.isPolyphonicSelected;
 
-          // 📝 4. 根據開關狀態，將 AI 找出的細節 (v) 推入投影片
           if (wantWriting) {
             vocabSlides.push({ 
               part: 'PART C', type: 'VocabLoop', title: `生字辨析：${v.word}`, 
@@ -188,11 +173,9 @@ export const useStep5Output = () => {
         ...idioms.map((i: any) => ({ part: 'PART C', type: 'IdiomLoop', title: `成語解析：${i.word}`, idiom: i })),
         { part: 'PART C', type: 'Assessment', title: '全課綜合評量' },
         
-        // PART D 
         ...languageActivities.map((act: any) => ({ part: 'PART D', type: 'LanguageActivity', title: `語文活動：${act.title}`, content: act.content })),
         ...strategies.map((st: any) => ({ part: 'PART D', type: 'Strategy', title: `教學策略：${st.title}`, strategy: st })),
         
-        // PART E
         { part: 'PART E', type: 'Ending', title: '結尾道別' }
       ];
 
@@ -257,12 +240,12 @@ export const useStep5Output = () => {
     const unitName = analysisData?.basicInfo?.unitName || '未命名課文';
     const today = new Date().toISOString().split('T')[0];
 
-    // 1. 計算語音焦點
-    const selectedVocabs = vocab.filter(v => v.isSelected).map(v => v.word).join('、');
+    // 1. 計算語音焦點 (相容 isSelected 或 isFocused)
+    const selectedVocabs = vocab.filter((v: any) => v.isSelected || v.isFocused).map((v: any) => v.word).join('、');
     let audioFocus = selectedVocabs ? `1. 深入辨析生字的部首與形近字口訣：${selectedVocabs}\n` : '';
     audioFocus += `2. 探討本課的主旨、結構與寫作修辭手法。`;
 
-    // 2. 🌟 關鍵優化：自動生成分批目錄
+    // 2. 🌟 關鍵優化：自動生成分批目錄，防呆計算 page_number
     let batchingDirectory = '';
     const batches: Record<string, { title: string, pages: string[] }> = {
       'PART A': { title: '第一批｜導航與結構', pages: [] },
@@ -272,9 +255,22 @@ export const useStep5Output = () => {
       'PART E': { title: '第五批｜評量與結尾', pages: [] }
     };
 
-    slides.forEach(slide => {
-      const label = slide.part_label || 'PART A';
-      if (batches[label]) batches[label].pages.push(`  P${slide.page_number} ${slide.title}`);
+    slides.forEach((slide: any, idx: number) => {
+      let label = slide.part_label || 'PART A';
+      
+      // 防呆：如果 AI 回傳不標準的 PART 名稱，強制歸類
+      if (!batches[label]) {
+        if (label.includes('A')) label = 'PART A';
+        else if (label.includes('B')) label = 'PART B';
+        else if (label.includes('C')) label = 'PART C';
+        else if (label.includes('D')) label = 'PART D';
+        else if (label.includes('E')) label = 'PART E';
+        else label = 'PART A';
+      }
+
+      // 🌟 [修復]：如果 AI 沒有給 page_number，自動用陣列索引推算！
+      const pageNum = slide.page_number || (idx + 1);
+      batches[label].pages.push(`  P${pageNum} ${slide.title}`);
     });
 
     Object.values(batches).forEach(batch => {
@@ -285,22 +281,42 @@ export const useStep5Output = () => {
       }
     });
 
+    // 🌟 [修復]：使用 /g 全域替換，確保檔案中所有的變數都會被換掉
     return PROMPT_GENERATE_NOTEBOOKLM_GUIDE
-      .replace('{KERNEL_VERSION}', "v59.3-DNA-Purity")
-      .replace('{GRADE}', grade)
-      .replace('{UNIT_NAME}', unitName)
-      .replace('{GUIDE_NAME}', guide.name || '導師')
-      .replace('{GUIDE_PERSONA}', guide.persona || '專業')
-      .replace('{VISUAL_STYLE}', visualData?.style?.name || '預設')
-      .replace('{VISUAL_METAPHOR}', visualData?.metaphor?.name || '預設')
-      .replace('{DATE}', today)
+      .replace(/{KERNEL_VERSION}/g, "v59.3-DNA-Purity")
+      .replace(/{GRADE}/g, grade)
+      .replace(/{UNIT_NAME}/g, unitName)
+      .replace(/{GUIDE_NAME}/g, guide.name || '導師')
+      .replace(/{GUIDE_PERSONA}/g, guide.persona || '專業')
+      .replace(/{VISUAL_STYLE}/g, visualData?.style?.name || '預設')
+      .replace(/{VISUAL_METAPHOR}/g, visualData?.metaphor?.name || '預設')
+      .replace(/{DATE}/g, today)
       .replace(/{GUIDE_DNA}/g, guide.visualDNA || "")
-      .replace('{AUDIO_FOCUS}', audioFocus)
-      .replace('{BATCHING_DIRECTORY}', batchingDirectory);
+      .replace(/{AUDIO_FOCUS}/g, audioFocus)
+      .replace(/{BATCHING_DIRECTORY}/g, batchingDirectory);
   };
 
   const handleManualModule = async (moduleKey: string) => {
     if (isProcessing.current || !state.analysisData) return;
+
+    // 🌟 [修復]：如果點擊「操作指令 (notebooklm)」，自動讀取現有資料並生成，不再等待 API
+    if (moduleKey === 'notebooklm') {
+       const castingData = getSafeData(state.castingResult);
+       const vocabData = getSafeData(state.deepVocabResult);
+       const vocab = vocabData?.vocabulary || state.analysisData.coreVocabulary || [];
+       const visualData = getSafeData(state.visualResult);
+       
+       let slides = [];
+       if (state.outputScript) {
+         const parsedScript = getSafeData(state.outputScript);
+         slides = Array.isArray(parsedScript) ? parsedScript : (parsedScript.slides || []);
+       }
+
+       const guideStr = generateNotebookLMGuide(castingData, vocab, state.analysisData, visualData, slides);
+       dispatch({ type: 'SET_OUTPUTS', payload: { outputNotebookLMGuide: guideStr } });
+       return;
+    }
+
     isProcessing.current = true;
     const moduleMap: Record<string, { prompt: string, status: string, stateKey: string }> = {
       worksheet: { prompt: PROMPT_GENERATE_WORKSHEET, status: '正在生成素養學習單...', stateKey: 'outputWorksheet' },
@@ -308,6 +324,7 @@ export const useStep5Output = () => {
       kb: { prompt: PROMPT_GENERATE_KB, status: '正在生成知識庫資料...', stateKey: 'outputKb' },
       gamified: { prompt: PROMPT_GENERATE_GAMIFIED_QUIZ, status: '正在生成遊戲化測驗...', stateKey: 'outputGamifiedQuiz' }
     };
+    
     const config = moduleMap[moduleKey];
     if (!config) { isProcessing.current = false; return; }
 
@@ -327,5 +344,9 @@ export const useStep5Output = () => {
     }
   };
 
-  return { handleScriptPipeline, handleManualModule, handleBack: () => dispatch({ type: 'SET_STEP', payload: AppStep.STEP_5_CASTING }) };
+  return { 
+    handleScriptPipeline, 
+    handleManualModule, 
+    handleBack: () => dispatch({ type: 'SET_STEP', payload: AppStep.STEP_5_CASTING }) 
+  };
 };
