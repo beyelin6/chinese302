@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect, useCallback, useMemo } from 'react';
 import { AppStep, WorkflowState, WorkflowAction } from '../types';
 import { workflowReducer, initialState } from './workflowReducer';
-import { saveToDB, loadFromDB } from '../utils.ts'; 
+import { saveToDB, loadFromDB } from '../utils'; 
 import { setApiKeys as setServiceApiKeys } from '../services/gemini';
 
 // 1. 拆分 Context，確保 Dispatch 永遠不會改變引用的地址

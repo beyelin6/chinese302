@@ -1,15 +1,6 @@
 // 檔案路徑: src/constants.ts
 
-export enum AppStep {
-  IDLE = 0,
-  STEP_1_INPUT = 1,
-  STEP_2_BASIC = 2,
-  STEP_3_DEEP_VOCAB = 3,
-  STEP_3_DEEP_SEGMENTS = 4,
-  STEP_4_VISUALS = 5,
-  STEP_5_CASTING = 6,
-  STEP_6_OUTPUT = 7
-}
+import { AppStep } from './types';
 
 export const VMAX_KERNEL_VERSION = "v59.0-DNA-Purity-Kernel";
 
