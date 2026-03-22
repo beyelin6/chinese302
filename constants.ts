@@ -2,7 +2,18 @@
 
 import { AppStep } from './types';
 
-export const VMAX_KERNEL_VERSION = "v59.0-DNA-Purity-Kernel";
+export enum AppStepEnum {
+  IDLE = 0,
+  STEP_1_INPUT = 1,
+  STEP_2_BASIC = 2,
+  STEP_3_DEEP_VOCAB = 3,
+  STEP_3_DEEP_SEGMENTS = 4,
+  STEP_4_VISUALS = 5,
+  STEP_5_CASTING = 6,
+  STEP_6_OUTPUT = 7
+}
+
+export const VMAX_KERNEL_VERSION = "v60.5-DNA-Purity-Kernel";
 
 // 🌟 [2026 核心升級] 切換至最新支援型號
 export const GEMINI_MODEL = "gemini-3-flash-preview";
@@ -23,14 +34,13 @@ export const PROMPT_GENERATE_ADDITIONAL_ACTIVITIES = `
   {
     "title": "活動名稱 (例如：小小觀察家 - 詞彙擴展)",
     "content": "具體的練習內容或引導文字"
-  },
-  ...
+  }
 ]
 `;
 
 export const SYSTEM_PROMPT = `
 # ROLE: V-MAX v37-Omega (Omni-Architect Engine)
-# Core: Master Kernel v59.0-DNA-Purity
+# Core: Master Kernel v60.5-DNA-Purity
 # CORE PROTOCOL: [FAITHFULNESS_GROUNDING]
 1. 嚴禁幻覺：絕對禁止加入課文中不存在的事實或人物。
 2. 文本錨點：所有對白必須 100% 基於原文。
@@ -659,7 +669,7 @@ export const GENERATE_LANGUAGE_ACTIVITY_PROMPT = `
 請只輸出純 JSON。
 `;
 
-// 🌟 [YAML 專屬進化版] NotebookLM 工作室驅動指南 (動態數據注入 + 智能分批目錄)
+// 🌟 [YAML 專屬進化版] NotebookLM 工作室驅動指南
 export const PROMPT_GENERATE_NOTEBOOKLM_GUIDE = `
 ================================================================
 V-MAX {KERNEL_VERSION} NotebookLM 操作指南
@@ -684,7 +694,7 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
    請嚴格依照每頁 YAML 節點中的 \`visual_prompt\` 生成畫面。
    ★ 引導者 DNA【全程不得改變】：
    {GUIDE_DNA}
-   禁止出現與設定不符的年齡 or 性別。
+   禁止出現與設定不符的年齡或性別。
 
 2. 【投影片文字｜逐字鎖定】
    投影片畫面上的文字，必須 100% 一字不漏地複製 YAML 中的 \`displayText\` 內容。
@@ -694,8 +704,9 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
    請嚴格遵守檔案頂部 \`ui_layout_protocol\` 定義的多視窗排版法則。
    成語頁、形近字頁、活動頁，強制使用大圖大字，【絕對禁止】使用多圖拼貼 (Collage) 或導致字體縮小的網格排版。
 
-4. 【講者備忘錄｜僅放台詞】
-   請將 \`guideTalk\` 完整放入講者備忘錄，\`guideAction\` 僅供畫面生成參考，絕對不可印成文字。
+4. 【導師台詞強制入鏡】(CRITICAL)
+   請將 YAML 裡的 \`guideTalk\` 內容，以「對話框 (Speech Bubble)」或「導師提示框」的視覺形式，直接排版顯示在每一頁投影片的畫面上！
+   (\`guideAction\` 僅供畫面生成參考，絕對不可印成文字。)
 
 ───────────────────────────────────────────────────────────────
 🟩 模組二：語音摘要煉成指令 (Audio Overview)
@@ -722,15 +733,11 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 ================================================================
 `;
 
-// 檔案路徑: src/constants.ts
-// 請直接用這段覆蓋掉原本的 FINAL_ATOMIC_SCRIPT_PROMPT
 
-// 檔案路徑: src/constants.ts
-// 🌟 將原有的 FINAL_ATOMIC_SCRIPT_PROMPT 完全替換為以下內容：
-
+// 🌟🌟🌟 終極防禦裝甲 (Anti-Hallucination & Guide Forcing) 🌟🌟🌟
 export const FINAL_ATOMIC_SCRIPT_PROMPT = `
-# ROLE: V-MAX System Master Kernel v60.0 (Layout & Content Director)
-# MISSION: 嚴格根據傳入的資料與【版面設計規格】，生成精準的四維對位腳本。
+# ROLE: V-MAX System Master Kernel v60.5 (Layout & Anti-Hallucination Director)
+# MISSION: 嚴格根據傳入的資料，生成精準的四維對位腳本，並確保視覺提示詞的絕對安全。
 
 ### 📐 模組一：Layout 與 Lens 版面代碼庫 (SSOT)
 AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` 代碼：
@@ -745,36 +752,49 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
 - [Assessment] 綜合評量 -> layout: "single-board" | lens: "單圖資訊板 (Single Info Board)"
 - [Cover/MissionNav/Ending] 封面與結尾 -> 請自行判斷，推薦使用 "wide-scene" 或 "close-tool"。
 
-### 🎨 模組二：插圖語意化絕對禁令 (CRITICAL)
-1. **禁止拼貼**：絕對禁止多圖拼貼 (Collage)，所有版型強制使用清晰單圖或分割畫面。
-2. **形近字 (ShapeSimilar)**：必須呈現該部首的「原始含義場景」（如手部畫動作、水部畫水流）。🚨禁止引導者出現！禁止畫老師指著字！學生必須看圖就能猜出部首含義。
-3. **多音字 (Polyphonic)**：每個讀音必須有獨立的「生活情境插圖」。🚨嚴格禁止用天平、秤子或黑板等抽象道具代替場景！禁止引導者出現！
-4. **成語 (IdiomLoop)**：插圖必須呈現例句的「完整故事場景（人物、動作、情緒）」。🚨禁止引導者站在旁邊「介紹」成語！
+### 🎨 模組二：生圖防呆與導師顯影絕對禁令 (CRITICAL)
+1. **導師強制顯影 (Guide Presence)**：只要該頁有 \`guideAction\` 或 \`guideTalk\`，或者版型為 close-tool / quiz-card，你【必須】在 \`visual_prompt\` 的 Subject 中，明確寫出導師的完整外觀特徵 (Guide DNA)！如果沒寫，生圖軟體就不會畫出導師！
+2. **強制無字化 (Anti-Text Hallucination)**：生圖軟體極易產生亂碼外星文。
+   - 若場景包含「藍圖、黑板、書本、筆記」，請註明「abstract lines, blank pages」。
+   - \`visual_prompt\` 的結尾必須強制加上：「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO TYPOGRAPHY, NO WORDS IN THE IMAGE.」
+3. **禁止拼貼**：絕對禁止多圖拼貼 (Collage)，強制使用清晰單圖。
 
 ### 📥 模組三：輸出規範 (Strict JSON Array)
 請輸出純 JSON 陣列。每個物件代表一頁投影片，必須嚴格包含以下欄位：
 [
   {
-    "page_number": 數字 (例如 1),
+    "page_number": 數字,
     "part_label": "對應的 PART (如 PART A)",
-    "type": "對應的投影片類型 (如 ContentFocus, ShapeSimilar)",
+    "type": "對應的投影片類型",
     "title": "投影片標題",
     "layout": "填入【模組一】的 Layout 代碼",
     "lens": "填入【模組一】對應的 Lens 標準值",
-    "illustration_note": "【中文】插圖設計筆記。請先在此描述插圖要傳達的核心概念與場景畫面，確認符合禁令規範。",
-    "visual_prompt": "【英文】生圖提示詞。Subject: [根據 note 描述]. Context: ... Composition: [layout]. Artistic VIS: {風格碼}. Safety: No text.",
-    "displayText": "顯示文字 (嚴格繁體中文，支援 Markdown 換行排版，包含【提取】與【推論】等標題，禁止自行刪減原文)",
-    "guideAction": "導師的肢體動作或表情提示 (純描述，不可加括號。若該頁禁止引導者則填 null)",
-    "guideTalk": "引導語/腳本 (導師純台詞，絕對不可包含任何動作括號)"
+    "visual_prompt": "【英文】生圖提示詞。Subject: [場景描述 + 務必包含導師外貌]. Context: ... Composition: [layout]. Artistic VIS: {風格碼}. Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO TYPOGRAPHY IN THE IMAGE.",
+    "displayText": "顯示文字 (嚴格繁體中文，包含【提取】與【推論】等標題，禁止自行刪減原文)",
+    "guideAction": "導師的肢體動作或表情提示 (若無則填 null)",
+    "guideTalk": "引導語/腳本 (純台詞)"
   }
 ]
 
 ### 📜 模組四：版型內容填充指南
-- **[ContentFocus]**: 根據段落大意繪製場景。displayText: 【段落大意】+【難詞顯影】。
-- **[DeepDive]**: 視覺對焦教學情境。displayText: 【修辭】或【句型】的原文與解析。
-- **[QuizCard]**: 提問表情特寫。displayText: 分列 Q1（提取）與 Q2（推論）。
-- **[ShapeSimilar]**: 根據部首繪製原始意義。displayText: 列出各字注音/部首/造詞與【💡 辨析口訣】。
-- **[Polyphonic]**: 根據讀音繪製不同生活情境。displayText: 讀音A(造詞) vs 讀音B(造詞)。
-- **[IdiomLoop]**: 根據成語「例句」畫出故事場景。displayText: 成語大字＋釋義＋近反義＋例句。
-- **[LanguageActivity]**: 若為「句型仿寫」畫核心情緒；若為「口語表達」畫對話舞台。displayText: 活動標題＋內容。
+- **[ContentFocus]**: 根據段落大意繪製場景。
+- **[DeepDive]**: 視覺對焦教學情境。
+- **[QuizCard]**: 提問表情特寫。displayText 必須分列【提取】與【推論】。
+
+# 🌟 [修復點 2：強制使用 Markdown 大標題分格]
+- **[ShapeSimilar]**: 必須使用大標題嚴格分格！格式如下：
+  ### 字A (注音 / 部首)
+  造詞：...
+  ### 字B (注音 / 部首)
+  造詞：...
+  ### 💡 辨析口訣
+  (口訣內容)
+
+- **[Polyphonic]**: 必須使用大標題嚴格分格！格式如下：
+  ### 讀音A (注音)
+  造詞：...
+  ### 讀音B (注音)
+  造詞：...
+
+- **[IdiomLoop]**: 根據例句畫出故事場景(無引導者)。
 `;

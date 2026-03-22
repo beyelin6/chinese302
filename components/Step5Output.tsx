@@ -74,7 +74,6 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     
     const lessonTitle = analysis?.basicInfo?.unitName || analysis?.title || analysis?.subject || '未命名課文';
 
-    // 🌟 [人類視角]：將資料轉譯為乾淨的 Markdown 視覺化分鏡腳本
     if (viewMode === 'human') {
       let humanReadableText = `# 📚 視覺化教學腳本：${lessonTitle}\n\n`;
       humanReadableText += `> 🎨 **視覺風格**：${visual?.style?.description || '保持一致'}\n`;
@@ -100,19 +99,21 @@ const Step5Output: React.FC<Step5OutputProps> = ({
       return humanReadableText;
     }
 
-    // 💻 [機器視角]：全面升級為 YAML 引擎，不再使用 JSON！
-    // 同時拔除 visual_metaphor，並要求 AI 專注場景、不要加多餘裝飾
+    // 🌟 這裡修改了 core_rule，強制加入 Speech Bubble (對話框) 的排版指令！
     let yamlString = `notebooklm_driver:
   system_role: "You are the V-MAX Slide Architect. Generate slides based on the YAML constraints. CRITICAL: You MUST use Multi-Box UI Layout according to the 'layout' and 'lens' properties of each slide."
   ui_layout_protocol:
-    core_rule: "NEVER put all displayText into a single visual container. You MUST split the text into distinct, separate spatial UI boxes based on headings and the layout type."
+    core_rule: "NEVER put all displayText into a single visual container. You MUST split the text into distinct spatial UI boxes. CRITICAL: You MUST also render the 'guideTalk' text directly ON THE SLIDE visually as a Speech Bubble or Quote Box!"
     layout_mapping:
       wide-scene: "Split screen 50/50. Left: Wide-angle scene image. Right: Text content separated into primary block (段落大意) and secondary block (難詞顯影)."
       close-tool: "Split screen. Left: Close-up image of the guide/tool. Right: Text separated into definition blocks (e.g., 修辭/句型) with distinct colored borders."
       quiz-card: "Single Info Board. Top: Image of guide. Bottom: Two distinct colored tag boxes. Blue tag box for 【提取】(Extraction) questions, Amber/Orange tag box for 【推論】(Inference) questions."
-      split-2: "Split Screen. 50% Left image, 50% Right image. Large text overlay at the bottom spanning full width. NO guide character."
-      grid-3: "Horizontal 3-column grid. Each cell contains 60% image and 40% text. Large text spanning full width at the bottom. NO guide character."
-      grid-4: "2x2 Grid. Each cell contains 60% image and 40% text. Large text spanning full width at the bottom. NO guide character."
+      
+      # 🌟 [修復點 1：強制 NotebookLM 將形近字文字塞入對應的格子裡]
+      split-2: "Split Screen Layout. CRITICAL: Put the text for Character 1 INSIDE the left panel under its image, and Character 2 INSIDE the right panel. Put the 【💡 辨析口訣】 in a separate wide box at the bottom. NO guide character."
+      grid-3: "3-Column Grid Layout. CRITICAL: Put the text for each character INSIDE its corresponding column under its image. Put the 【💡 辨析口訣】 in a separate wide box at the bottom. NO guide character."
+      grid-4: "2x2 Grid Layout. CRITICAL: Put the text for each character INSIDE its corresponding cell under its image. Put the 【💡 辨析口訣】 in a separate wide box at the bottom. NO guide character."
+      
       compare-scale: "Balance Screen Layout. Left and right distinct scenario images. NO guide character."
       triptych: "3-panel Balance Screen Layout. Left, center, and right distinct scenario images. NO guide character."
       story-panel: "Single Full Image taking up the upper 60% of the slide. MUST include Huge Text Overlay (4-character idiom) in the upper-center of the image. The lower 40% contains definition text. NO guide character."
@@ -142,7 +143,6 @@ VMAX_STRUCTURE_YAML:
     guide_dna: "${(casting?.guide?.visualDNA || "導師視覺 DNA").replace(/"/g, '\\"')}"
 slides:\n`;
 
-    // 迴圈將每一頁簡報精準轉換為 YAML 格式
     editableSlides.forEach((slide) => {
       yamlString += `  - page_number: ${slide.page_number || 1}\n`;
       yamlString += `    part_label: "${slide.part_label || ''}"\n`;
