@@ -132,7 +132,6 @@ export const useStep5Output = () => {
         ...segments.flatMap((s: any, idx: number) => {
           const chunk = [{ part: 'PART B', type: 'ContentFocus', title: `段落 ${idx+1}: 內容對焦`, segment: s }];
           
-          // 🌟 根據您的新規格，拆分 DeepDive 與 QuizCard
           const hasDeepDive = s.difficultWords?.length > 0 || s.rhetorics?.length > 0 || s.sentencePatterns?.length > 0;
           const hasQuiz = s.readingQuestions?.length > 0 || s.dokQuestions?.length > 0 || s.questions?.length > 0;
 
@@ -195,7 +194,6 @@ export const useStep5Output = () => {
         const chunk = blueprint.slice(i, i + chunkSize);
         dispatch({ type: 'SET_LOADING_STATUS', payload: `正在產出 ${chunk[0].part} (進度: ${i}/${blueprint.length})` });
 
-        // 🌟🌟🌟 全面植入「排版與鏡頭 (Layout & Lens) 絕對領域」 🌟🌟🌟
         const prompt = `
           ${SYSTEM_PROMPT}
           ${FINAL_ATOMIC_SCRIPT_PROMPT}
@@ -253,7 +251,9 @@ export const useStep5Output = () => {
     }
   };
 
-  // 自動計算分批產出目錄的引擎
+  /**
+   * 🌟 智能等距切塊引擎：每 15 頁切成一大批！
+   */
   const generateNotebookLMGuide = (castingData: any, vocab: any[], analysisData: any, visualData: any, slides: any[]) => {
     const guide = castingData?.guide || {};
     const grade = analysisData?.basicInfo?.grade || '';
@@ -265,35 +265,19 @@ export const useStep5Output = () => {
     audioFocus += `2. 探討本課的主旨、結構與寫作修辭手法。`;
 
     let batchingDirectory = '';
-    const batches: Record<string, { title: string, pages: string[] }> = {
-      'PART A': { title: '第一批｜導航與結構', pages: [] },
-      'PART B': { title: '第二批｜課文深究迴圈', pages: [] },
-      'PART C': { title: '第三批｜語文百寶箱 (生字/成語)', pages: [] },
-      'PART D': { title: '第四批｜策略活動', pages: [] },
-      'PART E': { title: '第五批｜評量與結尾', pages: [] }
-    };
+    const CHUNK_SIZE = 15; // 🌟 決定每一批要塞幾頁 (目前設定 15 頁)
 
-    slides.forEach((slide: any, idx: number) => {
-      let label = slide.part_label || 'PART A';
-      if (!batches[label]) {
-        if (label.includes('A')) label = 'PART A';
-        else if (label.includes('B')) label = 'PART B';
-        else if (label.includes('C')) label = 'PART C';
-        else if (label.includes('D')) label = 'PART D';
-        else if (label.includes('E')) label = 'PART E';
-        else label = 'PART A';
-      }
-      const pageNum = slide.page_number || (idx + 1);
-      batches[label].pages.push(`  P${pageNum} ${slide.title}`);
-    });
+    for (let i = 0; i < slides.length; i += CHUNK_SIZE) {
+      const chunk = slides.slice(i, i + CHUNK_SIZE);
+      const batchNumber = Math.floor(i / CHUNK_SIZE) + 1;
+      const firstPage = chunk[0].page_number || (i + 1);
+      const lastPage = chunk[chunk.length - 1].page_number || (i + chunk.length);
 
-    Object.values(batches).forEach(batch => {
-      if (batch.pages.length > 0) {
-        const first = batch.pages[0].match(/P(\d+)/)?.[1];
-        const last = batch.pages[batch.pages.length - 1].match(/P(\d+)/)?.[1];
-        batchingDirectory += `\n【${batch.title}】 (建議複製指令：請接續產出 P${first} 到 P${last} 的投影片)\n${batch.pages.join('\n')}\n`;
-      }
-    });
+      batchingDirectory += `\n【第 ${batchNumber} 批產出】 (建議複製指令：請接續產出 P${firstPage} 到 P${lastPage} 的投影片)\n`;
+      chunk.forEach((slide: any) => {
+        batchingDirectory += `  P${slide.page_number} ${slide.title}\n`;
+      });
+    }
 
     return PROMPT_GENERATE_NOTEBOOKLM_GUIDE
       .replace(/{KERNEL_VERSION}/g, "v59.3-DNA-Purity")
