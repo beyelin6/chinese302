@@ -55,9 +55,6 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     }
   }, [outputScript]);
 
-  /**
-   * 3. 🌟 核心引擎：根據當前分頁與視角狀態，即時封裝資料
-   */
   const syncRawCode = useMemo(() => {
     if (activeTab !== 'script') {
       return activeTab === 'worksheet' ? outputWorksheet || "" : 
@@ -74,7 +71,8 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     const visual = safeParse(state.visualResult);
     const casting = safeParse(state.castingResult);
     const analysis = state.analysisData;
-    const lessonTitle = analysis?.basicInfo?.unitName || analysis?.title || analysis?.lessonTitle || analysis?.subject || '未命名課文';
+    
+    const lessonTitle = analysis?.basicInfo?.unitName || analysis?.title || analysis?.subject || '未命名課文';
 
     // 🌟 [人類視角]：將資料轉譯為乾淨的 Markdown 視覺化分鏡腳本
     if (viewMode === 'human') {
@@ -84,7 +82,6 @@ const Step5Output: React.FC<Step5OutputProps> = ({
 
       editableSlides.forEach((slide, idx) => {
         humanReadableText += `## 🎬 投影片 P${slide.page_number || (idx + 1)}：${slide.title || '未命名場景'}\n`;
-        // 將 Layout 和 Lens 資訊明確顯示在 Markdown 中
         humanReadableText += `- **模組定位**：\`${slide.type || '一般'}\`\n`;
         humanReadableText += `- **排版指令**：\`${slide.layout || '預設'}\`\n`;
         humanReadableText += `- **鏡頭指令**：\`${slide.lens || '中景'}\`\n\n`;
@@ -103,53 +100,63 @@ const Step5Output: React.FC<Step5OutputProps> = ({
       return humanReadableText;
     }
 
-    // 💻 [機器視角]：加入超級強化的 NotebookLM 佈局解析指令
-    const unifiedPayload = {
-      notebooklm_driver: {
-        system_role: "You are the V-MAX Slide Architect. Generate slides based on the YAML constraints. CRITICAL: You MUST use Multi-Box UI Layout according to the 'layout' and 'lens' properties of each slide.",
-        ui_layout_protocol: {
-          core_rule: "NEVER put all displayText into a single visual container. You MUST split the text into distinct, separate spatial UI boxes based on headings and the layout type.",
-          // 🌟🌟🌟 新增：針對您的版型規格進行 1:1 強制映射 🌟🌟🌟
-          layout_mapping: {
-            "wide-scene": "Split screen 50/50. Left: Wide-angle scene image. Right: Text content separated into primary block (段落大意) and secondary block (難詞顯影).",
-            "close-tool": "Split screen. Left: Close-up image of the guide/tool. Right: Text separated into definition blocks (e.g., 修辭/句型) with distinct colored borders.",
-            "quiz-card": "Single Info Board. Top: Image of guide. Bottom: Two distinct colored tag boxes. Blue tag box for 【提取】(Extraction) questions, Amber/Orange tag box for 【推論】(Inference) questions.",
-            "split-2": "Split Screen. 50% Left image, 50% Right image. Large text overlay at the bottom spanning full width. NO guide character.",
-            "grid-3": "Horizontal 3-column grid. Each cell contains 60% image and 40% text. Large text spanning full width at the bottom. NO guide character.",
-            "grid-4": "2x2 Grid. Each cell contains 60% image and 40% text. Large text spanning full width at the bottom. NO guide character.",
-            "compare-scale": "Balance Screen Layout. Left and right distinct scenario images. NO guide character.",
-            "triptych": "3-panel Balance Screen Layout. Left, center, and right distinct scenario images. NO guide character.",
-            "story-panel": "Single Full Image taking up the upper 60% of the slide. MUST include Huge Text Overlay (4-character idiom) in the upper-center of the image. The lower 40% contains definition text. NO guide character."
-          }
-        },
-        artistic_consistency: visual?.style?.code || "A",
-        style_prompt: visual?.style?.description || "Maintain stylistic consistency.",
-        dna_traits: {
-          protagonist: casting?.protagonist || "主角視覺特徵",
-          guide: `${casting?.guide?.name || '導師'} | ${casting?.guide?.visualDNA || '標準人設'}`
-        }
-      },
-      VMAX_STRUCTURE_YAML: {
-        global_visual_protocol: { 
-          artistic_consistency: visual?.style?.code || "A", 
-          image_ratio: "16:9",
-          rendering_priority: "Visual DNA Consistency"
-        },
-        scaffolding_logic: {
-          macro_structure: analysis?.visualStructureRecommendation || "N1 故事山",
-          micro_thinking: "C1 氣泡圖 / T1 對比圖",
-          visual_metaphor: visual?.metaphor?.name || "隱喻設計",
-          visual_description: `必須在背景中使用「${visual?.metaphor?.name || '專屬隱喻'}」串連全課。`
-        },
-        visual_dna_anchor: {
-          protagonist_dna: casting?.protagonist || "主角視覺 DNA",
-          guide_dna: casting?.guide?.visualDNA || "導師視覺 DNA"
-        }
-      },
-      slides: editableSlides
-    };
+    // 💻 [機器視角]：全面升級為 YAML 引擎，不再使用 JSON！
+    // 同時拔除 visual_metaphor，並要求 AI 專注場景、不要加多餘裝飾
+    let yamlString = `notebooklm_driver:
+  system_role: "You are the V-MAX Slide Architect. Generate slides based on the YAML constraints. CRITICAL: You MUST use Multi-Box UI Layout according to the 'layout' and 'lens' properties of each slide."
+  ui_layout_protocol:
+    core_rule: "NEVER put all displayText into a single visual container. You MUST split the text into distinct, separate spatial UI boxes based on headings and the layout type."
+    layout_mapping:
+      wide-scene: "Split screen 50/50. Left: Wide-angle scene image. Right: Text content separated into primary block (段落大意) and secondary block (難詞顯影)."
+      close-tool: "Split screen. Left: Close-up image of the guide/tool. Right: Text separated into definition blocks (e.g., 修辭/句型) with distinct colored borders."
+      quiz-card: "Single Info Board. Top: Image of guide. Bottom: Two distinct colored tag boxes. Blue tag box for 【提取】(Extraction) questions, Amber/Orange tag box for 【推論】(Inference) questions."
+      split-2: "Split Screen. 50% Left image, 50% Right image. Large text overlay at the bottom spanning full width. NO guide character."
+      grid-3: "Horizontal 3-column grid. Each cell contains 60% image and 40% text. Large text spanning full width at the bottom. NO guide character."
+      grid-4: "2x2 Grid. Each cell contains 60% image and 40% text. Large text spanning full width at the bottom. NO guide character."
+      compare-scale: "Balance Screen Layout. Left and right distinct scenario images. NO guide character."
+      triptych: "3-panel Balance Screen Layout. Left, center, and right distinct scenario images. NO guide character."
+      story-panel: "Single Full Image taking up the upper 60% of the slide. MUST include Huge Text Overlay (4-character idiom) in the upper-center of the image. The lower 40% contains definition text. NO guide character."
+      pattern-drill: "Single Image, Large Text overlay."
+      punctuation-chart: "Single Image, Large Text overlay."
+      phrase-demo: "Single Image, Large Text overlay."
+      speech-stage: "Single Image, Large Text overlay."
+      info-flow: "Single Box Focus, Large Text overlay."
+      step-flow: "Single Box Focus, Large Text overlay."
+      single-board: "Single Info Board Layout."
+  artistic_consistency: "${visual?.style?.code || "A"}"
+  style_prompt: "${visual?.style?.description || "Maintain stylistic consistency."}"
+  dna_traits:
+    protagonist: "${(casting?.protagonist || "主角視覺特徵").replace(/"/g, '\\"')}"
+    guide: "${(casting?.guide?.name || '導師')} | ${(casting?.guide?.visualDNA || '標準人設').replace(/"/g, '\\"')}"
+VMAX_STRUCTURE_YAML:
+  global_visual_protocol:
+    artistic_consistency: "${visual?.style?.code || "A"}"
+    image_ratio: "16:9"
+    rendering_priority: "Visual DNA Consistency"
+  scaffolding_logic:
+    macro_structure: "${analysis?.visualStructureRecommendation || "N1 故事山"}"
+    micro_thinking: "C1 氣泡圖 / T1 對比圖"
+    visual_description: "請專注於畫面主體與場景，嚴禁在背景隨意加上不相關的隱喻裝飾物（如絲帶等）。"
+  visual_dna_anchor:
+    protagonist_dna: "${(casting?.protagonist || "主角視覺 DNA").replace(/"/g, '\\"')}"
+    guide_dna: "${(casting?.guide?.visualDNA || "導師視覺 DNA").replace(/"/g, '\\"')}"
+slides:\n`;
 
-    return JSON.stringify(unifiedPayload, null, 2);
+    // 迴圈將每一頁簡報精準轉換為 YAML 格式
+    editableSlides.forEach((slide) => {
+      yamlString += `  - page_number: ${slide.page_number || 1}\n`;
+      yamlString += `    part_label: "${slide.part_label || ''}"\n`;
+      yamlString += `    type: "${slide.type || ''}"\n`;
+      yamlString += `    title: "${(slide.title || '').replace(/"/g, '\\"')}"\n`;
+      yamlString += `    layout: "${slide.layout || ''}"\n`;
+      yamlString += `    lens: "${slide.lens || ''}"\n`;
+      yamlString += `    visual_prompt: |-\n      ${(slide.visual_prompt || '').replace(/\n/g, '\n      ')}\n`;
+      yamlString += `    displayText: |-\n      ${(slide.displayText || '').replace(/\n/g, '\n      ')}\n`;
+      yamlString += `    guideAction: "${(slide.guideAction || '').replace(/"/g, '\\"')}"\n`;
+      yamlString += `    guideTalk: |-\n      ${(slide.guideTalk || '').replace(/\n/g, '\n      ')}\n`;
+    });
+
+    return yamlString;
   }, [editableSlides, activeTab, viewMode, state.visualResult, state.castingResult, state.analysisData, outputWorksheet, outputAssessment, outputKb, outputNotebookLMGuide, outputGamifiedQuiz]);
 
   const updateSlide = (index: number, field: string, value: string) => {
@@ -168,11 +175,14 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     const min = String(now.getMinutes()).padStart(2, '0');
     const timeString = `${mm}${dd}_${hh}${min}`;
 
-    const lessonTitle = state.analysisData?.basicInfo?.unitName || state.analysisData?.title || state.analysisData?.lessonTitle || state.analysisData?.subject || '未命名課文';
+    const lessonTitle = state.analysisData?.basicInfo?.unitName || state.analysisData?.title || state.analysisData?.subject || '未命名課文';
+    const safeLessonTitle = lessonTitle.replace(/[\\/:*?"<>| ]/g, "_");
+    
     const moduleName = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
     
+    // 依然匯出為 txt (NotebookLM 最喜歡吃 txt)，但內容已是乾淨的 YAML
     const extension = (activeTab === 'script' && viewMode === 'human') ? 'md' : 'txt';
-    const dynamicFileName = `${lessonTitle}_${moduleName}_${timeString}.${extension}`;
+    const dynamicFileName = `${safeLessonTitle}_${moduleName}_${timeString}.${extension}`;
 
     const blob = new Blob(['\ufeff', syncRawCode], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -258,7 +268,7 @@ const Step5Output: React.FC<Step5OutputProps> = ({
                     </div>
                     <div className="p-5 space-y-4">
                       
-                      {/* 🎥 排版與鏡頭標示 (明確顯示您指定的版型) */}
+                      {/* 🎥 排版與鏡頭標示 */}
                       <div className="flex gap-2">
                          <span className="inline-block text-[10px] font-bold text-teal-600 bg-teal-50 border border-teal-100 px-2 py-1 rounded-md print:bg-white print:border-slate-300 print:text-slate-600">
                            📏 排版: {slide.layout || "未指定"}
@@ -279,7 +289,6 @@ const Step5Output: React.FC<Step5OutputProps> = ({
                             const titleMatch = block.match(/^#{3,4}\s+(.+)/);
                             const blockTitle = titleMatch ? titleMatch[1].replace(/[💡🔍🧠✍️#*-]/g, '').trim() : `文本區塊 ${bIdx + 1}`;
                             
-                            // 🌟 針對不同版型給予編輯器視覺提示
                             let blockStyle = "border-slate-200";
                             if (slide.layout === 'quiz-card' && blockTitle.includes('提取')) blockStyle = "border-blue-400 bg-blue-50/30";
                             if (slide.layout === 'quiz-card' && blockTitle.includes('推論')) blockStyle = "border-amber-400 bg-amber-50/30";
@@ -349,7 +358,7 @@ const Step5Output: React.FC<Step5OutputProps> = ({
         <div className="w-[480px] border-l border-slate-200 bg-slate-50 flex flex-col shadow-[-10px_0_15px_-10px_rgba(0,0,0,0.05)] z-10 print:hidden">
           <div className="px-4 py-3 bg-white border-b border-slate-200 flex justify-between items-center">
             
-            {/* 🌟 視角切換器 */}
+            {/* 🌟 視角切換器：文字已更改為 YAML 原始碼 */}
             {activeTab === 'script' ? (
               <div className="flex bg-slate-100 p-1 rounded-lg">
                 <button 
@@ -362,9 +371,9 @@ const Step5Output: React.FC<Step5OutputProps> = ({
                 <button 
                   onClick={() => setViewMode('json')}
                   className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'json' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                  title="匯出時將包含機器識別的括號符號"
+                  title="匯出時將包含機器識別的 YAML 結構"
                 >
-                  JSON 原始碼
+                  YAML 原始碼
                 </button>
               </div>
             ) : (
@@ -391,7 +400,7 @@ const Step5Output: React.FC<Step5OutputProps> = ({
             )}
           </div>
           <div className="p-3 bg-indigo-50 border-t border-slate-200 text-[9px] text-indigo-400 font-bold font-mono">
-            {activeTab === 'script' && viewMode === 'human' ? '✅ 當前匯出格式：無符號 Markdown 視覺文本' : '⚠️ 當前匯出格式：帶有多視窗 (Multi-Box) 指令的原始代碼'}
+            {activeTab === 'script' && viewMode === 'human' ? '✅ 當前匯出格式：無符號 Markdown 視覺文本' : '⚠️ 當前匯出格式：帶有多視窗 (Multi-Box) 指令的 YAML 原始碼'}
           </div>
         </div>
       </div>
