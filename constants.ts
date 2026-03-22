@@ -526,7 +526,7 @@ Special Structures (特殊文體)
 
 export const STEP_3_CASTING_PROMPT_PREFIX = `[V-MAX CASTING ENGINE] 請根據來源文本的靈魂，為本課推薦 3 位最契合的引導者候選人。`;
 
-
+// 🌟 [性別補完計畫] 強制要求提取性別 (Gender)
 export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 # ROLE: V-MAX 視覺邏輯導演 (Casting Director v13.0)
 # MISSION: 根據【傳入的課文原文】提取真實主角，並結合【全域視覺風格】量身打造專業的引導者。
@@ -571,7 +571,7 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
   "protagonist": {
     "name": "必須是文本中真實出現的名字。若無則填 None",
     "description": "根據文本描述其身份與核心行動",
-    "visualDNA": "Age: [明確年齡] | Hair: [髮型] | Clothing: [符合時代背景的服裝]",
+    "visualDNA": "Gender: [男/女] | Age: [明確年齡] | Hair: [髮型] | Clothing: [符合時代背景的服裝]",
     "isNone": boolean,
     "verification": "請簡述你在原文哪裡找到這個人，以及他做了什麼行動來推動劇情"
   },
@@ -581,7 +581,7 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
       "name": "契合文本情境的專屬名字",
       "persona": "G1-G6 語氣晶片",
       "description": "他在本課的專屬定位",
-      "visualDNA": "Age: [明確年齡] | [髮型] | [🌟 必須融合【選定視覺風格】的服裝與配件細節描述]"
+      "visualDNA": "Gender: [男/女] | Age: [明確年齡] | [髮型] | [🌟 必須融合【選定視覺風格】的服裝與配件細節描述]"
     },
     { "id": "C2", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." },
     { "id": "C3", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." }
@@ -589,11 +589,15 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 }
 `;
 
-export const GUIDE_TRAITS_SUGGESTION_PROMPT = `[INSTRUCTION] Refine Visual DNA. {GENDER}, {AGE}, {TONE}`;
-export const GUIDE_TEACHING_STYLE_SUGGESTION_PROMPT = `[INSTRUCTION] Create teaching style for Guide: {GENDER}, {AGE}, {TONE_LABEL}.`;
-export const PROTAGONIST_TRAITS_SUGGESTION_PROMPT = `[INSTRUCTION] Generate Pipe Format Visual DNA for Protagonist. (CRITICAL: Must include exact Age, e.g., Age: 12, Age: 40s at the beginning).`;
+export const GUIDE_TRAITS_SUGGESTION_PROMPT = `[INSTRUCTION] Refine Visual DNA. Must include Gender (e.g., Gender: Male or Female), {AGE}, {TONE}`;
+export const GUIDE_TEACHING_STYLE_SUGGESTION_PROMPT = `[INSTRUCTION] Create teaching style for Guide: Gender: [M/F], {AGE}, {TONE_LABEL}.`;
+
+// 🌟 [性別補完計畫] 嚴格要求 Protagonist 包含 Gender
+export const PROTAGONIST_TRAITS_SUGGESTION_PROMPT = `[INSTRUCTION] Generate Pipe Format Visual DNA for Protagonist. (CRITICAL: Must include exact Gender and Age, e.g., Gender: Male | Age: 12, or Gender: Female | Age: 40s at the beginning).`;
+
+// 🌟 [性別補完計畫] 萃取自訂圖片特徵時，也要判斷性別
 export const EXTRACT_IMAGE_TRAITS_PROMPT = `
-請以專業角色設計師的角度，精準分析隨附的圖片，並將該人物的視覺特徵萃取為嚴格的 YAML 格式 (Visual DNA)。務必明確標示出該角色的推測年齡 (Age)。
+請以專業角色設計師的角度，精準分析隨附的圖片，並將該人物的視覺特徵萃取為嚴格的 YAML 格式 (Visual DNA)。務必明確標示出該角色的性別 (Gender) 與推測年齡 (Age)。
 `;
 
 export const STEP_5_MATERIALS_PROMPT = `[INSTRUCTION] Execute STEP 6: 輔助產出 (Material Linkage).`;
@@ -669,7 +673,6 @@ export const GENERATE_LANGUAGE_ACTIVITY_PROMPT = `
 請只輸出純 JSON。
 `;
 
-// 🌟 [YAML 專屬進化版] NotebookLM 工作室驅動指南
 export const PROMPT_GENERATE_NOTEBOOKLM_GUIDE = `
 ================================================================
 V-MAX {KERNEL_VERSION} NotebookLM 操作指南
@@ -735,6 +738,7 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 
 
 // 🌟🌟🌟 終極防禦裝甲 (Anti-Hallucination & Guide Forcing) 🌟🌟🌟
+// 加入了明確宣告性別的嚴格限制！
 export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 # ROLE: V-MAX System Master Kernel v60.5 (Layout & Anti-Hallucination Director)
 # MISSION: 嚴格根據傳入的資料，生成精準的四維對位腳本，並確保視覺提示詞的絕對安全。
@@ -753,7 +757,7 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
 - [Cover/MissionNav/Ending] 封面與結尾 -> 請自行判斷，推薦使用 "wide-scene" 或 "close-tool"。
 
 ### 🎨 模組二：生圖防呆與導師顯影絕對禁令 (CRITICAL)
-1. **導師強制顯影 (Guide Presence)**：只要該頁有 \`guideAction\` 或 \`guideTalk\`，或者版型為 close-tool / quiz-card，你【必須】在 \`visual_prompt\` 的 Subject 中，明確寫出導師的完整外觀特徵 (Guide DNA)！如果沒寫，生圖軟體就不會畫出導師！
+1. **導師強制顯影 (Guide Presence)**：只要該頁有 \`guideAction\` 或 \`guideTalk\`，或者版型為 close-tool / quiz-card，你【必須】在 \`visual_prompt\` 的 Subject 中，明確寫出導師的完整外觀特徵 (包含【性別 Gender】與年齡的 Guide DNA)！如果沒寫，生圖軟體就不會畫出導師！
 2. **強制無字化 (Anti-Text Hallucination)**：生圖軟體極易產生亂碼外星文。
    - 若場景包含「藍圖、黑板、書本、筆記」，請註明「abstract lines, blank pages」。
    - \`visual_prompt\` 的結尾必須強制加上：「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO TYPOGRAPHY, NO WORDS IN THE IMAGE.」
@@ -769,7 +773,7 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
     "title": "投影片標題",
     "layout": "填入【模組一】的 Layout 代碼",
     "lens": "填入【模組一】對應的 Lens 標準值",
-    "visual_prompt": "【英文】生圖提示詞。Subject: [場景描述 + 務必包含導師外貌]. Context: ... Composition: [layout]. Artistic VIS: {風格碼}. Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO TYPOGRAPHY IN THE IMAGE.",
+    "visual_prompt": "【英文】生圖提示詞。Subject: [場景描述 + 務必包含導師外貌(Gender & Age)]. Context: ... Composition: [layout]. Artistic VIS: {風格碼}. Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO TYPOGRAPHY IN THE IMAGE.",
     "displayText": "顯示文字 (嚴格繁體中文，包含【提取】與【推論】等標題，禁止自行刪減原文)",
     "guideAction": "導師的肢體動作或表情提示 (若無則填 null)",
     "guideTalk": "引導語/腳本 (純台詞)"

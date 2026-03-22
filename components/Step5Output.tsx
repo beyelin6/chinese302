@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { 
   Layout, FileText, Check, Download, ArrowLeft, Loader2, 
-  Sparkles, BookOpen, Database, Copy, Printer, Wand2
+  Sparkles, BookOpen, Database, Copy, Printer, Wand2, CheckCircle
 } from 'lucide-react';
 import { useWorkflowContext } from '../context/WorkflowContext';
 
