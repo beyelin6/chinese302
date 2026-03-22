@@ -2,8 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { 
   Layout, FileText, Check, Download, ArrowLeft, Loader2, 
-  Sparkles, BookOpen, Database, Copy, Code, Zap, MessageSquare,
-  Image as ImageIcon, MessageCircle, CheckCircle, Printer
+  Sparkles, BookOpen, Database, Copy, Printer, Wand2
 } from 'lucide-react';
 import { useWorkflowContext } from '../context/WorkflowContext';
 
@@ -16,6 +15,7 @@ interface Step5OutputProps {
   outputGamifiedQuiz: string | null;
   onScriptPipeline: () => void;
   onManualModule: (key: string) => void;
+  onRegenerateSingleSlide?: (slideData: any) => Promise<any>; // 🌟 新增 API 接口
   isLoading: boolean;
   onBack: () => void;
 }
@@ -23,15 +23,17 @@ interface Step5OutputProps {
 const Step5Output: React.FC<Step5OutputProps> = ({ 
   outputScript, outputWorksheet, outputAssessment, outputKb, 
   outputNotebookLMGuide, outputGamifiedQuiz, onScriptPipeline, 
-  onManualModule, isLoading, onBack 
+  onManualModule, onRegenerateSingleSlide, isLoading, onBack 
 }) => {
-  const { state } = useWorkflowContext();
+  const { state, dispatch } = useWorkflowContext();
   const [activeTab, setActiveTab] = useState('script');
   const [isCopied, setIsCopied] = useState(false);
   const [editableSlides, setEditableSlides] = useState<any[]>([]);
   const prevSlidesLength = useRef(0);
-
   const [viewMode, setViewMode] = useState<'json' | 'human'>('human'); 
+  
+  // 🌟 單頁重繪的 Loading 狀態
+  const [regeneratingIdx, setRegeneratingIdx] = useState<number | null>(null);
 
   useEffect(() => {
     if (!outputScript && !isLoading) {
@@ -42,18 +44,43 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   useEffect(() => {
     if (outputScript) {
       try {
-        const parsed = JSON.parse(outputScript);
+        const parsed = typeof outputScript === 'string' && outputScript.includes('notebooklm_driver') 
+          ? JSON.parse(outputScript) 
+          : JSON.parse(outputScript);
+        
         const incomingSlides = parsed.slides || (Array.isArray(parsed) ? parsed : []);
         
-        if (incomingSlides.length > prevSlidesLength.current) {
+        if (incomingSlides.length > 0) {
           setEditableSlides(incomingSlides);
-          prevSlidesLength.current = incomingSlides.length;
         }
       } catch (e) {
         console.error("解析腳本失敗", e);
       }
     }
   }, [outputScript]);
+
+  // 🌟 單頁重寫執行函數
+  const handleRegenerateClick = async (idx: number, slide: any) => {
+    if (!onRegenerateSingleSlide) return;
+    setRegeneratingIdx(idx);
+    try {
+      const newSlideData = await onRegenerateSingleSlide(slide);
+      if (newSlideData) {
+        const newSlides = [...editableSlides];
+        newSlides[idx] = { ...newSlides[idx], ...newSlideData, page_number: slide.page_number };
+        setEditableSlides(newSlides);
+        
+        // 將更新後的 slides 重新封裝寫回 Context 儲存
+        const currentPayload = JSON.parse(outputScript || '{}');
+        const newPayload = { ...currentPayload, slides: newSlides };
+        dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: JSON.stringify(newPayload, null, 2) } });
+      }
+    } catch (e) {
+      alert("重寫失敗，請稍後再試！");
+    } finally {
+      setRegeneratingIdx(null);
+    }
+  };
 
   const syncRawCode = useMemo(() => {
     if (activeTab !== 'script') {
@@ -71,7 +98,6 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     const visual = safeParse(state.visualResult);
     const casting = safeParse(state.castingResult);
     const analysis = state.analysisData;
-    
     const lessonTitle = analysis?.basicInfo?.unitName || analysis?.title || analysis?.subject || '未命名課文';
 
     if (viewMode === 'human') {
@@ -84,22 +110,13 @@ const Step5Output: React.FC<Step5OutputProps> = ({
         humanReadableText += `- **模組定位**：\`${slide.type || '一般'}\`\n`;
         humanReadableText += `- **排版指令**：\`${slide.layout || '預設'}\`\n`;
         humanReadableText += `- **鏡頭指令**：\`${slide.lens || '中景'}\`\n\n`;
-        
-        humanReadableText += `### 📝 畫面顯示文字\n`;
-        humanReadableText += `${slide.displayText || '(無文字)'}\n\n`;
-        
-        humanReadableText += `### 🗣️ 導師引導台詞\n`;
-        humanReadableText += `> ${slide.guideAction ? `*(${slide.guideAction})* ` : ''}${slide.guideTalk || '(無台詞)'}\n\n`;
-        
-        humanReadableText += `### 🖼️ AI 生圖提示詞\n`;
-        humanReadableText += `\`\`\`text\n${slide.visual_prompt || '(無)'}\n\`\`\`\n\n`;
-        humanReadableText += `---\n\n`;
+        humanReadableText += `### 📝 畫面顯示文字\n${slide.displayText || '(無文字)'}\n\n`;
+        humanReadableText += `### 🗣️ 導師引導台詞\n> ${slide.guideAction ? `*(${slide.guideAction})* ` : ''}${slide.guideTalk || '(無台詞)'}\n\n`;
+        humanReadableText += `### 🖼️ AI 生圖提示詞\n\`\`\`text\n${slide.visual_prompt || '(無)'}\n\`\`\`\n\n---\n\n`;
       });
-
       return humanReadableText;
     }
 
-    // 🌟 這裡修改了 core_rule，強制加入 Speech Bubble (對話框) 的排版指令！
     let yamlString = `notebooklm_driver:
   system_role: "You are the V-MAX Slide Architect. Generate slides based on the YAML constraints. CRITICAL: You MUST use Multi-Box UI Layout according to the 'layout' and 'lens' properties of each slide."
   ui_layout_protocol:
@@ -108,12 +125,9 @@ const Step5Output: React.FC<Step5OutputProps> = ({
       wide-scene: "Split screen 50/50. Left: Wide-angle scene image. Right: Text content separated into primary block (段落大意) and secondary block (難詞顯影)."
       close-tool: "Split screen. Left: Close-up image of the guide/tool. Right: Text separated into definition blocks (e.g., 修辭/句型) with distinct colored borders."
       quiz-card: "Single Info Board. Top: Image of guide. Bottom: Two distinct colored tag boxes. Blue tag box for 【提取】(Extraction) questions, Amber/Orange tag box for 【推論】(Inference) questions."
-      
-      # 🌟 [修復點 1：強制 NotebookLM 將形近字文字塞入對應的格子裡]
       split-2: "Split Screen Layout. CRITICAL: Put the text for Character 1 INSIDE the left panel under its image, and Character 2 INSIDE the right panel. Put the 【💡 辨析口訣】 in a separate wide box at the bottom. NO guide character."
       grid-3: "3-Column Grid Layout. CRITICAL: Put the text for each character INSIDE its corresponding column under its image. Put the 【💡 辨析口訣】 in a separate wide box at the bottom. NO guide character."
       grid-4: "2x2 Grid Layout. CRITICAL: Put the text for each character INSIDE its corresponding cell under its image. Put the 【💡 辨析口訣】 in a separate wide box at the bottom. NO guide character."
-      
       compare-scale: "Balance Screen Layout. Left and right distinct scenario images. NO guide character."
       triptych: "3-panel Balance Screen Layout. Left, center, and right distinct scenario images. NO guide character."
       story-panel: "Single Full Image taking up the upper 60% of the slide. MUST include Huge Text Overlay (4-character idiom) in the upper-center of the image. The lower 40% contains definition text. NO guide character."
@@ -163,6 +177,11 @@ slides:\n`;
     const newSlides = [...editableSlides];
     newSlides[index] = { ...newSlides[index], [field]: value };
     setEditableSlides(newSlides);
+    
+    // 即時寫回 Context 進行儲存
+    const currentPayload = JSON.parse(outputScript || '{}');
+    const newPayload = { ...currentPayload, slides: newSlides };
+    dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: JSON.stringify(newPayload, null, 2) } });
   };
 
   const handleDownload = () => {
@@ -179,8 +198,6 @@ slides:\n`;
     const safeLessonTitle = lessonTitle.replace(/[\\/:*?"<>| ]/g, "_");
     
     const moduleName = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
-    
-    // 依然匯出為 txt (NotebookLM 最喜歡吃 txt)，但內容已是乾淨的 YAML
     const extension = (activeTab === 'script' && viewMode === 'human') ? 'md' : 'txt';
     const dynamicFileName = `${safeLessonTitle}_${moduleName}_${timeString}.${extension}`;
 
@@ -204,7 +221,6 @@ slides:\n`;
   return (
     <div className="flex flex-col h-screen bg-slate-50 text-slate-800 overflow-hidden animate-in fade-in duration-500">
       
-      {/* 🌟 頂部導覽列 (Header) */}
       <div className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 flex-shrink-0 z-10 shadow-sm print:hidden">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors">
@@ -253,22 +269,36 @@ slides:\n`;
 
       <div className="flex-1 flex overflow-hidden">
         
-        {/* 左側：編輯區 / 文件閱讀區 */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50 print:p-0 print:bg-white">
           <div className="max-w-3xl mx-auto space-y-6 pb-20 print:pb-0">
             {activeTab === 'script' ? (
               editableSlides.length > 0 ? (
                 editableSlides.map((slide, idx) => (
-                  <div key={idx} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden focus-within:border-indigo-300 transition-all print:shadow-none print:border-b print:rounded-none print:mb-8">
+                  <div key={idx} className={`bg-white border ${regeneratingIdx === idx ? 'border-indigo-400 shadow-indigo-100' : 'border-slate-200'} rounded-2xl shadow-sm overflow-hidden focus-within:border-indigo-300 transition-all print:shadow-none print:border-b print:rounded-none print:mb-8 relative`}>
+                    
+                    {/* 🌟 局部 Loading 遮罩 */}
+                    {regeneratingIdx === idx && (
+                      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center text-indigo-600">
+                        <Loader2 size={32} className="animate-spin mb-2" />
+                        <span className="font-bold text-sm tracking-widest animate-pulse">AI 正在重寫此頁...</span>
+                      </div>
+                    )}
+
                     <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 text-xs font-mono text-slate-500 flex justify-between items-center print:bg-white print:border-b-2 print:border-slate-800">
                       <span className="font-bold text-slate-800">投影片 P{slide.page_number || (idx + 1)} // 類型：{slide.type}</span>
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1 print:hidden">
-                        <Check size={12}/> 已同步
-                      </span>
+                      
+                      {/* 🌟 魔法重寫按鈕 */}
+                      <button 
+                        onClick={() => handleRegenerateClick(idx, slide)}
+                        disabled={regeneratingIdx !== null}
+                        className="text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center gap-1 transition-colors print:hidden shadow-sm border border-indigo-100 active:scale-95"
+                      >
+                        <Wand2 size={12}/> AI 重寫這頁
+                      </button>
                     </div>
+                    
                     <div className="p-5 space-y-4">
                       
-                      {/* 🎥 排版與鏡頭標示 */}
                       <div className="flex gap-2">
                          <span className="inline-block text-[10px] font-bold text-teal-600 bg-teal-50 border border-teal-100 px-2 py-1 rounded-md print:bg-white print:border-slate-300 print:text-slate-600">
                            📏 排版: {slide.layout || "未指定"}
@@ -278,14 +308,13 @@ slides:\n`;
                          </span>
                       </div>
                       
-                      {/* 📝 畫面呈現文字 (編輯區) */}
                       <div className="space-y-2">
                         <span className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-1">
                           <Layout size={12}/> 📝 畫面呈現文字
                         </span>
                         
                         <div className="space-y-3">
-                          {(slide.displayText || '').split(/(?=(?:^|\n)#{3,4} )/).map(p => p.trim()).filter(Boolean).map((block, bIdx, arr) => {
+                          {(slide.displayText || '').split(/(?=(?:^|\n)#{3,4} )/).map((p: string) => p.trim()).filter(Boolean).map((block: string, bIdx: number, arr: string[]) => {
                             const titleMatch = block.match(/^#{3,4}\s+(.+)/);
                             const blockTitle = titleMatch ? titleMatch[1].replace(/[💡🔍🧠✍️#*-]/g, '').trim() : `文本區塊 ${bIdx + 1}`;
                             
@@ -315,9 +344,8 @@ slides:\n`;
                         </div>
                       </div>
 
-                      {/* 🗣️ 導師引導台詞 */}
                       <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl print:bg-transparent print:border-l-4 print:border-l-indigo-500 print:rounded-none mt-4">
-                        <span className="text-xs font-bold text-indigo-400 mb-1 block">🗣️ 導師引導台詞</span>
+                        <span className="text-xs font-bold text-indigo-400 mb-1 block">🗣️ 導師引導台詞 (將印在對話框)</span>
                         <textarea 
                           value={slide.guideTalk} 
                           onChange={(e) => updateSlide(idx, 'guideTalk', e.target.value)}
@@ -326,7 +354,6 @@ slides:\n`;
                         />
                       </div>
                       
-                      {/* 🎨 AI 生圖提示 */}
                       <div className="text-[10px] font-mono text-slate-400 break-all line-clamp-1 hover:line-clamp-none transition-all print:text-slate-300">
                         🎨 AI 圖像提示: {slide.visual_prompt}
                       </div>
@@ -354,24 +381,19 @@ slides:\n`;
           </div>
         </div>
 
-        {/* 右側：即時碼 / 劇本預覽 (列印時隱藏) */}
         <div className="w-[480px] border-l border-slate-200 bg-slate-50 flex flex-col shadow-[-10px_0_15px_-10px_rgba(0,0,0,0.05)] z-10 print:hidden">
           <div className="px-4 py-3 bg-white border-b border-slate-200 flex justify-between items-center">
-            
-            {/* 🌟 視角切換器：文字已更改為 YAML 原始碼 */}
             {activeTab === 'script' ? (
               <div className="flex bg-slate-100 p-1 rounded-lg">
                 <button 
                   onClick={() => setViewMode('human')}
                   className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'human' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                  title="匯出時將呈現乾淨的排版"
                 >
                   劇本預覽 (無代碼)
                 </button>
                 <button 
                   onClick={() => setViewMode('json')}
                   className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'json' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                  title="匯出時將包含機器識別的 YAML 結構"
                 >
                   YAML 原始碼
                 </button>
@@ -398,9 +420,6 @@ slides:\n`;
                 <code>{syncRawCode}</code>
               </pre>
             )}
-          </div>
-          <div className="p-3 bg-indigo-50 border-t border-slate-200 text-[9px] text-indigo-400 font-bold font-mono">
-            {activeTab === 'script' && viewMode === 'human' ? '✅ 當前匯出格式：無符號 Markdown 視覺文本' : '⚠️ 當前匯出格式：帶有多視窗 (Multi-Box) 指令的 YAML 原始碼'}
           </div>
         </div>
       </div>

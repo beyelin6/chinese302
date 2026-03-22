@@ -25,41 +25,32 @@ export const useStep5Output = () => {
   };
 
   /**
-   * 🌟 [終極武裝版] 一體化 YAML 標頭 (高精度 NotebookLM 驅動引擎 + 絕對頁碼注入)
+   * 🌟 [終極武裝版] 一體化 JSON 標頭 (供 UI 層轉為 YAML)
    */
   const wrapScriptWithYAML = (slides: any[], data: any) => {
     const { analysisData, visualDNA, casting } = data;
     
-    // 1. 深度萃取視覺風格與隱喻
+    // 1. 深度萃取視覺風格
     const styleCode = visualDNA?.style?.code || "F";
-    const styleDesc = visualDNA?.style?.description || visualDNA?.style?.prompt || "Clean, high-quality educational vector art with vibrant and engaging colors.";
-    const metaphorLabel = visualDNA?.metaphor?.label || "主題隱喻";
-    const metaphorDesc = visualDNA?.metaphor?.description || `在畫面背景與過場中，必須巧妙融入【${metaphorLabel}】的視覺元素，藉此串連全課情境。`;
+    const styleDesc = visualDNA?.style?.description || visualDNA?.style?.prompt || "Clean, high-quality educational vector art.";
 
     // 2. 深度萃取角色 DNA
-    const protagDNA = casting?.protagonist || "符合課文情境的核心人物，保持清晰的臉部特徵與連貫的服裝設定。";
+    const protagDNA = casting?.protagonist || "符合課文情境的核心人物";
     const guideName = casting?.guide?.name || "V-MAX 導師";
     const guidePersona = casting?.guide?.persona || "專業、溫暖、具啟發性";
-    
-    let guideDNA = casting?.guide?.visualDNA || "";
-    if (!guideDNA || guideDNA.includes("預設")) {
-        guideDNA = "身穿俐落的現代教學套裝，帶著親切且自信的微笑，常以手勢指示畫面的重點。";
-    }
+    let guideDNA = casting?.guide?.visualDNA || "身穿俐落的現代教學套裝，帶著親切且自信的微笑。";
 
-    // 3. 🌟 [新增] 絕對頁碼注入器
+    // 3. 絕對頁碼注入器
     const numberedSlides = slides.map((slide, index) => {
       const { page_number, ...restProps } = slide; 
-      return {
-        page_number: index + 1,
-        ...restProps
-      };
+      return { page_number: index + 1, ...restProps };
     });
 
     const unifiedPayload = {
       notebooklm_driver: {
         system_role: "You are the V-MAX Slide Architect. Your absolute priority is to strictly follow the VMAX_STRUCTURE_YAML protocols and the dynamic slide blueprints.",
         artistic_consistency: styleCode,
-        style_prompt: `Artistic VIS [${styleCode}]: ${styleDesc}. (CRITICAL: Maintain absolute stylistic consistency across all slides.)`,
+        style_prompt: `Artistic VIS [${styleCode}]: ${styleDesc}.`,
         dna_traits: {
           protagonist: protagDNA,
           guide: `[Name: ${guideName}] | [Persona: ${guidePersona}] | [Visual Prompt: ${guideDNA}]`
@@ -69,23 +60,17 @@ export const useStep5Output = () => {
         global_visual_protocol: {
           artistic_consistency: styleCode,
           image_ratio: "16:9",
-          rendering_priority: "1. Protagonist DNA -> 2. Metaphor Integration -> 3. Action Accuracy"
+          rendering_priority: "1. Protagonist DNA -> 2. Action Accuracy"
         },
         scaffolding_logic: {
           macro_structure: analysisData?.visualStructureRecommendation || "鷹架導航結構",
           micro_thinking: "C1 氣泡圖 (分析) / T1 對比圖 (辨析)",
-          visual_metaphor: metaphorLabel,
-          visual_description: metaphorDesc
+          // 🛡️ 防禦：嚴禁在普通場景中畫出隱喻絲帶
+          visual_description: "請專注於畫面主體與場景，嚴禁在背景隨意加上不相關的隱喻裝飾物（如絲帶等）。"
         },
         visual_dna_anchor: {
           protagonist_dna: protagDNA,
           guide_dna: guideDNA
-        },
-        slide_sequence_blueprint: {
-          PART_A: "【導航與鷹架】建立全課心智地圖與學習任務",
-          PART_B: "【詳盡課文迴圈】逐段深究、情境重現與修辭解析",
-          PART_C: "【原子語文與評量】生字寫法、形近多音辨析與總結測驗",
-          PART_D_E: "【策略與結尾】語文百寶箱活動與課程收尾"
         }
       },
       slides: numberedSlides
@@ -109,81 +94,48 @@ export const useStep5Output = () => {
       const segments = segmentsData?.segments || [];
       const vocabulary = vocabData?.vocabulary || [];
       const idioms = vocabData?.deepIdiomsDetails || [];
-      
       const languageActivities = analysisData?.languageActivities || [];
       const strategies = segmentsData?.strategies || [];
 
-      // 1. 🌟 [精準對位藍圖] 建立分段藍圖 (加入 QuizCard 新版型邏輯)
+      // 1. 🌟 [精準對位藍圖] 建立分段藍圖
       const blueprint = [
         { part: 'PART A', type: 'Cover', title: '封面' },
         { part: 'PART A', type: 'MissionNav', title: '任務導覽' },
         { 
-          part: 'PART A', 
-          type: 'FusionMap', 
-          title: '結構視圖',
-          quickGrasp: segments.map((s: any, idx: number) => ({
-            label: `段落 ${idx + 1}`,
-            keywords: s.keywords?.slice(0, 4).join('、') || "重點萃取中"
-          })),
-          macroStructure: analysisData?.visualStructureRecommendation,
+          part: 'PART A', type: 'FusionMap', title: '結構視圖',
+          quickGrasp: segments.map((s: any, idx: number) => ({ label: `段落 ${idx + 1}`, keywords: s.keywords?.slice(0, 4).join('、') })),
+          // 🛡️ 只有這張圖可以收到絲帶的隱喻！
           visualMetaphor: visualData?.metaphor?.label
         },
         
         ...segments.flatMap((s: any, idx: number) => {
-          const chunk = [{ part: 'PART B', type: 'ContentFocus', title: `段落 ${idx+1}: 內容對焦`, segment: s }];
+          // 🚀 優化 1：Token 瘦身大作戰！只給大意跟關鍵字，丟掉冗長原文
+          const slimSegment = { summary: s.summary, keywords: s.keywords };
+          const chunk = [{ part: 'PART B', type: 'ContentFocus', title: `段落 ${idx+1}: 內容對焦`, segment: slimSegment }];
           
-          const hasDeepDive = s.difficultWords?.length > 0 || s.rhetorics?.length > 0 || s.sentencePatterns?.length > 0;
-          const hasQuiz = s.readingQuestions?.length > 0 || s.dokQuestions?.length > 0 || s.questions?.length > 0;
-
-          if (hasDeepDive) {
+          if (s.difficultWords?.length > 0 || s.rhetorics?.length > 0 || s.sentencePatterns?.length > 0) {
             chunk.push({ part: 'PART B', type: 'DeepDive', title: `段落 ${idx+1}: 深究特寫`, segment: { difficultWords: s.difficultWords, rhetorics: s.rhetorics, sentencePatterns: s.sentencePatterns } });
           }
-          
-          if (hasQuiz) {
-            chunk.push({ part: 'PART B', type: 'QuizCard', title: `段落 ${idx+1}: 閱讀小挑戰`, segment: { readingQuestions: s.readingQuestions, dokQuestions: s.dokQuestions, questions: s.questions } });
+          if (s.readingQuestions?.length > 0 || s.dokQuestions?.length > 0 || s.questions?.length > 0) {
+            chunk.push({ part: 'PART B', type: 'QuizCard', title: `段落 ${idx+1}: 閱讀小挑戰`, segment: { readingQuestions: s.readingQuestions, dokQuestions: s.dokQuestions } });
           }
           return chunk;
         }),
         
         ...vocabulary.flatMap((v: any) => {
-          const coreVocabList = analysisData?.coreVocabulary || [];
-          const uiFlags = coreVocabList.find((cv: any) => cv.word === v.word) || {};
-
+          const uiFlags = (analysisData?.coreVocabulary || []).find((cv: any) => cv.word === v.word) || {};
           if (uiFlags.isSelected === false) return [];
-          
           const vocabSlides = [];
-          const wantWriting = uiFlags.wantsWritingTips || uiFlags.isWritingTipsSelected;
-          const wantShape = uiFlags.wantsShapeSimilar || uiFlags.isShapeSimilarSelected;
-          const wantPoly = uiFlags.wantsPolyphonic || uiFlags.isPolyphonicSelected;
-
-          if (wantWriting) {
-            vocabSlides.push({ 
-              part: 'PART C', type: 'VocabLoop', title: `生字辨析：${v.word}`, 
-              word: String(v.word), writingTips: uiFlags.writingTips || "請注意字形比例與重心。" 
-            });
-          }
-          if (wantShape && v.shapeSimilar && v.shapeSimilar.length > 0) {
-            vocabSlides.push({ 
-              part: 'PART C', type: 'ShapeSimilar', title: `形近辨析：${v.word}`, 
-              details: JSON.stringify(v.shapeSimilar), mnemonic: v.mnemonic || uiFlags.mnemonic 
-            });
-          }
-          if (wantPoly && v.polyphonic && v.polyphonic.length > 0) {
-            vocabSlides.push({ 
-              part: 'PART C', type: 'Polyphonic', title: `多音字辨析：${v.word}`, 
-              details: JSON.stringify(v.polyphonic) 
-            });
-          }
-          
+          if (uiFlags.wantsWritingTips || uiFlags.isWritingTipsSelected) vocabSlides.push({ part: 'PART C', type: 'VocabLoop', title: `生字辨析：${v.word}`, word: v.word, writingTips: uiFlags.writingTips });
+          if ((uiFlags.wantsShapeSimilar || uiFlags.isShapeSimilarSelected) && v.shapeSimilar) vocabSlides.push({ part: 'PART C', type: 'ShapeSimilar', title: `形近辨析：${v.word}`, details: v.shapeSimilar, mnemonic: v.mnemonic });
+          if ((uiFlags.wantsPolyphonic || uiFlags.isPolyphonicSelected) && v.polyphonic) vocabSlides.push({ part: 'PART C', type: 'Polyphonic', title: `多音字辨析：${v.word}`, details: v.polyphonic });
           return vocabSlides;
         }),
         
         ...idioms.map((i: any) => ({ part: 'PART C', type: 'IdiomLoop', title: `成語解析：${i.word}`, idiom: i })),
         { part: 'PART C', type: 'Assessment', title: '全課綜合評量' },
-        
         ...languageActivities.map((act: any) => ({ part: 'PART D', type: 'LanguageActivity', title: `語文活動：${act.title}`, content: act.content })),
-        ...strategies.map((st: any) => ({ part: 'PART D', type: 'Strategy', title: `教學策略：${st.title}`, strategy: st })),
-        
+        ...strategies.map((st: any) => ({ part: 'PART D', type: 'Strategy', title: `教學策略：${st.title}`, strategy: { title: st.title, method: st.method, application: st.application } })),
         { part: 'PART E', type: 'Ending', title: '結尾道別' }
       ];
 
@@ -202,24 +154,6 @@ export const useStep5Output = () => {
           - 語氣校準：導師為 ${castingData?.guide?.name}，展現「${castingData?.guide?.persona}」特質。
           
           # 任務：生成第 ${i+1} 至 ${Math.min(i+chunkSize, blueprint.length)} 頁
-          ${chunk.map((b, idx) => `${i + idx + 1}. [${b.type}] ${b.title}`).join('\n')}
-          
-          # 🚨 [CRITICAL] 視覺版面與鏡頭分配法則 (Layout & Lens Protocol)
-          你必須嚴格根據投影片的 \`type\`，在 JSON 中強制輸出對應的 \`layout\` 與 \`lens\` 屬性。請絕對遵守以下 1:1 映射表：
-          - [ContentFocus] => layout: "wide-scene", lens: "廣角 (Exhale)"
-          - [DeepDive] => layout: "close-tool", lens: "特寫 (Inhale)"
-          - [QuizCard] => layout: "quiz-card", lens: "單圖資訊板 (Single Info Board)"
-          - [ShapeSimilar] => lens: "左右分割對比大字排版 (Split Screen, Large Text)"。layout請判斷: 若為2字組用 "split-2", 3字組用 "grid-3", 4字組用 "grid-4"。
-          - [Polyphonic] => lens: "天平對比大字排版 (Balance Screen, Large Text)"。layout請判斷: 若為2讀音用 "compare-scale", 3讀音用 "triptych"。
-          - [IdiomLoop] => layout: "story-panel", lens: "單一滿版大圖配大字 (Single Full Image, Huge Text Overlay)"
-          - [LanguageActivity] => layout: "pattern-drill" 或 "punctuation-chart" 或 "phrase-demo", lens: "單圖大字互動舞台 (Single Image, Large Text)"
-          - [Strategy] => layout: "info-flow" 或 "step-flow", lens: "單圖大字百寶箱 (Single Box Focus, Large Text)"
-          - 其他 (Cover/Ending/MissionNav/Assessment) => 請自行判斷最適合的單圖或廣角版型。
-
-          # 頁面特定邏輯說明：
-          - 若遇到 [FusionMap]：必須利用 quickGrasp 清單，關鍵詞標籤精確對應段落。
-          - 若遇到 [QuizCard]：請將題目分裝為【提取】(藍色標籤) 與【推論】(琥珀色標籤) 格式。
-          
           # 參考數據：
           ${JSON.stringify(chunk)}
         `;
@@ -239,7 +173,6 @@ export const useStep5Output = () => {
 
       const guide = generateNotebookLMGuide(castingData, vocabulary, analysisData, visualData, accumulatedSlides);
       dispatch({ type: 'SET_OUTPUTS', payload: { outputNotebookLMGuide: guide } });
-      
       dispatch({ type: 'SET_STEP', payload: AppStep.STEP_6_OUTPUT });
 
     } catch (error: any) {
@@ -249,6 +182,32 @@ export const useStep5Output = () => {
       isProcessing.current = false;
       dispatch({ type: 'SET_LOADING', payload: false });
     }
+  };
+
+  /**
+   * 🚀 優化 2：單頁重繪引擎 (Micro-Regeneration)
+   */
+  const handleRegenerateSingleSlide = async (slideData: any): Promise<any> => {
+    const castingData = getSafeData(state.castingResult);
+    
+    const prompt = `
+      ${SYSTEM_PROMPT}
+      ${FINAL_ATOMIC_SCRIPT_PROMPT}
+      
+      # 任務：【單頁重繪】
+      請幫我重新改寫以下這張投影片的內容（displayText 與 guideTalk），讓教學引導更生動、更有啟發性。
+      ★ 必須維持原有的排版 (layout) 與鏡頭 (lens) 設定！
+      ★ 導師設定：${castingData?.guide?.name} (${castingData?.guide?.persona})
+      
+      【原始投影片資料】：
+      ${JSON.stringify(slideData, null, 2)}
+      
+      請只輸出包含這 1 張投影片的 JSON 陣列！
+    `;
+
+    const response = await sendMessageToGemini(prompt, [], 0);
+    const parsed = sanitizeAndParseJSON(response);
+    return Array.isArray(parsed) ? parsed[0] : (parsed.slides ? parsed.slides[0] : parsed);
   };
 
   /**
@@ -265,7 +224,7 @@ export const useStep5Output = () => {
     audioFocus += `2. 探討本課的主旨、結構與寫作修辭手法。`;
 
     let batchingDirectory = '';
-    const CHUNK_SIZE = 15; // 🌟 決定每一批要塞幾頁 (目前設定 15 頁)
+    const CHUNK_SIZE = 15; 
 
     for (let i = 0; i < slides.length; i += CHUNK_SIZE) {
       const chunk = slides.slice(i, i + CHUNK_SIZE);
@@ -280,7 +239,7 @@ export const useStep5Output = () => {
     }
 
     return PROMPT_GENERATE_NOTEBOOKLM_GUIDE
-      .replace(/{KERNEL_VERSION}/g, "v59.3-DNA-Purity")
+      .replace(/{KERNEL_VERSION}/g, "v60.5-DNA-Purity")
       .replace(/{GRADE}/g, grade)
       .replace(/{UNIT_NAME}/g, unitName)
       .replace(/{GUIDE_NAME}/g, guide.name || '導師')
@@ -342,6 +301,7 @@ export const useStep5Output = () => {
   return { 
     handleScriptPipeline, 
     handleManualModule, 
+    handleRegenerateSingleSlide,
     handleBack: () => dispatch({ type: 'SET_STEP', payload: AppStep.STEP_5_CASTING }) 
   };
 };

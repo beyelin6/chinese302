@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import { 
   Key, Settings, AlertCircle, ChevronRight, Zap, 
-  ShieldCheck, AlertTriangle, RotateCcw, Check 
+  ShieldCheck, AlertTriangle, RotateCcw, Check, Save, Download 
 } from 'lucide-react';
 import { AppStep } from './types';
-import { useWorkflow } from './context/WorkflowContext';
+import { useWorkflow, useWorkflowContext } from './context/WorkflowContext';
 import { hasApiKey } from './services/gemini';
 
 import { ApiKeyModal } from './components/ApiKeyModal';
@@ -25,6 +25,27 @@ function AppContent() {
     showApiKeyModal, 
     setShowApiKeyModal 
   } = useWorkflow();
+
+  // 🌟 取得完整的全域狀態，準備打包下載
+  const { state: fullState } = useWorkflowContext();
+
+  const handleSaveProject = () => {
+    // 排除掉不需存檔的暫時狀態（如載入中、API Key 等）
+    const { isLoading, error, loadingStatus, apiKeys, showApiKeyModal, ...persistentData } = fullState;
+    
+    // 轉成 JSON 檔案
+    const blob = new Blob([JSON.stringify(persistentData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // 自動抓取課文名稱當檔名
+    const lessonTitle = persistentData.analysisData?.basicInfo?.unitName || '未命名專案';
+    link.download = `VMAX_Project_${lessonTitle}.json`;
+    
+    link.click();
+    URL.revokeObjectURL(url);
+  };
   
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   
@@ -118,6 +139,17 @@ function AppContent() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* 🌟 在這裡插入「儲存專案」按鈕 🌟 */}
+          {currentStep > AppStep.STEP_1_INPUT && (
+            <button 
+              onClick={handleSaveProject} 
+              className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-xl transition-all shadow-sm border border-emerald-200" 
+              title="手動備份目前進度"
+            >
+              <Save size={16} />
+            </button>
+          )}
+
           <button 
             onClick={() => setShowApiKeyModal(true)}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-widest transition-all border shadow-sm ${
