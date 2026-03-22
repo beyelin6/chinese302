@@ -286,7 +286,6 @@ export const useStep5Output = () => {
       .replace(/{GUIDE_NAME}/g, guide.name || '導師')
       .replace(/{GUIDE_PERSONA}/g, guide.persona || '專業')
       .replace(/{VISUAL_STYLE}/g, visualData?.style?.name || '預設')
-      .replace(/{VISUAL_METAPHOR}/g, visualData?.metaphor?.name || '預設')
       .replace(/{DATE}/g, today)
       .replace(/{GUIDE_DNA}/g, guide.visualDNA || "")
       .replace(/{AUDIO_FOCUS}/g, audioFocus)

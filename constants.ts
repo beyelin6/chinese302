@@ -659,14 +659,13 @@ export const GENERATE_LANGUAGE_ACTIVITY_PROMPT = `
 請只輸出純 JSON。
 `;
 
-// 🌟 [史詩級升級版] NotebookLM 工作室驅動指南 (動態數據注入 + 智能分批目錄)
+// 🌟 [YAML 專屬進化版] NotebookLM 工作室驅動指南 (動態數據注入 + 智能分批目錄)
 export const PROMPT_GENERATE_NOTEBOOKLM_GUIDE = `
 ================================================================
 V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 課次：{GRADE} {UNIT_NAME}
 引導者：{GUIDE_NAME} ({GUIDE_PERSONA})
 視覺風格：{VISUAL_STYLE}
-隱喻結構：{VISUAL_METAPHOR}
 產出日期：{DATE}
 ================================================================
 
@@ -674,28 +673,29 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 🚀 模組一：自動簡報生成指令 (Slide Generation)
 位置：NotebookLM → 點擊【Slide Guide（簡報）】→ ✏️ 自訂指令框
 ───────────────────────────────────────────────────────────────
-請讀取我剛剛匯出並上傳的腳本檔案（檔名格式如：{UNIT_NAME}_Script_月日時分.md 或 .txt）。
-這份檔案是完整的「簡報分鏡腳本」，請嚴格按照腳本中每一頁的資料，依序生成完整投影片。不得跳頁或合併。
+請讀取我剛剛匯出並上傳的「YAML 結構腳本檔案」（檔名如：{UNIT_NAME}_Script_月日時分.txt）。
+這份檔案包含了完整的「簡報分鏡與排版指令」，請嚴格解析 YAML 節點，依序生成完整投影片。不得跳頁或合併。
 
 🗂️ 【智能分段產出建議】 (NotebookLM 單次有字數限制，請務必分批貼上指令)：
 {BATCHING_DIRECTORY}
 
 ⚠️ 投影片生成最高準則：
 1. 【畫面生成｜視覺 DNA 鎖定】
-   請嚴格依照每頁的「visual_prompt」生成畫面。
+   請嚴格依照每頁 YAML 節點中的 \`visual_prompt\` 生成畫面。
    ★ 引導者 DNA【全程不得改變】：
    {GUIDE_DNA}
-   禁止出現與設定不符的年齡或性別。
+   禁止出現與設定不符的年齡 or 性別。
 
 2. 【投影片文字｜逐字鎖定】
-   投影片畫面上的文字，必須 100% 一字不漏地複製 displayText 欄位。
+   投影片畫面上的文字，必須 100% 一字不漏地複製 YAML 中的 \`displayText\` 內容。
    禁止自行刪減、潤飾 or 翻譯。禁止加入英文標籤。
 
 3. 【排版強制防呆】
+   請嚴格遵守檔案頂部 \`ui_layout_protocol\` 定義的多視窗排版法則。
    成語頁、形近字頁、活動頁，強制使用大圖大字，【絕對禁止】使用多圖拼貼 (Collage) 或導致字體縮小的網格排版。
 
 4. 【講者備忘錄｜僅放台詞】
-   請將 guideTalk 完整放入講者備忘錄，guideAction 僅供畫面生成參考，絕對不可印成文字。
+   請將 \`guideTalk\` 完整放入講者備忘錄，\`guideAction\` 僅供畫面生成參考，絕對不可印成文字。
 
 ───────────────────────────────────────────────────────────────
 🟩 模組二：語音摘要煉成指令 (Audio Overview)
@@ -704,7 +704,7 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 啟動 V-MAX 教學對話模式：
 - 主講人 A：{GUIDE_NAME}（{GUIDE_PERSONA} 的引導導師）
 - 主講人 B：好奇的小學生
-- 核心對話素材：嚴格根據來源文件之【guideTalk】區塊進行內容對話化。
+- 核心對話素材：嚴格根據來源文件之 \`guideTalk\` 區塊進行內容對話化。
 
 🎯 本課重點討論項目（請務必在對話中深入解析）：
 {AUDIO_FOCUS}
@@ -718,7 +718,7 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 {GUIDE_DNA}
 
 【情況 B：投影片文字漏印或被亂改】
-請維持本頁圖片完全不動。重新讀取本頁的 displayText 欄位，100% 逐字補回繁體中文。
+請維持本頁圖片完全不動。重新讀取本頁的 \`displayText\` 欄位，100% 逐字補回繁體中文。
 ================================================================
 `;
 
