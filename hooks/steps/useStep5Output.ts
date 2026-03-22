@@ -111,7 +111,7 @@ export const useStep5Output = () => {
         ...segments.flatMap((s: any, idx: number) => {
           // 🚀 優化 1：Token 瘦身大作戰！只給大意跟關鍵字，丟掉冗長原文
           const slimSegment = { summary: s.summary, keywords: s.keywords };
-          const chunk = [{ part: 'PART B', type: 'ContentFocus', title: `段落 ${idx+1}: 內容對焦`, segment: slimSegment }];
+          const chunk: any[] = [{ part: 'PART B', type: 'ContentFocus', title: `段落 ${idx+1}: 內容對焦`, segment: slimSegment }];
           
           if (s.difficultWords?.length > 0 || s.rhetorics?.length > 0 || s.sentencePatterns?.length > 0) {
             chunk.push({ part: 'PART B', type: 'DeepDive', title: `段落 ${idx+1}: 深究特寫`, segment: { difficultWords: s.difficultWords, rhetorics: s.rhetorics, sentencePatterns: s.sentencePatterns } });

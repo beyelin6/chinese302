@@ -495,9 +495,10 @@ Y. 低多邊形: "Low Poly art, faceted surfaces, sharp edges, stylized 3D look,
 
 ### 🗺️ 2️⃣ Visual Metaphor Mapping (視覺隱喻庫)
 ⚠️ 邏輯：根據文體與內容選擇最契合的隱喻。
-Type A: 探索與順序 (適用：說明文/遊記)
+Type A: 探索與順序 (適用：說明文/遊記/發展史)
 - [M1] 冒險地圖 (Adventure Map): 羊皮紙、虛線、羅盤。
 - [M2] 生態解構圖 (Anatomy/Ecosystem): 放大鏡、標籤、中心放射。
+- [M7] 漫步小徑 (Winding Path Timeline): 🌟 蜿蜒的小路、時間軸、沿途散布著代表故事發展的小場景節點。
 Type B: 情感與流動 (適用：記敘文/抒情文)
 - [M3] 故事絲帶 (Story Ribbon): 緞帶、節點、柔和路徑。
 - [M4] 情緒溫度計 (Emotion Thermometer): 刻度、天氣圖示、起伏。
@@ -738,7 +739,6 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 
 
 // 🌟🌟🌟 終極防禦裝甲 (Anti-Hallucination & Guide Forcing) 🌟🌟🌟
-// 加入了明確宣告性別的嚴格限制！
 export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 # ROLE: V-MAX System Master Kernel v60.5 (Layout & Anti-Hallucination Director)
 # MISSION: 嚴格根據傳入的資料，生成精準的四維對位腳本，並確保視覺提示詞的絕對安全。
@@ -781,9 +781,9 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
 ]
 
 ### 📜 模組四：版型內容填充指南
-- **[FusionMap]**: 🌟這是全課結構視圖！請務必結合傳入的 \`visualMetaphor\` (如故事絲帶/冒險地圖)，在 \`visual_prompt\` 中要求繪製出精美且具有設計感的「資訊圖表 (Infographic)」或「心智圖 (Mindmap)」，展現全課的宏觀結構！
-- **[ContentFocus]**: 根據段落大意繪製場景。
-- **[DeepDive]**: 視覺對焦教學情境。
+- **[FusionMap]**: 🌟這是全課結構視圖！請務必嚴格結合傳入的 \`visualMetaphor\`。如果在屬性中看到「漫步小徑」，請在 \`visual_prompt\` 中明確要求繪製「A winding path timeline connecting small distinct scenes along the way」；如果是其他隱喻，請根據該隱喻畫出具有設計感的資訊圖表 (Infographic)！
+- **[ContentFocus]**: 根據段落大意繪製場景。displayText 必須包含【段落大意】與【難詞顯影】。🚨【難詞顯影格式鐵律】：絕對禁止只列出單字！你必須強制為每一個難詞附上簡短解釋（格式範例：「頭痛：令人感到困擾的事。」）。
+- **[DeepDive]**: 視覺對焦教學情境。若內容包含難詞探究，同樣必須遵守上述【難詞顯影格式鐵律】。
 - **[QuizCard]**: 提問表情特寫。displayText 必須分列【提取】與【推論】。
 - **[ShapeSimilar]**: 必須使用大標題嚴格分格！格式如下：
   ### 字A (注音 / 部首)
