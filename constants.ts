@@ -740,7 +740,7 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 
 // 🌟🌟🌟 終極防禦裝甲 (Anti-Hallucination & Guide Forcing) 🌟🌟🌟
 export const FINAL_ATOMIC_SCRIPT_PROMPT = `
-# ROLE: V-MAX System Master Kernel v60.5 (Layout & Anti-Hallucination Director)
+# ROLE: V-MAX System Master Kernel v60.6 (Layout & Anti-Hallucination Director)
 # MISSION: 嚴格根據傳入的資料，生成精準的四維對位腳本，並確保視覺提示詞的絕對安全。
 
 ### 📐 模組一：Layout 與 Lens 版面代碼庫 (SSOT)
@@ -750,7 +750,7 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
 - [QuizCard] 閱讀小挑戰 -> layout: "quiz-card" | lens: "單圖資訊板 (Single Info Board)"
 - [ShapeSimilar] 形近字辨析 -> lens: "左右分割對比大字排版 (Split Screen, Large Text)"。layout 依字組數決定："split-2"(2字), "grid-3"(3字), "grid-4"(4字)。
 - [Polyphonic] 多音字辨析 -> lens: "天平對比大字排版 (Balance Screen, Large Text)"。layout 依讀音數決定："compare-scale"(2讀音), "triptych"(3讀音)。
-- [IdiomLoop] 成語解析 -> layout: "story-panel" | lens: "單一滿版大圖配大字 (Single Full Image, Huge Text Overlay)"
+- [IdiomLoop] 成語解析 -> layout: "story-panel" | lens: "上下分割故事版 (Split Story Board)"
 - [LanguageActivity] 語文活動 -> layout: "pattern-drill", "punctuation-chart", "phrase-demo" 或 "speech-stage" | lens: "單圖大字互動舞台 (Single Image, Large Text)"
 - [Strategy/FusionMap] 教學策略 -> layout: "info-flow" 或 "step-flow" | lens: "單圖大字百寶箱 (Single Box Focus, Large Text)"
 - [Assessment] 綜合評量 -> layout: "single-board" | lens: "單圖資訊板 (Single Info Board)"
@@ -781,21 +781,23 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
 ]
 
 ### 📜 模組四：版型內容填充指南
-- **[FusionMap]**: 🌟這是全課結構視圖！請務必嚴格結合傳入的 \`visualMetaphor\`。如果在屬性中看到「漫步小徑」，請在 \`visual_prompt\` 中明確要求繪製「A winding path timeline connecting small distinct scenes along the way」；如果是其他隱喻，請根據該隱喻畫出具有設計感的資訊圖表 (Infographic)！
+- **[FusionMap]**: 🌟這是全課結構視圖！請強制使用「蜿蜒路徑故事地圖 (Winding path journey map)」的概念，在 visual_prompt 中明確要求繪製出「一條蜿蜒的小徑，沿途散布著幾個代表故事發展的小場景節點 (A winding path timeline connecting small distinct scenes along the way)」，展現全課的宏觀時間軸與結構！
 - **[ContentFocus]**: 根據段落大意繪製場景。displayText 必須包含【段落大意】與【難詞顯影】。🚨【難詞顯影格式鐵律】：絕對禁止只列出單字！你必須強制為每一個難詞附上簡短解釋（格式範例：「頭痛：令人感到困擾的事。」）。
 - **[DeepDive]**: 視覺對焦教學情境。若內容包含難詞探究，同樣必須遵守上述【難詞顯影格式鐵律】。
 - **[QuizCard]**: 提問表情特寫。displayText 必須分列【提取】與【推論】。
-- **[ShapeSimilar]**: 必須使用大標題嚴格分格！格式如下：
-  ### 字A (注音 / 部首)
-  造詞：...
-  ### 字B (注音 / 部首)
-  造詞：...
+
+# 🌟 [升級點：強制使用 H1 超大標題與粗體來強調部首差異]
+- **[ShapeSimilar]**: 必須使用「超大標題」來強調生字，並緊接著用粗體標示部首！格式如下（注意 # 的數量）：
+  # 字A (**部首A**)
+  注音：... / 造詞：...
+  # 字B (**部首B**)
+  注音：... / 造詞：...
   ### 💡 辨析口訣
   (口訣內容)
-- **[Polyphonic]**: 必須使用大標題嚴格分格！格式如下：
-  ### 讀音A (注音)
+
+- **[Polyphonic]**: 必須使用「超大標題」嚴格分格！格式如下：
+  # 讀音A (注音)
   造詞：...
-  ### 讀音B (注音)
+  # 讀音B (注音)
   造詞：...
-- **[IdiomLoop]**: 根據例句畫出故事場景(無引導者)。
-`;
+- **[IdiomLoop]**: 🚨【生圖鐵律】：插圖必須「嚴格根據例句的具體情境」來繪製，幫助學生透過情境秒懂成語用法！displayText 必須將成語標題、釋義、例句等排版在文字框內，**絕對禁止**要求 AI 在畫面上疊加巨大的成語文字。(無引導者)

@@ -131,7 +131,7 @@ const Step5Output: React.FC<Step5OutputProps> = ({
       grid-4: "2x2 Grid Layout. CRITICAL: Put the text for each character INSIDE its corresponding cell under its image. Put the 【💡 辨析口訣】 in a separate wide box at the bottom. NO guide character."
       compare-scale: "Balance Screen Layout. Left and right distinct scenario images. NO guide character."
       triptych: "3-panel Balance Screen Layout. Left, center, and right distinct scenario images. NO guide character."
-      story-panel: "Single Full Image taking up the upper 60% of the slide. MUST include Huge Text Overlay (4-character idiom) in the upper-center of the image. The lower 40% contains definition text. NO guide character."
+      story-panel: "Horizontal Split Layout. Top 60% is a clear image explicitly illustrating the example sentence (CRITICAL: NO text overlay on the image). Bottom 40% is a structured text box containing the idiom title, definition, and example sentence. NO guide character."
       pattern-drill: "Single Image, Large Text overlay."
       punctuation-chart: "Single Image, Large Text overlay."
       phrase-demo: "Single Image, Large Text overlay."
