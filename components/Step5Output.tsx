@@ -123,6 +123,7 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     core_rule: "NEVER put all displayText into a single visual container. You MUST split the text into distinct spatial UI boxes. CRITICAL: You MUST also render the 'guideTalk' text directly ON THE SLIDE visually as a Speech Bubble or Quote Box!"
     layout_mapping:
       wide-scene: "Split screen 50/50. Left: Wide-angle scene image. Right: Text content separated into primary block (段落大意) and secondary block (難詞顯影)."
+      dialogue-scene: "Split Screen Layout. CRITICAL: Render guideTalk in a speech bubble on the left, and main text on the right. NO guide character visible on the right side."
       close-tool: "Split screen. Left: Close-up image of the guide/tool. Right: Text separated into definition blocks (e.g., 修辭/句型) with distinct colored borders."
       quiz-card: "Single Info Board. Top: Image of guide. Bottom: Two distinct colored tag boxes. Blue tag box for 【提取】(Extraction) questions, Amber/Orange tag box for 【推論】(Inference) questions."
       split-2: "Split Screen Layout. CRITICAL: Put the text for Character 1 INSIDE the left panel under its image, and Character 2 INSIDE the right panel. Put the 【💡 辨析口訣】 in a separate wide box at the bottom. NO guide character."
