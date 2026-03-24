@@ -740,7 +740,7 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 
 // 🌟🌟🌟 終極防禦裝甲 (Anti-Hallucination & Guide Forcing) 🌟🌟🌟
 export const FINAL_ATOMIC_SCRIPT_PROMPT = `
-# ROLE: V-MAX System Master Kernel v60.6 (Layout & Anti-Hallucination Director)
+# ROLE: V-MAX System Master Kernel v60.7 (Layout & Anti-Hallucination Director)
 # MISSION: 嚴格根據傳入的資料，生成精準的四維對位腳本，並確保視覺提示詞的絕對安全。
 
 ### 📐 模組一：Layout 與 Lens 版面代碼庫 (SSOT)
@@ -762,6 +762,7 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
    - 若場景包含「藍圖、黑板、書本、筆記」，請註明「abstract lines, blank pages」。
    - \`visual_prompt\` 的結尾必須強制加上：「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO TYPOGRAPHY, NO WORDS IN THE IMAGE.」
 3. **禁止拼貼**：絕對禁止多圖拼貼 (Collage)，強制使用清晰單圖。
+4. **畫風絕對鎖定 (Style Lock)**：你必須嚴格使用系統傳入的【全域視覺風格】來撰寫 visual_prompt。即使課文主題是「科技、條碼、網路」，也【絕對禁止】擅自改成 "cyberpunk", "sci-fi", "holographic" 等科幻詞彙！必須將科技元素轉化為指定風格（例如：吉卜力風格下的魔法圖騰或精緻的手繪木製機關）。
 
 ### 📥 模組三：輸出規範 (Strict JSON Array)
 請輸出純 JSON 陣列。每個物件代表一頁投影片，必須嚴格包含以下欄位：
@@ -773,7 +774,7 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
     "title": "投影片標題",
     "layout": "填入【模組一】的 Layout 代碼",
     "lens": "填入【模組一】對應的 Lens 標準值",
-    "visual_prompt": "【英文】生圖提示詞。Subject: [場景描述 + 務必包含導師外貌(Gender & Age)]. Context: ... Composition: [layout]. Artistic VIS: {風格碼}. Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO TYPOGRAPHY IN THE IMAGE.",
+    "visual_prompt": "【英文】生圖提示詞。Subject: [場景描述 + 務必包含導師外貌(Gender & Age)]. Context: ... Composition: [layout]. Artistic VIS: [在此填入全域視覺風格的英文描述，嚴禁自創]. Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO TYPOGRAPHY IN THE IMAGE.",
     "displayText": "顯示文字 (嚴格繁體中文，包含【提取】與【推論】等標題，禁止自行刪減原文)",
     "guideAction": "導師的肢體動作或表情提示 (若無則填 null)",
     "guideTalk": "引導語/腳本 (純台詞)"
@@ -785,19 +786,17 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
 - **[ContentFocus]**: 根據段落大意繪製場景。displayText 必須包含【段落大意】與【難詞顯影】。🚨【難詞顯影格式鐵律】：絕對禁止只列出單字！你必須強制為每一個難詞附上簡短解釋（格式範例：「頭痛：令人感到困擾的事。」）。
 - **[DeepDive]**: 視覺對焦教學情境。若內容包含難詞探究，同樣必須遵守上述【難詞顯影格式鐵律】。
 - **[QuizCard]**: 提問表情特寫。displayText 必須分列【提取】與【推論】。
-
-# 🌟 [升級點：強制使用 H1 超大標題與粗體來強調部首差異]
-- **[ShapeSimilar]**: 必須使用「超大標題」來強調生字，並緊接著用粗體標示部首！格式如下（注意 # 的數量）：
+- **[ShapeSimilar]**: 必須使用「超大標題」來強調生字，並緊接著用粗體標示部首！格式如下：
   # 字A (**部首A**)
   注音：... / 造詞：...
   # 字B (**部首B**)
   注音：... / 造詞：...
   ### 💡 辨析口訣
   (口訣內容)
-
 - **[Polyphonic]**: 必須使用「超大標題」嚴格分格！格式如下：
   # 讀音A (注音)
   造詞：...
   # 讀音B (注音)
   造詞：...
 - **[IdiomLoop]**: 🚨【生圖鐵律】：插圖必須「嚴格根據例句的具體情境」來繪製，幫助學生透過情境秒懂成語用法！displayText 必須將成語標題、釋義、例句等排版在文字框內，**絕對禁止**要求 AI 在畫面上疊加巨大的成語文字。(無引導者)
+`;
