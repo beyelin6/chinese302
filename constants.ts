@@ -295,6 +295,31 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 }
 `;
 
+export const REGENERATE_STRATEGIES_PROMPT = `
+[INSTRUCTION]
+# ROLE: V-MAX 核心教研專家
+使用者對目前的「語文百寶箱」策略不滿意，要求「全面換新」。
+請根據課文深度分析，利用「三神器」邏輯，腦力激盪出 3 個全新的教學策略。
+
+⚠️ 核心要求：
+1. 創意性：避開老掉牙的教學法，必須具備 V-MAX 科技感或遊戲化元素。
+2. 深度性：策略必須能觸及課文的深層意義或修辭美感。
+3. 結構性：包含策略名稱、核心方法、教學痛點與具體應用步驟。
+
+⚠️ 輸出格式：Valid JSON Array ONLY.
+
+Schema:
+[
+  {
+    "type": "Thinking",
+    "title": "[具備科技感與遊戲感的名稱]",
+    "method": "[核心方法論描述]",
+    "teachingPoint": "[本策略要解決的深層教學痛點]",
+    "application": "[課文連結] + [步驟 1] -> [步驟 2]"
+  }
+]
+`;
+
 export const GENERATE_SINGLE_STRATEGY_PROMPT = `
 [INSTRUCTION]
 # ROLE: V-MAX 破壞式創新教研專家
@@ -321,28 +346,6 @@ Schema:
   "method": "[核心方法論描述]",
   "teachingPoint": "[本策略要解決的深層教學痛點]",
   "application": "[課文連結] + [步驟 1] -> [步驟 2]"
-}
-`;
-
-export const GENERATE_SINGLE_STRATEGY_PROMPT = `
-[INSTRUCTION]
-The user requires ONE NEW "Teaching Strategy" (百寶箱) idea.
-Based on the analysis context and existing strategies, please BRAINSTORM 1 distinct strategy.
-Try to vary the Type (Rhetoric/Thinking/Task).
-
-⚠️ STRICT REQUIREMENT for 'application':
-1. Context Link: Explicitly state WHICH part of the text this strategy applies to.
-2. Operational Steps: Provide numbered steps for the teacher/student interaction.
-
-⚠️ Output format: Valid JSON Object ONLY.
-
-Schema:
-{
-  "type": "Thinking",
-  "title": "[Gamified Name]",
-  "method": "[Methodology description]",
-  "teachingPoint": "[Insight]",
-  "application": "[Context Link] + [Step 1] -> [Step 2]"
 }
 `;
 
