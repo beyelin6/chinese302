@@ -7,13 +7,36 @@ import { Loader2 } from 'lucide-react';
 import { sanitizeAndParseJSON } from '../utils/jsonParser';
 
 // 🌟 [優化 1] 延遲載入所有組件，解決 429 請求過載問題
-const Step1Input = lazy(() => import('./Step1Input'));
-const Step2Basic = lazy(() => import('./Step2Basic'));
-const Step2Deep = lazy(() => import('./Step2Deep'));
-const Step2DeepSegments = lazy(() => import('./Step2DeepSegments'));
-const Step3Visuals = lazy(() => import('./Step3Visuals'));
-const Step4Casting = lazy(() => import('./Step4Casting'));
-const Step5Output = lazy(() => import('./Step5Output'));
+// 🛡️ 升級為防呆版本：當發現抓不到 JS 檔時，自動幫使用者重新整理一次網頁
+const lazyWithRetry = (componentImport: () => Promise<any>) =>
+  lazy(async () => {
+    const pageHasAlreadyBeenForceRefreshed = JSON.parse(
+      window.sessionStorage.getItem('page-force-refreshed') || 'false'
+    );
+
+    try {
+      const component = await componentImport();
+      window.sessionStorage.setItem('page-force-refreshed', 'false');
+      return component;
+    } catch (error) {
+      if (!pageHasAlreadyBeenForceRefreshed) {
+        // 發現抓不到 Chunk，記錄狀態並強制重新整理
+        window.sessionStorage.setItem('page-force-refreshed', 'true');
+        window.location.reload();
+        return { default: () => null } as any;
+      }
+      // 如果重整過還是失敗，才真的拋出錯誤
+      throw error;
+    }
+  });
+
+const Step1Input = lazyWithRetry(() => import('./Step1Input'));
+const Step2Basic = lazyWithRetry(() => import('./Step2Basic'));
+const Step2Deep = lazyWithRetry(() => import('./Step2Deep'));
+const Step2DeepSegments = lazyWithRetry(() => import('./Step2DeepSegments'));
+const Step3Visuals = lazyWithRetry(() => import('./Step3Visuals'));
+const Step4Casting = lazyWithRetry(() => import('./Step4Casting'));
+const Step5Output = lazyWithRetry(() => import('./Step5Output'));
 
 // 導入 Hooks
 import { useStep1Analysis } from '../hooks/steps/useStep1Analysis'; 

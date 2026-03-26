@@ -378,7 +378,7 @@ export const GENERATE_SHAPE_SIMILAR_PROMPT = `
 ⚠️ 核心邏輯：
 1. 結構對照：精確標註「字體部件」的微小差異。
 2. 意象關聯：部首解釋必須與「字義」強烈掛鉤（例如：目部與眼睛看有關）。
-3. 辨析口訣：產出 12 字以內的對比口訣（例如：用手「搥」打，追「槌」趕跑）。
+3. 辨析口訣：產出對比口訣。若為兩字對比可精簡（如：用手搥打，追槌趕跑），若為三到四字，請適度放寬字數寫成兩三句順口溜，以【通順、合理】為最高原則。
 
 ⚠️ 輸出格式：Valid JSON Array ONLY. No Markdown.
 
@@ -390,7 +390,7 @@ Schema:
     "radical": "部首名稱 (例如：言部)",
     "words": "高頻教學詞彙 (例如：辨別)",
     "explanation": "【精準部件辨析】：精簡說明該部首在字義上的決定性作用。",
-    "mnemonic": "辨析口訣 (例如：有言來爭辯，有心要辨別)"
+    "mnemonic": "辨析口訣 (例如：有言來爭辯，有刀要辨別)"
   }
 ]
 `;
@@ -417,22 +417,17 @@ Schema:
 
 export const GENERATE_MNEMONIC_PROMPT = `
 [INSTRUCTION]
-Generate a high-quality Chinese mnemonic (辨析筆記/口訣) for the provided shape-similar characters.
+# ROLE: 國小語文教師與口訣大師
+使用者剛剛新增或修改了形近字組合，請為以下這組字重新生成一個「高品質、好記憶的辨析口訣」。
 
-Input Data:
+輸入資料：
 {CHARACTERS_LIST}
 
-Objective:
-Create a memory aid that helps students distinguish these characters based on their components (Radicals) and meanings.
-
-Requirements:
-1. Structure: 
-   - Primary: A catchy rhyme or sentence linking Radical to Meaning (e.g. "辨別要用刀，辯論要用言").
-   - Secondary (Optional): If the characters have complex usage differences, add a brief 1-sentence clarification.
-2. Logic: Explicitly explain *why* that radical is used (e.g. "目部與眼睛有關").
-3. Tone: Educational, encouraging, suitable for K-12 students.
-4. Completeness: If the input provides specific words/definitions, incorporate them to make the note comprehensive.
-5. Output: ONLY the mnemonic content. No conversational filler.
+⚠️ 核心邏輯與要求：
+1. 結構：請用「順口溜」或「對稱句」的方式，將每個字的【部首】與【字義/造詞】巧妙結合。（例如：「用手『搥』打，追『槌』趕跑」）。
+2. 擴充彈性：如果輸入的字有 3 個或 4 個，請不要硬塞成一句短話，可以寫成兩句 or 三句的押韻短詩，字數不限，以通順、合乎邏輯為最高原則。
+3. 語氣：適合國小學生的生動語氣，不要咬文嚼字，不要使用艱澀文言文。
+4. 輸出限制：只能輸出「口訣本身」的純文字，絕對不要加上「口訣：」等前綴，也不要有任何 Markdown 符號或多餘的對話解釋。
 `;
 
 export const GENERATE_POLYPHONIC_PROMPT = `
