@@ -99,7 +99,7 @@ export const useStep5Output = () => {
 
       // 1. 🌟 [精準對位藍圖] 建立分段藍圖
       const blueprint = [
-        { part: 'PART A', type: 'Cover', title: '封面' },
+        { part: 'PART A', type: 'Cover', title: '封面', basicInfo: analysisData?.basicInfo },
         { part: 'PART A', type: 'MissionNav', title: '任務導覽' },
         { 
           part: 'PART A', type: 'FusionMap', title: '結構視圖',

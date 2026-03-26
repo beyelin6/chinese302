@@ -61,6 +61,7 @@ export const STEP_1_BASIC_PROMPT_SUFFIX = `
   "basicInfo": {
     "grade": "提取年級（如：三下）",
     "unitName": "提取「課次與課名」或大標題",
+    "author": "提取作者（若無則填寫 無）",
     "genre": "提取文體（如：記敘文）",
     "subject": "提取核心主題",
     "writingTechnique": "提取寫法",
@@ -108,7 +109,7 @@ export const STEP_1_FAST_PROMPT_SUFFIX = `
 
 {
   "basicInfo": {
-    "grade": "提取年級", "unitName": "提取課名", "genre": "提取文體",
+    "grade": "提取年級", "unitName": "提取課名", "author": "提取作者", "genre": "提取文體",
     "subject": "提取核心主題", "writingTechnique": "提取寫法", "mainIdea": "提取主旨"
   },
   "languageActivities": [ { "title": "活動標題", "content": "練習內容" } ],
@@ -118,7 +119,7 @@ export const STEP_1_FAST_PROMPT_SUFFIX = `
 }
 
 【資料尋找終極指南】：
-1. 基本資訊：掃描文章最前面的列表。若無，請看大標題。
+1. 基本資訊：掃描文章最前面的列表。若無，請看大標題與作者標示。
 2. coreVocabulary：尋找第一個有「部首」欄位的表格。
 3. 語文活動：尋找帶有「綜合語文活動」或「語文活動」字眼的段落，將其提取出來。
 4. 難詞與成語：尋找被括號包住的詞彙，分別歸類。
@@ -601,9 +602,9 @@ export const PROMPT_GENERATE_WORKSHEET = `
 [INSTRUCTION]
 Please Execute STEP 6-A: 素養學習單 (Worksheet).
 Requirements:
-1. 擷取訊息: 針對意義段的事實提問.
-2. 推論分析: 針對主角動機或作者用意提問.
-3. 比較評估: 連結生活經驗的開放式問題.
+1. 擷取訊息 (DOK 1-2): 針對意義段的事實提問.
+2. 推論分析 (DOK 2-3): 針對主角動機或作者用意提問.
+3. 🚀 深度素養與遷移 (DOK 3-4): 【強制提取】請務必從傳入的分析資料中，嚴格提取「策略思考 (DOK 3-4)」的題目（特別是：手法模擬、生活遷移、價值評鑑等），原封不動地列入學習單的「進階挑戰」區塊！
 
 [VMAX_EXECUTION_PROTOCOL]
 - 100% 純繁體中文，禁止英文翻譯。
@@ -748,7 +749,8 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
 - [LanguageActivity] 語文活動 -> layout: "pattern-drill", "punctuation-chart", "phrase-demo" 或 "speech-stage" | lens: "單圖大字互動舞台 (Single Image, Large Text)"
 - [Strategy/FusionMap] 教學策略 -> layout: "info-flow" 或 "step-flow" | lens: "單圖大字百寶箱 (Single Box Focus, Large Text)"
 - [Assessment] 綜合評量 -> layout: "single-board" | lens: "單圖資訊板 (Single Info Board)"
-- [Cover/MissionNav/Ending] 封面與結尾 -> 請自行判斷，推薦使用 "wide-scene" 或 "close-tool"。
+- **[Cover]**: 🌟這是課程封面！displayText 必須明確列出【課名】、【文體】與【作者】（若有），讓學生一開始就掌握基本資訊。
+- **[MissionNav/Ending]** 任務導覽與結尾 -> 請自行判斷，推薦使用 "wide-scene" 或 "close-tool"。
 
 ### 🎨 模組二：生圖防呆與導師顯影絕對禁令 (CRITICAL)
 1. **導師強制顯影 (Guide Presence)**：只要該頁有 \`guideAction\` 或 \`guideTalk\`，或者版型為 close-tool / quiz-card，你【必須】在 \`visual_prompt\` 的 Subject 中，明確寫出導師的完整外觀特徵 (包含【性別 Gender】與年齡的 Guide DNA)！如果沒寫，生圖軟體就不會畫出導師！
@@ -792,4 +794,5 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
   ⭕ 【 讀音B 】 (注音)
   造詞：...
 - **[IdiomLoop]**: 🚨【生圖鐵律】：插圖必須「嚴格根據例句的具體情境」來繪製，幫助學生透過情境秒懂成語用法！displayText 必須將成語標題、釋義、例句等排版在文字框內，**絕對禁止**要求 AI 在畫面上疊加巨大的成語文字。(無引導者)
+- **[Assessment]**: 🌟這是全課綜合評量！你【必須】從傳入的深度分析資料中，優先挑選 2-3 題「策略思考 (DOK 3-4)」的高階提問（特別是：手法模擬、生活遷移、價值評鑑、後設認知等）放進 displayText 裡作為壓軸討論題。絕對禁止只問簡單的「事實記憶題」！
 `;
