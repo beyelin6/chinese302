@@ -43,7 +43,7 @@ export const SYSTEM_PROMPT = `
 # ROLE: V-MAX v37-Omega (Omni-Architect Engine)
 # Core: Master Kernel v60.5-DNA-Purity
 # CORE PROTOCOL: [FAITHFULNESS_GROUNDING]
-1. 嚴禁幻覺：絕對禁止加入課文中不存在的事實或人物。
+1. 嚴禁幻覺：絕對禁止加入課文中不存在的事實或人物.
 2. 文本錨點：所有對白必須 100% 基於原文。
 3. 語言規範：100% 繁體中文，禁止夾雜英文或注音。
 `;
@@ -304,7 +304,7 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 export const REGENERATE_STRATEGIES_PROMPT = `
 [INSTRUCTION]
 # ROLE: V-MAX 核心教研專家
-使用者對目前的「語文百寶箱」策略不滿意，要求「全面換新」。
+使用者剛剛對目前的「語文百寶箱」策略不滿意，要求「全面換新」。
 請根據課文深度分析，利用「三神器」邏輯，腦力激盪出 3 個全新的教學策略。
 
 ⚠️ 核心要求：
@@ -336,8 +336,8 @@ export const GENERATE_SINGLE_STRATEGY_PROMPT = `
 1. **【動詞封殺】**：絕對禁止使用「畫線、圈出、找一找、朗讀、討論」等傳統低階動詞！請改用「辯論、偵查、解謎、改寫、盲測、法庭攻防」等高階互動動詞。
 2. **【指定視角強制啟動】**：
    - 若要求的類型是 Task (任務)：請強制設計成「遊戲化/角色扮演」任務（如：密室逃脫、嫌疑犯審問、時空採訪員）。
-   - 若要求的類型是 Thinking (思考)：請強制設計成「哲學思辨/極端情境」探討（如：辯論天平、道德兩難、如果歷史改變）。
-   - 若要求的類型是 Rhetoric (修辭)：請強制設計成「跨界改編/感官重塑」任務（如：將記敘文改成新聞快報、推銷廣告、感官調色盤）。
+   - 若要求的類型 is Thinking (思考)：請強制設計成「哲學思辨/極端情境」探討（如：辯論天平、道德兩難、如果歷史改變）。
+   - 若要求的類型 is Rhetoric (修辭)：請強制設計成「跨界改編/感官重塑」任務（如：將記敘文改成新聞快報、推銷廣告、感官調色盤）。
 
 ⚠️ 'application' 欄位必須嚴格包含：
 - [連結課文]：明確指出應用於課文哪一段落或哪一句話。
@@ -503,7 +503,7 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 
 **第一步：真實性驗證 (Existence Check)**
 - 該人物的名字或具體身份是否在【原文】中出現？
-- ❌ 否 -> 立即進入 Mode B。
+- ❌ 否 -> 進入 Mode B。
 - ✅ 是 -> 進入第二步。
 
 **第二步：行動力驗證 (Agency Check)**
@@ -551,7 +551,7 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 export const GUIDE_TRAITS_SUGGESTION_PROMPT = `[INSTRUCTION] Refine Visual DNA. Must include Gender (e.g., Gender: Male or Female), {AGE}, {TONE}`;
 export const GUIDE_TEACHING_STYLE_SUGGESTION_PROMPT = `[INSTRUCTION] Create teaching style for Guide: Gender: [M/F], {AGE}, {TONE_LABEL}.`;
 
-// 🌟 [性別補完計畫] 嚴格要求 Protagonist 包含 Gender
+// 🌟 [性別補完計畫] 強制要求 Protagonist 包含 Gender
 export const PROTAGONIST_TRAITS_SUGGESTION_PROMPT = `[INSTRUCTION] Generate Pipe Format Visual DNA for Protagonist. (CRITICAL: Must include exact Gender and Age, e.g., Gender: Male | Age: 12, or Gender: Female | Age: 40s at the beginning).`;
 
 // 🌟 [性別補完計畫] 萃取自訂圖片特徵時，也要判斷性別
@@ -605,7 +605,7 @@ export const PROMPT_GENERATE_ASSESSMENT = `
 (列出本課形近字，必須包含：辨析字、注音、造詞，以及 💡【辨析口訣】)
 ### 2. 多音字家族
 (列出本課多音字，必須包含：讀音、注音、字義、造詞，以及 💡【辨析口訣】)
-### 3. 必考成語
+### 3.必考成語
 (列出本課成語，必須包含：釋義與精簡例句)
 
 ## ✍️ 三、 寫作魔法陣 (修辭與句型)
@@ -789,7 +789,7 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 🟨 模組三：單頁精準修復指令 (Precision Revise)
 位置：投影片產出後 → 特定頁面右上角的 ✏️ Revise
 ───────────────────────────────────────────────────────────────
-【情況 A：角色年齡或長相跑掉】
+【情況 A：角色年齡或長樣跑掉】
 請維持本頁文字完全不動。重新讀取來源文件本頁的視覺提示詞。強制修正角色外觀為：
 {GUIDE_DNA}
 
@@ -847,7 +847,7 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
 - 🚨【字數防爆破鐵律】：為了確保簡報視覺舒適，所有投影片的 \`displayText\` 總字數【絕對禁止】超過 130字！請善用精簡的敘述或條列式重點！
 - 🚨【段落導航與隱喻融合】：對於 [ContentFocus]、[DeepDive]、[QuizCard] 這三種類型，你【必須】在 \`displayText\` 的最上方第一行，用粗體印出結合了「視覺隱喻」的段落進度（例如：**【第一扇門：發現問題】** 或 **【第一站：交通糾紛】**），讓學生一眼看出目前的進度！
 - **[FusionMap]**: 🌟這是全課結構視圖！在 visual_prompt 中請強制要求繪製出與本課隱喻相符的結構路徑圖。🚨【結構文字鐵律】：displayText 【絕對禁止】只寫空泛摘要！你【必須】提取完整的「全課邏輯骨架（如：起因➔經過➔結果）」，以層次分明的條列式排版在畫面上！
-- **[ContentFocus]**: 根據段落大意繪製場景。🚨【動態生圖鐵律】：插圖必須「嚴格擷取該段落的具體人、事、物」並結合「視覺隱喻」來繪製！【絕對禁止】無腦套用空泛背景。displayText 必須包含【段落導航與隱喻融合】、【段落大意】與【難詞顯影】(須附簡短解釋)。
+- **[ContentFocus]**: 根據段落大意繪製場景。🚨【動態生圖與情境鎖定鐵律】：(維持剛才設定的三步生圖流程與終極防呆...)。🚨【文字搬運鐵律】：displayText 必須包含【段落導航小標題】、【段落大意】與【難詞顯影】。其中【段落大意】你【必須 100% 精準擷取並照抄】傳入資料中的原文，【絕對禁止】為了縮減字數而擅自改寫、刪減關鍵字或腦補情節！【難詞顯影】則必須強制附上簡短解釋。
 - **[DeepDive]**: 視覺對焦該段落的具體教學情境. 若內容包含修辭，visual_prompt 可嘗試將修辭概念具象化（例如「類疊」畫一個大放大鏡）。
 - **[QuizCard]**: 提問表情特寫。displayText 必須包含【段落導航】，並分列【提取】與【推論】。
 - **[ShapeSimilar]**: 🚨【部首意象生圖鐵律】：在 visual_prompt 中，除了大字排版，你必須明確要求 AI 畫出「各個部首對應的具體小圖示 (icon)」來輔助視覺記憶（例如：手部畫一隻手、水部畫水滴）！displayText 絕對禁止使用 # 符號，請使用安全括號：⭕ 【 字A 】 (**部首A**) 注音：... / 造詞：... 💡 辨析口訣：(口訣內容)
