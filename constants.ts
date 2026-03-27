@@ -14,12 +14,59 @@ export enum AppStepEnum {
   STEP_6_OUTPUT = 7
 }
 
-export const VMAX_KERNEL_VERSION = "v60.5-DNA-Purity-Kernel";
+export const VMAX_KERNEL_VERSION = "v60.8-DNA-Purity-Universal";
 
 // 🌟 [2026 核心升級] 切換至最新支援型號
 export const GEMINI_MODEL = "gemini-3-flash-preview";
 
-// 🛡️ [核心防護裝甲]：強化 FAITHFULNESS_GROUNDING
+// ============================================================
+// 🎭 視覺基因鎖定系統 (Visual DNA Anchoring System)
+// ============================================================
+
+export const CHARACTER_VISUAL_REF_PLACEHOLDER = "{CHARACTER_VISUAL_REF}"; 
+
+// 模式 A：內建文字描述模式 (原本設定)
+export const CHARACTER_ORIGINAL_PROMPT_TEMPLATE = `
+[CHARACTER_DNA_INTERNAL]
+- Subject Identity: {PERSONA_DESC} (Character Name: {GUIDE_NAME})
+- Style: {STYLE_PROMPT}
+- Consistency: Maintain 100% visual consistency of this character's features across all slides.
+`;
+
+// 模式 B：外部基準圖模式 (專門給 NotebookLM 讀取外部圖片使用)
+export const CHARACTER_EXTERNAL_ANCHOR_PROMPT_TEMPLATE = `
+[CHARACTER_DNA_EXTERNAL_ANCHOR]
+- **Visual Truth Source**: PLEASE REFER TO THE SEPARATE UPLOADED CHARACTER IMAGE FILE AS THE PRIMARY SOURCE.
+- **Instruction**: Ignore textual character details. Use the visual DNA (shape, color, proportions) from the external image file as the SOLE TRUTH for the guide character {GUIDE_NAME}.
+- **Consistency**: Ensure {GUIDE_NAME} looks identical to the image file in every generated scene.
+`;
+
+// [NANOBANANA 專用發電機]：產出給使用者去生基準圖的 Master Prompt
+export const PROMPT_GENERATE_CHARACTER_DNA_FOR_EXTERNAL = `
+[INSTRUCTION]
+# ROLE: 視覺藝術總監 (Art Director)
+# MISSION: 根據本課視覺風格「{STYLE}」與導師人設「{PERSONA}」，產出一組專門給 NANOBANANA (DALL-E 3) 使用的「基準人設提示詞 (Master DNA Prompt)」。
+# REQUIREMENTS:
+- Subject: Must be a single, full-body character (Named: {GUIDE_NAME}).
+- Format: Friendly, three-quarter view, standing on a neutral background.
+- Details: Describe materials, lighting, and exact color palette based on the persona.
+- 🚨 NO TEXT: Absolutely no letters, words, or labels in the image.
+- Language: Prompt must be in ENGLISH for maximum AI accuracy.
+- Output: Return ONLY the English prompt string without any markdown formatting.
+`;
+
+// ============================================================
+// 🛡️ 核心防護裝甲與基礎指令
+// ============================================================
+
+export const SYSTEM_PROMPT = `
+# ROLE: V-MAX v60.8 (Omni-Architect Engine)
+# CORE PROTOCOL: [FAITHFULNESS_GROUNDING]
+1. 嚴禁幻覺：絕對禁止加入課文中不存在的事實或人物。
+2. 文本錨點：所有對白必須 100% 基於原文。
+3. 語言規範：100% 繁體中文，禁止夾雜英文或注音。
+`;
+
 export const PROMPT_GENERATE_ADDITIONAL_ACTIVITIES = `
 # ROLE: 國語文教學設計專家
 # MISSION: 根據提供的【課文內容】與【年級】，設計 3 個額外的「語文活動」。
@@ -37,58 +84,6 @@ export const PROMPT_GENERATE_ADDITIONAL_ACTIVITIES = `
     "content": "具體的練習內容或引導文字"
   }
 ]
-`;
-
-export const SYSTEM_PROMPT = `
-# ROLE: V-MAX v37-Omega (Omni-Architect Engine)
-# Core: Master Kernel v60.5-DNA-Purity
-# CORE PROTOCOL: [FAITHFULNESS_GROUNDING]
-1. 嚴禁幻覺：絕對禁止加入課文中不存在的事實或人物.
-2. 文本錨點：所有對白必須 100% 基於原文。
-3. 語言規範：100% 繁體中文，禁止夾雜英文或注音。
-`;
-
-export const STEP_1_BASIC_PROMPT_SUFFIX = `
-⚠️ 【寫法注意 (writingTips) 絕對萃取準則】(CRITICAL)
-請仔細掃描原始資料中的「[語文活動｜我會認字]：寫法注意」區塊。
-在建立 coreVocabulary 陣列時，writingTips 欄位務必「100% 一字不漏」地複製原始資料中的描述！
-例如：如果資料寫「『微』中間有短橫」，你就必須原封不動照抄。
-絕對禁止：AI 擅自發揮、修改、或套用自己的國語辭典知識。若無提及請填寫 "無"。
-
-[V-MAX LIGHTWEIGHT PARSER: V8.8]
-請提取全文資料，必須嚴格依照以下 JSON 結構輸出：
-
-{
-  "basicInfo": {
-    "grade": "提取年級（如：三下）",
-    "unitName": "提取「課次與課名」或大標題",
-    "author": "提取作者（若無則填寫 無）",
-    "genre": "提取文體（如：記敘文）",
-    "subject": "提取核心主題",
-    "writingTechnique": "提取寫法",
-    "mainIdea": "提取主旨"
-  },
-  "languageActivities": [
-    {
-      "title": "提取活動標題",
-      "content": "提取具體的練習內容"
-    }
-  ],
-  "coreVocabulary": [
-    {
-      "word": "漢字",
-      "radical": "部首",
-      "type": "分類",
-      "writingTips": "寫法提醒",
-      "shapeSimilar": [],
-      "polyphonic": []
-    }
-  ],
-  "textbookDifficultWords": ["詞語"],
-  "idioms": ["成語"]
-}
-
-(⚠️ 注意：此階段不要生成形近字與多音字細節，確保輸出簡潔，請將 shapeSimilar 和 polyphonic 保持空陣列)
 `;
 
 export const STEP_1_FAST_SCAN_PROMPT = `
@@ -128,11 +123,27 @@ export const STEP_1_FAST_PROMPT_SUFFIX = `
 請只輸出純 JSON 格式，不要有任何 Markdown 外框 (\`\`\`json)。
 `;
 
+export const STEP_1_BASIC_PROMPT_SUFFIX = `
+⚠️ 【寫法注意 絕對萃取準則】(CRITICAL)
+請仔細掃描原始資料中的「[語文活動｜我會認字]：寫法注意」區塊。
+在建立 coreVocabulary 陣列時，writingTips 欄位務必「100% 一字不漏」地複製原始資料中的描述！
+例如：如果資料寫「『微』中間有短橫」，你就必須原封不動照抄。
+絕對禁止：AI 擅自發揮、修改、或套用自己的國語辭典知識。若無提及請填寫 "無"。
+
+{
+  "basicInfo": { "grade": "...", "unitName": "...", "author": "...", "genre": "...", "subject": "...", "writingTechnique": "...", "mainIdea": "..." },
+  "languageActivities": [ { "title": "...", "content": "..." } ],
+  "coreVocabulary": [ { "word": "漢字", "radical": "部首", "type": "分類", "writingTips": "寫法提醒", "shapeSimilar": [], "polyphonic": [] } ],
+  "textbookDifficultWords": ["詞語"],
+  "idioms": ["成語"]
+}
+(⚠️ 注意：此階段不要生成形近字與多音字細節，請將 shapeSimilar 和 polyphonic 保持空陣列)
+`;
+
 export const STEP_2_DEEP_PROMPT_PREFIX = `
 [INSTRUCTION]
 The user has confirmed the Basic Analysis (Mode & Vocabulary).
 Please Execute STEP 2.5: 語文輻射 (Deep Vocabulary Radiation).
-
 [CONTEXT: CONFIRMED BASIC DATA]
 `;
 
@@ -153,35 +164,11 @@ export const STEP_2_DEEP_VOCAB_PROMPT_SUFFIX = `
       "word": "生字",
       "type": "形近字/多音字/成語",
       "zhuyin": "注音",
-      "shapeSimilar": [
-        {
-          "char": "辨析字",
-          "zhuyin": "注音",
-          "radical": "部首",
-          "words": "造詞",
-          "explanation": "部首辨析說明",
-          "mnemonic": "辨析口訣"
-        }
-      ],
-      "polyphonic": [
-        {
-          "zhuyin": "讀音",
-          "words": "造詞",
-          "usage": "用法說明"
-        }
-      ]
+      "shapeSimilar": [ { "char": "辨析字", "zhuyin": "注音", "radical": "部首", "words": "造詞", "explanation": "說明", "mnemonic": "辨析口訣" } ],
+      "polyphonic": [ { "zhuyin": "讀音", "words": "造詞", "usage": "用法說明" } ]
     }
   ],
-  "deepIdiomsDetails": [
-    {
-      "word": "成語",
-      "definition": "釋義",
-      "example": "例句",
-      "synonyms": ["近義詞"],
-      "antonyms": ["反義詞"],
-      "context": "生活應用情境"
-    }
-  ]
+  "deepIdiomsDetails": [ { "word": "成語", "definition": "釋義", "example": "例句", "synonyms": ["近義詞"], "antonyms": ["反義詞"], "context": "情境" } ]
 }
 `;
 
@@ -194,7 +181,6 @@ export const DEEP_VOCABULARY_PROMPT = `
 3. 每個生字的說明請簡潔有力，避免贅字，以防字串過長截斷。
 
 目標生字：{VOCAB_LIST}
-
 請嚴格依照以下 JSON 結構輸出：
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
@@ -227,77 +213,35 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 - C3 維恩圖 (Venn): 比較異同 (雙物件).
 - C4 雙氣泡圖 (Double Bubble): 比較特質 (進階對比).
 - C5 T型圖 (T-Chart): 正方-反方 (辯證).
-- C6 橋梁圖 (Bridge): 類比關係.
 - D1 冰山圖 (Iceberg): 顯性-隱性 (深層含義).
-- D2 觀點圖 (Perspectives): 多角度思考.
-- D3 漏斗圖 (Funnel): 篩選資訊.
 - D4 曼陀羅 (Mandala): 九宮格思考 (全面擴散).
 
 ### ⛔ 數據忠誠度協定 (DATA_FAITHFULNESS)
-1. 嚴禁任何形式的創作：禁止加入原文不存在的背景故事、人物、物件 or 科學實驗。
-2. 術語鎖定：必須使用原文出現的詞彙描述事物，禁止使用上位詞（如將「紫色的鋼筆」概括為「筆」）。
-3. 證據鏈要求：每一個生成的段落大意，都必須伴隨一段至少 15 字的原文原句作為證據。
-4. 語言：100% 繁體中文，禁止夾雜英文或注音。
+1. 嚴禁任何形式的創作：禁止加入原文不存在的背景故事、人物、物件。
+2. 證據鏈要求：每一個生成的段落大意，都必須伴隨一段至少 15 字的原文原句作為證據。
+3. 語言：100% 繁體中文，禁止夾雜英文或注音。
 
 🚨🚨🚨 【修辭與句型：絕對物理搬運鐵律】(CRITICAL) 🚨🚨🚨
 1. 只能從原文中「明確標示」為修辭、句型、寫作手法的區塊提取資料！
-2. 絕對禁止 AI 擅自閱讀課文並「發揮想像力」自行分析或通靈修辭！
-3. 如果原文資料中「沒有」明確提供該段落的修辭或句型，對應的 rhetorics 或 sentencePatterns 陣列必須保持空白 \`[]\`，絕對不准無中生有！
+2. 絕對禁止 AI 擅自閱讀課文並自行通靈修辭！
+3. 若無明確標示，陣列必須保持空白 \`[]\`。
 
 ⚠️ 【段落大意精準分配準則】(CRITICAL)
-你必須將大意「拆解」並「精準對應」到正確的 segment 中。
-- 當 segmentIndex 為 0 時，summary 欄位「只能」填寫第一段的大意。
-- 絕對禁止：將整篇文章的各段大意全部塞進同一個 segment 的 summary 裡！每個段落只能有屬於自己的那一小句話。
+你必須將大意「拆解」並「精準對應」到正確的 segment 中。每個段落只能有屬於自己的那一小句話，絕對禁止將全文摘要塞進同一個 segment。
 
 * Execution Logic:
-    1.  意義段分析 (Logical Segments):
-        * Break text into 3-5 Logical Segments.
-        * ⚠️ 文體動態邏輯 (Genre Logic): 
-            * IF Genre is 記敘文/說明文 (Prose): Extract chronological or logical keywords.
-            * IF Genre is 童詩/新詩 (Poetry): Treat each Stanza (詩節) as a segment. You MUST identify the repeating structural pattern.
-        * keywords: Extract 3-4 specific keywords.
-    
-    2.  🧠 語文百寶箱 (Teaching Strategies) 強制生成:
-        * 請主動利用「三神器」邏輯（Rhetoric 寫作工具、Thinking 邏輯工具、Task 行動任務）與上述「2.3 Micro-Structure」圖表，腦力激盪出 3 個全新的教學策略。
-        * 'application' 欄位必須包含：[連結課文具體段落] + [操作步驟 1] -> [操作步驟 2]。
+    1.  意義段分析 (Logical Segments): Break text into 3-5 Logical Segments.
+    2.  🧠 語文百寶箱 (Teaching Strategies) 強制生成: 利用「三神器」邏輯腦力激盪出 3 個全新的教學策略。'application' 欄位必須包含：[連結課文] + [操作步驟 1] -> [操作步驟 2]。
 
 ### 📥 唯一合法來源
 <SOURCE_TEXT>
 {INPUT_TEXT}
 </SOURCE_TEXT>
 
-### 📤 輸出規範 (Strict JSON)
-請直接輸出 JSON 格式，不需前言。必須嚴格遵循以下結構 (請務必保留 "segments" 作為外層 Key)：
+請直接輸出 JSON 格式 (包含 segments 與 strategies)：
 {
-  "segments": [
-    {
-      "segmentIndex": 0,
-      "title": "具備文學感的段落標題",
-      "summary": "段落大意 (必須包含原文中的具體細節)",
-      "evidence_quote": "🌟 [重要] 從原文中「原封不動」複製的對應語句",
-      "difficultWords": ["難詞1", "難詞2"],
-      "keywords": ["關鍵字1", "關鍵字2"],
-      "rhetorics": [
-        { "name": "修辭名", "example": "原文原句", "analysis": "深度解析：說明作者為何這樣寫", "pedagogicalPoint": "教學重點", "application": "應用" }
-      ],
-      "dokQuestions": [
-        { "type": "DOK 3-4 等級高階提問", "question": "針對原文細節的提問", "intent": "提問意圖" }
-      ],
-      "sentencePatterns": [
-         { "name": "Pattern Structure", "example": "Exact Sentence from text." }
-      ],
-      "deepDive": "Deep meaning or author's emotion"
-    }
-  ],
-  "strategies": [
-    {
-      "type": "Rhetoric 或 Thinking 或 Task",
-      "title": "策略名稱 (需有 V-MAX 科技感，如：感官調色盤)",
-      "method": "核心方法論描述",
-      "teachingPoint": "本策略要解決的教學痛點或目標",
-      "application": "[連結課文] + [步驟 1] -> [步驟 2]"
-    }
-  ]
+  "segments": [ { "segmentIndex": 0, "title": "...", "summary": "段落大意", "evidence_quote": "原文原句", "difficultWords": ["..."], "keywords": ["..."], "rhetorics": [], "dokQuestions": [ { "type": "DOK 3-4", "question": "...", "intent": "..." } ], "sentencePatterns": [], "deepDive": "..." } ],
+  "strategies": [ { "type": "...", "title": "...", "method": "...", "teachingPoint": "...", "application": "..." } ]
 }
 `;
 
@@ -313,17 +257,7 @@ export const REGENERATE_STRATEGIES_PROMPT = `
 3. 結構性：包含策略名稱、核心方法、教學痛點與具體應用步驟。
 
 ⚠️ 輸出格式：Valid JSON Array ONLY.
-
-Schema:
-[
-  {
-    "type": "Thinking",
-    "title": "[具備科技感與遊戲感的名稱]",
-    "method": "[核心方法論描述]",
-    "teachingPoint": "[本策略要解決的深層教學痛點]",
-    "application": "[課文連結] + [步驟 1] -> [步驟 2]"
-  }
-]
+[ { "type": "Thinking", "title": "...", "method": "...", "teachingPoint": "...", "application": "..." } ]
 `;
 
 export const GENERATE_SINGLE_STRATEGY_PROMPT = `
@@ -333,32 +267,18 @@ export const GENERATE_SINGLE_STRATEGY_PROMPT = `
 請根據課文內容，並避開現有的策略，腦力激盪出 1 個全新的點子。
 
 ### 🚨 創意突變強制協定 (CRITICAL MUTATION)
-1. **【動詞封殺】**：絕對禁止使用「畫線、圈出、找一找、朗讀、討論」等傳統低階動詞！請改用「辯論、偵查、解謎、改寫、盲測、法庭攻防」等高階互動動詞。
+1. **【動詞封殺】**：絕對禁止使用「畫線、圈出、找一找、朗讀、討論」等傳統低階動詞！請改用「辯論、偵查、解謎、改寫、法庭攻防」等高階互動動詞。
 2. **【指定視角強制啟動】**：
-   - 若要求的類型是 Task (任務)：請強制設計成「遊戲化/角色扮演」任務（如：密室逃脫、嫌疑犯審問、時空採訪員）。
-   - 若要求的類型 is Thinking (思考)：請強制設計成「哲學思辨/極端情境」探討（如：辯論天平、道德兩難、如果歷史改變）。
-   - 若要求的類型 is Rhetoric (修辭)：請強制設計成「跨界改編/感官重塑」任務（如：將記敘文改成新聞快報、推銷廣告、感官調色盤）。
-
-⚠️ 'application' 欄位必須嚴格包含：
-- [連結課文]：明確指出應用於課文哪一段落或哪一句話。
-- [操作步驟]：提供 Step 1 -> Step 2 的具體師生互動（必須具有遊戲感或張力）。
+   - Task (任務)：強制設計成「遊戲化/角色扮演」任務。
+   - Thinking (思考)：強制設計成「哲學思辨/極端情境」探討。
+   - Rhetoric (修辭)：強制設計成「跨界改編/感官重塑」任務。
 
 ⚠️ Output format: Valid JSON Object ONLY.
-
-Schema:
-{
-  "type": "{TYPE}",
-  "title": "[具備科技感與遊戲感的名稱]",
-  "method": "[核心方法論描述]",
-  "teachingPoint": "[本策略要解決的深層教學痛點]",
-  "application": "[課文連結] + [步驟 1] -> [步驟 2]"
-}
+{ "type": "{TYPE}", "title": "...", "method": "...", "teachingPoint": "...", "application": "..." }
 `;
 
 export const GENERATE_RHETORIC_GUIDANCE_PROMPT = `
 [INSTRUCTION]
-The user wants to refine the "Teaching Guidance" and "Interactive Micro-task" for a specific rhetoric technique in a specific meaning segment.
-
 Target Segment: "{SEGMENT_TITLE}"
 Target Rhetoric: "{RHETORIC_NAME}"
 Original Example: "{RHETORIC_EXAMPLE}"
@@ -367,102 +287,50 @@ Objective:
 Generate a more refined and actionable "Teaching Guidance" (教學引導) and "Interactive Micro-task" (互動微任務) for this specific rhetoric.
 
 ⚠️ Output format: Valid JSON Object ONLY.
-
-Schema:
-{
-  "teachingPoint": "Refined Insight (e.g. 引導學生觀察...)",
-  "application": "Refined Micro-task (e.g. 1. 請學生圈出... 2. 仿作...)"
-}
+{ "teachingPoint": "Refined Insight (e.g. 說明作者為何這樣寫)", "interactiveTask": "Interactive Micro-task (e.g. 讓學生試著替換詞語)" }
 `;
 
 export const GENERATE_SHAPE_SIMILAR_PROMPT = `
 [INSTRUCTION]
-你現在是 V-MAX 系統的「漢字辨析專家」。請針對目標字 "{CHAR}" 進行深度形近字挖掘。
+# ROLE: 國小語文專家
+請針對目標生字「{CHAR}」，主動找出 1-2 個形近字進行辨析。
 
-目標：找出 2 個學生最容易混淆的形近字，並建立「解構式」辨析。
-
-⚠️ 核心邏輯：
-1. 結構對照：精確標註「字體部件」的微小差異。
-2. 意象關聯：部首解釋必須與「字義」強烈掛鉤（例如：目部與眼睛看有關）。
-3. 辨析口訣：產出對比口訣。若為兩字對比可精簡（如：用手搥打，追槌趕跑），若為三到四字，請適度放寬字數寫成兩三句順口溜，以【通順、合理】為最高原則。
-
-⚠️ 輸出格式：Valid JSON Array ONLY. No Markdown.
-
-Schema:
-[
-  {
-    "char": "辨析字",
-    "zhuyin": "注音 (例如：ㄅㄧㄢˋ)",
-    "radical": "部首名稱 (例如：言部)",
-    "words": "高頻教學詞彙 (例如：辨別)",
-    "explanation": "【精準部件辨析】：精簡說明該部首在字義上的決定性作用。",
-    "mnemonic": "辨析口訣 (例如：有言來爭辯，有刀要辨別)"
-  }
-]
+⚠️ 輸出格式：Valid JSON Array ONLY.
+[ { "char": "辨析字", "zhuyin": "注音", "radical": "部首名稱", "words": "造詞", "explanation": "【精準部件辨析】：精簡說明該部首在字義上的決定性作用", "mnemonic": "辨析口訣" } ]
 `;
 
 export const GENERATE_SHAPE_SIMILAR_DETAILS_PROMPT = `
 [INSTRUCTION]
-The user wants to generate detailed information for a specific Shape-Similar Character (形近字).
 Input Character: "{CHAR}"
-
-Objective:
-Provide the Zhuyin (注音), Radical (部首), Common Words (造詞), and a brief Explanation (解釋) of the radical's meaning for this character.
-
+Objective: Provide the Zhuyin, Radical, Common Words, and a brief Explanation.
 ⚠️ Output format: Valid JSON Object ONLY. No Markdown.
-
-Schema:
-{
-  "char": "{CHAR}",
-  "zhuyin": "Zhuyin (e.g. ㄅㄧㄢˋ)",
-  "radical": "Radical (e.g. 言部)",
-  "words": "Common Word (e.g. 辯論)",
-  "explanation": "Brief explanation of radical difference (e.g. 中間是言，表示用語言爭論)"
-}
+{ "char": "{CHAR}", "zhuyin": "...", "radical": "...", "words": "...", "explanation": "..." }
 `;
 
 export const GENERATE_MNEMONIC_PROMPT = `
 [INSTRUCTION]
 # ROLE: 國小語文教師與口訣大師
-使用者剛剛新增或修改了形近字組合，請為以下這組字重新生成一個「高品質、好記憶的辨析口訣」。
+請為以下這組字重新生成一個「高品質、好記憶的辨析口訣」。
 
-輸入資料：
-{CHARACTERS_LIST}
+輸入資料：{CHARACTERS_LIST}
 
 ⚠️ 核心邏輯與要求：
-1. 結構：請用「順口溜」或「對稱句」的方式，將每個字的【部首】與【字義/造詞】巧妙結合。（例如：「用手『搥』打，追『槌』趕跑」）。
-2. 擴充彈性：如果輸入的字有 3 個或 4 個，請不要硬塞成一句短話，可以寫成兩句 or 三句的押韻短詩，字數不限，以通順、合乎邏輯為最高原則。
-3. 語氣：適合國小學生的生動語氣，不要咬文嚼字，不要使用艱澀文言文。
-4. 輸出限制：只能輸出「口訣本身」的純文字，絕對不要加上「口訣：」等前綴，也不要有任何 Markdown 符號或多餘的對話解釋。
+1. 結構：請用「順口溜」或「對稱句」的方式，將每個字的【部首】與【字義/造詞】巧妙結合。
+2. 擴充彈性：字數不限，以通順、合乎邏輯為最高原則。
+3. 語氣：適合國小學生的生動語氣，不要使用艱澀文言文。
+4. 輸出限制：只能輸出「口訣本身」的純文字，絕對不要加上「口訣：」等前綴。
 `;
 
 export const GENERATE_POLYPHONIC_PROMPT = `
 [INSTRUCTION]
-The user wants to generate details for a Polyphonic Character (多音字).
-Input Character: "{CHAR}"
-
-Objective:
-List all standard Traditional Chinese pronunciations (Zhuyin) for this character, along with common words and usage context.
-
-🚨 字典絕對防禦協定 (STRICT MOE DICTIONARY RULE):
-你必須【100% 嚴格遵守】台灣「教育部重編國語辭典修訂本」或「國語辭典簡編本」的標準讀音！絕對禁止使用網路口語音或俗讀！
-【防呆範例】：植物「結(ㄐㄧㄝˊ)果」、「結(ㄐㄧㄝˊ)實纍纍」必須是二聲！強壯「結(ㄐㄧㄝ)實」、「結(ㄐㄧㄝ)巴」才是一聲！
+List all standard Traditional Chinese pronunciations for the input character.
+🚨 **教育部字典絕對防禦協定**：
+1. 你必須【100% 嚴格遵守】台灣「教育部重編國語辭典修訂本」的標準讀音。
+2. 絕對禁止使用網路口語音或俗讀音（例如：結果必須標註為二聲 ㄐㄧㄝˊ）。
+3. 字義解釋必須精確對齊字典定義。
 
 ⚠️ Output format: Valid JSON Array ONLY. No Markdown.
-
-Schema:
-[
-  { 
-    "zhuyin": "Zhuyin (e.g. ㄅㄟ)", 
-    "words": "Common Word (e.g. 背包)", 
-    "usage": "Brief Usage Context (e.g. 名詞，指背負的東西)" 
-  },
-  { 
-    "zhuyin": "Zhuyin (e.g. ㄅㄟˋ)", 
-    "words": "Common Word (e.g. 背景)", 
-    "usage": "Brief Usage Context (e.g. 名詞，指物體後面的景象)" 
-  }
-]
+[ { "zhuyin": "Zhuyin (e.g. ㄅㄟ)", "words": "Common Word", "usage": "Brief Usage Context" } ]
 `;
 
 export const STEP_3_VISUAL_GENERIC_PROMPT = `
@@ -472,119 +340,101 @@ export const STEP_3_VISUAL_GENERIC_PROMPT = `
 ${getVisualLibraryPrompt()}
 
 ### 📤 輸出規範 (Strict JSON)
-{
-  "recommendations": [
-    {
-      "style": { "code": "A-Y", "name": "風格名稱", "description": "對應的英文提示詞" },
-      "metaphor": { "code": "M1-S6", "name": "隱喻名稱", "description": "視覺隱喻的具體描述" },
-      "reason": "為什麼這個風格與隱喻的組合最適合本課？(連結文體與主題)"
-    }
-  ]
-}
+{ "recommendations": [ { "style": { "code": "A-Y", "name": "...", "description": "..." }, "metaphor": { "code": "M1-S6", "name": "...", "description": "..." }, "reason": "..." } ] }
 `;
 
 export const STEP_3_CASTING_PROMPT_PREFIX = `[V-MAX CASTING ENGINE] 請根據來源文本的靈魂，為本課推薦 3 位最契合的引導者候選人。`;
 
-// 🌟 [性別補完計畫] 強制要求提取性別 (Gender)
 export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 # ROLE: V-MAX 視覺邏輯導演 (Casting Director v13.0)
-# MISSION: 根據【傳入的課文原文】提取真實主角，並結合【全域視覺風格】量身打造專業的引導者。
+# MISSION: 根據原文提取主角，並結合全域視覺風格量身打造專業的引導者。
 
-### 🚨 終極禁令 (CRITICAL FORBIDDEN RULES)
-1. **禁止虛構主角**：絕對禁止創造【原文中未提及】的人物。
-   - ❌ 錯誤：原文沒寫，卻自行加入「小創、小明、老師、學生」等角色。
-   - ✅ 正確：若原文中「確實出現」了具名的人物（如：皮爾森律師）或特定身份的人物（如：一位老農夫），則可依邏輯判定為主角。
-2. **禁止預設角色**：不要因為是教育 App 就慣性地預設一個「學習夥伴」或「虛擬老師」作為故事主角。
-3. **禁止動植物主角**：除非該動植物具備人類語言與社交行為（如寓言），否則禁止列為主角。
-4. **禁止觀察者當主角**：如果人物只是在觀察（如：我看著天空），而沒有「解決問題」或「推動情節」，請判定為 Mode B。
-
-### 🎭 視覺邏輯矩陣判定 (Casting Logic Matrix)
-請依序執行以下三段式判定來尋找「故事主角」：
-
-**第一步：真實性驗證 (Existence Check)**
-- 該人物的名字或具體身份是否在【原文】中出現？
-- ❌ 否 -> 進入 Mode B。
-- ✅ 是 -> 進入第二步。
-
-**第二步：行動力驗證 (Agency Check)**
-- 該人物是否發起了關鍵行動？是否面臨並解決了衝突？
-- ❌ 否（僅是旁白或被提及的人物） -> 進入 Mode B。
-- ✅ 是 -> 進入第三步。
-
-**第三步：Mode A 判定 (Drama Mode Confirmation)**
-- 該人物是否為全文的核心？
-- ✅ 是 -> 輸出 Mode A，並提取該人物。
-- ❌ 否 -> 輸出 Mode B。
-
-### 🌟 萬用引導者生成法則 (Universal Guide Design Logic)
-請為本課推演出 3 位不同風格的「引導者 (candidates)」：
-1. 【情境動態適配】：依據課文是科普、童話、歷史或抒情文，賦予引導者合乎情理的職業身分（如：生態觀察員、時空旅人、魔法說書人）。
-2. 🎨【美學 100% 連動 (CRITICAL)】：
-   - 系統已傳入【老師已選定的全域視覺風格】（例如：吉卜力、3D軟陶、賽博龐克）。
-   - 你設計的引導者，其「服裝材質、配件細節、整體氛圍」必須【完美融入該視覺風格】！
-3. 【高階質感要求】：無論適配哪種情境，角色都必須具備「精緻、專業、電影感」。嚴禁使用隨便的名字與無聊的服裝。
+### 🚨 終極禁令：禁止虛構主角、禁止預設角色。
+請依據真實性與行動力驗證來尋找故事主角。並為本課推演出 3 位不同風格的「引導者」。
 
 ### 📥 輸出規範 (Strict JSON)
-{
-  "mode": "Drama Mode" | "Guide Mode",
-  "protagonist": {
-    "name": "必須是文本中真實出現的名字。若無則填 None",
-    "description": "根據文本描述其身份與核心行動",
-    "visualDNA": "Gender: [男/女] | Age: [明確年齡] | Hair: [髮型] | Clothing: [符合時代背景的服裝]",
-    "isNone": boolean,
-    "verification": "請簡述你在原文哪裡找到這個人，以及他做了什麼行動來推動劇情"
-  },
-  "candidates": [
-    {
-      "id": "C1",
-      "name": "契合文本情境的專屬名字",
-      "persona": "G1-G6 語氣晶片",
-      "description": "他在本課的專屬定位",
-      "visualDNA": "Gender: [男/女] | Age: [明確年齡] | [髮型] | [🌟 必須融合【選定視覺風格】的服裝與配件細節描述]"
-    },
-    { "id": "C2", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." },
-    { "id": "C3", "name": "...", "persona": "...", "description": "...", "visualDNA": "..." }
-  ]
+{ 
+  "mode": "Drama Mode" | "Guide Mode", 
+  "protagonist": { "name": "...", "description": "...", "visualDNA": "Gender: [男/女] | Age: [明確年齡] | ...", "isNone": false, "verification": "..." }, 
+  "candidates": [ { "id": "C1", "name": "...", "persona": "...", "description": "...", "visualDNA": "Gender: [男/女] | Age: [明確年齡] | ..." } ] 
 }
 `;
 
 export const GUIDE_TRAITS_SUGGESTION_PROMPT = `[INSTRUCTION] Refine Visual DNA. Must include Gender (e.g., Gender: Male or Female), {AGE}, {TONE}`;
 export const GUIDE_TEACHING_STYLE_SUGGESTION_PROMPT = `[INSTRUCTION] Create teaching style for Guide: Gender: [M/F], {AGE}, {TONE_LABEL}.`;
+export const PROTAGONIST_TRAITS_SUGGESTION_PROMPT = `[INSTRUCTION] Generate Pipe Format Visual DNA for Protagonist. (CRITICAL: Must include exact Gender and Age, e.g., Gender: Male | Age: 12).`;
 
-// 🌟 [性別補完計畫] 強制要求 Protagonist 包含 Gender
-export const PROTAGONIST_TRAITS_SUGGESTION_PROMPT = `[INSTRUCTION] Generate Pipe Format Visual DNA for Protagonist. (CRITICAL: Must include exact Gender and Age, e.g., Gender: Male | Age: 12, or Gender: Female | Age: 40s at the beginning).`;
-
-// 🌟 [性別補完計畫] 萃取自訂圖片特徵時，也要判斷性別
 export const EXTRACT_IMAGE_TRAITS_PROMPT = `
-請以專業角色設計師的角度，精準分析隨附的圖片，並將該人物的視覺特徵萃取為嚴格的 YAML 格式 (Visual DNA)。務必明確標示出該角色的性別 (Gender) 與推測年齡 (Age)。
-若角色具備「Q版博士 (Chibi Scientist)」特徵，請務必在 DNA 中註明其誇張的表情、白袍、眼鏡或實驗器材等細節。
+[INSTRUCTION]
+請以專業角色設計師的角度，精準分析隨附的圖片，並將該人物的視覺特徵萃取為嚴格的 YAML 格式 (Visual DNA)。
+
+⚠️ 核心要求：
+1. **性別與年齡**：務必明確標示出該角色的性別 (Gender) 與推測年齡 (Age)。
+2. **視覺特徵**：包含髮型、服裝、配件、表情等。
+
+⚠️ 輸出格式：Strict YAML ONLY. No Markdown.
 `;
 
 export const STEP_5_MATERIALS_PROMPT = `[INSTRUCTION] Execute STEP 6: 輔助產出 (Material Linkage).`;
 
-export const PROMPT_GENERATE_WORKSHEET = `
-[INSTRUCTION]
-# ROLE: V-MAX 專業素養命題專家
-# MISSION: 請根據傳入的全課分析資料，產出一份排版精美、留有作答空間，可讓老師直接列印發放的「Markdown 格式素養學習單」。
+// ============================================================
+// 🚀 最終排版大腦 (The Slide Architect)
+// ============================================================
 
-### 📜 學習單必須嚴格遵循以下 Markdown 排版結構與骨架：
+export const FINAL_ATOMIC_SCRIPT_PROMPT = `
+# ROLE: V-MAX System Master Kernel v60.8 (Layout & Anti-Hallucination Director)
+# MISSION: 嚴格根據傳入的資料，生成精準的四維對位腳本，並確保視覺提示詞的絕對安全。
 
-# 📝 《(請填入課名)》素養學習單
-**班級：** ______ **座號：** ___ **姓名：** _________
+### 🎨 視覺 DNA 鎖定協定 (Character Consistency)
+${CHARACTER_VISUAL_REF_PLACEHOLDER}
 
-## 一、 基礎偵探：擷取訊息 (DOK 1-2)
-(請根據各段落大意，設計 2-3 題事實提取問題。💡 每一題的下方請務必加入 \`<br><br><br>\` 的 HTML 換行標籤，為學生預留作答空間)
+### 📐 模組一：Layout 與 Lens 版面代碼庫 (SSOT)
+AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` 代碼：
+- [ContentFocus] 課文內容對焦 -> layout: "wide-scene" | lens: "廣角 (Exhale)"
+- [DeepDive] 修辭與句型深究 -> layout: "close-tool" | lens: "特寫 (Inhale)"
+- [QuizCard] 閱讀小挑戰 -> layout: "quiz-card" | lens: "單圖資訊板 (Single Info Board)"
+- [ShapeSimilar] 形近字辨析 -> lens: "左右分割對比大字排版 (Split Screen, Large Text)"。layout 依字組數決定："split-2"(2字), "grid-3"(3字), "grid-4"(4字)。
+- [Polyphonic] 多音字辨析 -> lens: "天平對比大字排版 (Balance Screen, Large Text)"。layout 依讀音數決定："compare-scale"(2讀音), "triptych"(3讀音)。
+- [IdiomLoop] 成語解析 -> layout: "story-panel" | lens: "上下分割故事版 (Split Story Board)"
+- [LanguageActivity] 語文活動 -> layout: "pattern-drill" 或 "speech-stage" | lens: "單圖大字互動舞台"
+- [Strategy/FusionMap] 教學策略 -> layout: "info-flow" 或 "step-flow" | lens: "單圖大字百寶箱"
+- [Assessment] 綜合評量 -> layout: "single-board" | lens: "單圖資訊板 (Single Info Board)"
+- **[Cover]**: 🌟這是課程封面！displayText 必須明確列出【課名】、【文體】與【作者】。
 
-## 二、 深度思考：推論分析 (DOK 2-3)
-(請根據文本深層涵義、主角動機或寫作手法，設計 2 題推論題。💡 每一題的下方請務必加入 \`<br><br><br><br>\` 預留作答空間)
+### 📥 模組二：輸出規範 (Strict JSON Array)
+請輸出純 JSON 陣列。每個物件必須包含：
+[
+  {
+    "page_number": 數字,
+    "part_label": "PART A",
+    "type": "ContentFocus 等",
+    "title": "投影片標題",
+    "layout": "Layout 代碼",
+    "lens": "Lens 標準值",
+    "visual_prompt": "【英文】... 🚨加上 --no text",
+    "displayText": "顯示文字...",
+    "guideAction": "肢體動作",
+    "guideTalk": "台詞"
+  }
+]
 
-## 三、 素養大挑戰：進階思辨與遷移 (DOK 3-4)
-(🚨 強制提取：請務必從傳入的分析資料中，嚴格提取「策略思考 (DOK 3-4)」的題目，例如：手法模擬、生活遷移、價值評鑑等，列出 2 題壓軸題。💡 每一題下方請加入 \`<br><br><br><br><br>\` 預留大片作答空間)
+### 📜 模組三：版型內容填充萬用通則
 
-[VMAX_EXECUTION_PROTOCOL]
-1. 100% 純繁體中文，禁止英文翻譯. 禁止全文注音，僅多音字可標示。
-2. 🚨【純淨輸出鐵律】：請直接輸出完整的 Markdown 純文字內容！絕對禁止任何開場白（如「好的，這是您的學習單...」）或結尾廢話！
+【全域排版鐵律】
+- **角色演繹**：guideTalk 必須使用導師 Persona 專屬口頭禪，展現劇場感互動。
+- **無文字生圖**：visual_prompt 禁止出現文字指令，結尾強制加上「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS IN THE IMAGE.」
+- **字數防爆破**：所有投影片的 \`displayText\` 總字數【絕對禁止】超過 130 字！請善用精簡敘述！
+
+【版型專屬通則】
+- **[FusionMap] (萬用結構圖)**: 🌟無論何種文體，你必須提取「邏輯骨架（如：總分總、起因經過結果）」。🚨【文字鐵律】：對應每一個節點，必須以「📍 節點名稱 (關鍵詞) - 簡短摘要」的格式排版，禁止寫空泛摘要！
+- **[ContentFocus] (情境鎖定)**: 🌟執行「萃取、構建、融合」三步生圖法。🚨【搬運鐵律】：段落大意必須 100% 照抄傳入資料原文，絕對禁止縮減改寫！
+- **[ShapeSimilar] (形近字)**: 🌟視覺化部首。visual_prompt 需為部首畫出輔助小圖示。禁止使用 # 標題符號。
+- **[Assessment] (高階提問)**: 🌟必須優先從分析資料中提取 2-3 題「DOK 3-4 策略思考題」(生活遷移、價值評鑑) 作為壓軸。
 `;
+
+// ============================================================
+// 📄 模組六：豐富版輔助教材產出模板 (The Big 6)
+// ============================================================
 
 export const PROMPT_GENERATE_ASSESSMENT = `
 [INSTRUCTION]
@@ -622,37 +472,29 @@ export const PROMPT_GENERATE_ASSESSMENT = `
 export const PROMPT_GENERATE_KB = `
 [INSTRUCTION]
 # ROLE: V-MAX 知識庫總編輯
-# MISSION: 請將系統傳入的「全課深度分析資料」，編譯並排版成一份給 NotebookLM 閱讀的「完美結構化 Markdown 知識庫」。
-
-這份文件將作為 NotebookLM AI 的「底層大腦」，排版必須極度清晰、層次分明。請嚴格依照以下的結構，將傳入的資料填入對應的區塊中。
-
-### 📜 知識庫必須包含以下完整結構：
-
-# 【基本資訊 (Metadata)】
-- 課名：
-- 作者：
-- 文體：
-- 核心主旨：
-
-# 【意義段與課文深究 (Deep Segments)】
-(請逐段列出以下資訊，讓 AI 了解課文發展脈絡)
-## 段落 (數字)：(段落標題)
-- 段落大意：...
-- 難詞解釋：(列出難詞與意義)
-- 修辭與句型解析：(列出名稱、原句與解析，若無則寫無)
-
-# 【字詞與形音義大本營 (Vocabulary Radiation)】
-- 形近字辨析：(必須完整列出辨析字與【辨析口訣】)
-- 多音字：(必須完整列出讀音、字義與【辨析口訣】)
-- 延伸成語：(列出成語、釋義與例句)
-
-# 【高階素養提問 (DOK 3-4)】
-(請列出本課的高階思考題，這對於 NotebookLM 產出深度的 Audio Overview 語音廣播非常重要)
+# MISSION: 請根據傳入的全課文本與深度分析結果，為我生成一份「結構化 Markdown 知識庫 (Knowledge Base)」。
 
 [VMAX_EXECUTION_PROTOCOL]
-1. 100% 純繁體中文輸出，禁止夾雜英文。
-2. 🚨【純淨輸出鐵律】：請直接輸出完整的 Markdown 純文字內容！絕對禁止任何開場白（如「好的，這是我為您整理的...」）或結尾廢話！
-3. 資料必須【100% 忠於傳入的原始內容】，嚴禁自行發明或遺漏任何形近字口訣與成語。
+1. 🚨【視覺鎖定】：請在知識庫開頭明確標註：「本課程視覺設計請 NotebookLM 參考來源中的【人物設計圖/角色設定檔】，確保生成的對話風格與視覺描述一致。」
+2. 100% 純繁體中文，禁止夾雜英文。
+3. 🚨【純淨輸出鐵律】：直接輸出 Markdown 內容，禁止任何開場白或結尾廢話！
+
+### 📜 知識庫必須包含以下結構：
+# 🧠 《(請填入課名)》全課知識精華庫
+
+## 📍 一、 基本資訊
+- **年級**：
+- **文體**：
+- **核心主題**：
+
+## 🗺️ 二、 全課結構邏輯 (Logical Skeleton)
+(請以條列式呈現本課的起因、經過、結果或邏輯層次)
+
+## 💡 三、 字詞口訣與深度辨析 (Vocab & Idioms)
+(請整理本課所有的形近字口訣、多音字辨析與成語應用)
+
+## 🚀 四、 高階思辨提問 (DOK 3-4 Questions)
+(請列出本課最值得討論的 3 個深度問題及其引導方向)
 `;
 
 export const PROMPT_GENERATE_GAMIFIED_QUIZ = `
@@ -666,18 +508,15 @@ export const PROMPT_GENERATE_GAMIFIED_QUIZ = `
 3. 選項字數：每個選項不可超過 75 個字元。
 4. 誘答設計：誘答選項 (Distractors) 必須具備高度合理性，能測驗出學生易混淆的盲點（如形近字的錯誤部首、多音字的錯誤讀音、相似但不同的修辭）。
 5. 100% 純繁體中文，禁止夾雜英文。禁止全文注音，僅多音字可標示。
+6. 🚨【純淨輸出鐵律】：直接輸出 CSV 內容，絕對禁止任何開場白、結尾廢話 or \`\`\`csv 標籤！
 
 🎯 題型配置 (共 10 題)：
-- 詞彙與形音義 (3 題)
-- 課文內容理解 (3 題)
-- 修辭與寫作手法 (2 題)
-- 素養與生活遷移 (2 題：包含 DOK 3-4 情境推論)
+- 詞彙與形近字辨析 (3 題)
+- 多音字與成語應用 (3 題)
+- 課文細節與邏輯推論 (2 題)
+- 修辭與句型辨識 (2 題)
 
-📋 輸出格式 (嚴格遵守 CSV 結構)：
-🚨【純淨輸出鐵律】：為了讓老師能直接匯入系統，請直接輸出純文字的 CSV 內容！【絕對禁止】任何 Markdown \`\`\`csv 或 \`\`\`text 標籤，也【絕對禁止】任何開場白或結尾廢話！
-
-第一行請務必嚴格輸出以下標題（不要修改）：
-題目,選項1,選項2,選項3,選項4,正確答案(填寫數字1-4),時間限制(秒)
+格式：題目,選項1,選項2,選項3,選項4,正確答案(1-4),時間限制(秒)
 `;
 
 export const PROMPT_GENERATE_INTERACTIVE_QUIZ = `
@@ -698,7 +537,7 @@ export const PROMPT_GENERATE_INTERACTIVE_QUIZ = `
       "type": "choice",
       "question": "題目內容...",
       "options": ["選項A", "選項B", "選項C", "選項D"],
-      "answer": 0, // 正確選項的索引 (0-3)
+      "answer": 0,
       "explanation": "解析說明..."
     },
     {
@@ -731,6 +570,31 @@ export const GENERATE_LANGUAGE_ACTIVITY_PROMPT = `
   ]
 }
 請只輸出純 JSON。
+`;
+
+export const PROMPT_GENERATE_WORKSHEET = `
+[INSTRUCTION]
+# ROLE: V-MAX 學習單設計專家
+# MISSION: 請根據傳入的全課分析資料，產出一份結構清晰、具備層次感且「預留學生作答空間」的 Markdown 格式素養學習單。
+
+### 📜 學習單必須包含以下結構：
+# 📝 《(請填入課名)》素養學習單
+
+## 📍 一、 擷取訊息 (Facts)
+(請針對課文中的具體事實設計 2-3 題)
+💡 (請在每題下方加上 \`<br><br><br>\` 以預留作答空間)
+
+## 🔍 二、 推論分析 (Inference)
+(請針對主角動機、作者用意 or 情節發展設計 2-3 題)
+💡 (請在每題下方加上 \`<br><br><br><br>\` 以預留較大作答空間)
+
+## 🚀 三、 策略思考 (DOK 3-4)
+(請設計 1-2 題高階思考題，連結學生的生活經驗 or 價值評鑑)
+💡 (請在每題下方加上 \`<br><br><br><br><br>\` 以預留大片論述空間)
+
+[VMAX_EXECUTION_PROTOCOL]
+1. 100% 純繁體中文，禁止英文翻譯。
+2. 🚨【純淨輸出鐵律】：請直接輸出完整的 Markdown 純文字內容！絕對禁止 any 開場白或結尾廢話！
 `;
 
 export const PROMPT_GENERATE_NOTEBOOKLM_GUIDE = `
@@ -796,73 +660,4 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 【情況 B：投影片文字漏印或被亂改】
 請維持本頁圖片完全不動。重新讀取本頁的 \`displayText\` 欄位，100% 逐字補回繁體中文。
 ================================================================
-`;
-
-
-// 🌟🌟🌟 終極防禦裝甲 (Anti-Hallucination & Guide Forcing) 🌟🌟🌟
-export const FINAL_ATOMIC_SCRIPT_PROMPT = `
-# ROLE: V-MAX System Master Kernel v60.7 (Layout & Anti-Hallucination Director)
-# MISSION: 嚴格根據傳入的資料，生成精準的四維對位腳本，並確保視覺提示詞的絕對安全。
-
-### 📐 模組一：Layout 與 Lens 版面代碼庫 (SSOT)
-AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` 代碼：
-- [ContentFocus] 課文內容對焦 -> layout: "wide-scene" | lens: "廣角 (Exhale)"
-- [DeepDive] 修辭與句型深究 -> layout: "close-tool" | lens: "特寫 (Inhale)"
-- [QuizCard] 閱讀小挑戰 -> layout: "quiz-card" | lens: "單圖資訊板 (Single Info Board)"
-- [ShapeSimilar] 形近字辨析 -> lens: "左右分割對比大字排版 (Split Screen, Large Text)"。layout 依字組數決定："split-2"(2字), "grid-3"(3字), "grid-4"(4字)。
-- [Polyphonic] 多音字辨析 -> lens: "天平對比大字排版 (Balance Screen, Large Text)"。layout 依讀音數決定："compare-scale"(2讀音), "triptych"(3讀音)。
-- [IdiomLoop] 成語解析 -> layout: "story-panel" | lens: "上下分割故事版 (Split Story Board)"
-- [LanguageActivity] 語文活動 -> layout: "pattern-drill", "punctuation-chart", "phrase-demo" 或 "speech-stage" | lens: "單圖大字互動舞台 (Single Image, Large Text)"
-- [Strategy/FusionMap] 教學策略 -> layout: "info-flow" 或 "step-flow" | lens: "單圖大字百寶箱 (Single Box Focus, Large Text)"
-- [Assessment] 綜合評量 -> layout: "single-board" | lens: "單圖資訊板 (Single Info Board)"
-- **[Cover]**: 🌟這是課程封面！displayText 必須明確列出【課名】、【文體】與【作者】（若有），讓學生一開始就掌握基本資訊。
-- **[MissionNav/Ending]** 任務導覽與結尾 -> 請自行判斷，推薦使用 "wide-scene" 或 "close-tool"。
-
-### 🎨 模組二：生圖防呆與導師顯影絕對禁令 (CRITICAL)
-1. **導師強制顯影 (Guide Presence)**：只要該頁有 \`guideAction\` 或 \`guideTalk\`，或者版型為 close-tool / quiz-card，你【必須】在 \`visual_prompt\` 的 Subject 中，明確寫出導師的完整外觀特徵 (包含【性別 Gender】與年齡的 Guide DNA)！如果沒寫，生圖軟體就不會畫出導師！
-2. **強制無字化 (Anti-Text Hallucination)**：生圖軟體極易產生亂碼外星文。
-   - 若場景包含「藍圖、黑板、書本、筆記」，請註明「abstract lines, blank pages」。
-   - \`visual_prompt\` 的結尾必須強制加上：「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO TYPOGRAPHY, NO WORDS IN THE IMAGE.」
-3. **禁止拼貼**：絕對禁止多圖拼貼 (Collage)，強制使用清晰單圖。
-4. **畫風絕對鎖定 (Style Lock)**：你必須嚴格使用系統傳入的【全域視覺風格】來撰寫 visual_prompt。即使課文主題是「科技、條碼、網路」，也【絕對禁止】擅自改成 "cyberpunk", "sci-fi", "holographic" 等科幻詞彙！必須將科技元素轉化為指定風格（例如：吉卜力風格下的魔法圖騰或精緻的手繪木製機關）。
-
-### 📥 模組三：輸出規範 (Strict JSON Array)
-請輸出純 JSON 陣列。每個物件代表一頁投影片，必須嚴格包含以下欄位：
-[
-  {
-    "page_number": 數字,
-    "part_label": "對應的 PART (如 PART A)",
-    "type": "對應的投影片類型",
-    "title": "投影片標題",
-    "layout": "填入【模組一】的 Layout 代碼",
-    "lens": "填入【模組一】對應的 Lens 標準值",
-    "visual_prompt": "【英文】生圖提示詞。Subject: [場景描述 + 務必包含導師外貌(Gender & Age)]。🚨【隱喻貫穿鐵律】：你必須將系統傳入的「視覺隱喻(Metaphor)」具象化在畫面上！(例如隱喻是魔法門，就必須畫出門；是時光列車，就必須畫出車廂)。Context: ... Composition: [layout]. Artistic VIS: [填入全域視覺風格]. Safety: ABSOLUTELY NO TEXT.",
-    "displayText": "顯示文字 (嚴格繁體中文，包含【提取】與【推論】等標題，禁止自行刪減原文)",
-    "guideAction": "導師的肢體動作或表情提示 (若無則填 null)",
-    "guideTalk": "🚨【極致角色扮演鐵律】：你必須根據導師的 Persona，為他設定專屬的「發語詞/口頭禪」（例如機器人的「嗶！」、偵探的「真相只有一個」），並頻繁使用於每頁台詞的開頭或強調處！絕對禁止使用無聊的傳統教師說教口吻，請多用「想像一下...」等互動語氣！"
-  }
-]
-
-### 📜 模組四：版型內容填充指南
-- 🚨【字數防爆破鐵律】：為了確保簡報視覺舒適，所有投影片的 \`displayText\` 總字數【絕對禁止】超過 130字！請善用精簡的敘述或條列式重點！
-- 🚨【段落導航與隱喻融合】：對於 [ContentFocus]、[DeepDive]、[QuizCard] 這三種類型，你【必須】在 \`displayText\` 的最上方第一行，用粗體印出結合了「視覺隱喻」的段落進度（例如：**【第一扇門：發現問題】** 或 **【第一站：交通糾紛】**），讓學生一眼看出目前的進度！
-- **[FusionMap]**: 🌟這是全課結構視圖！在 visual_prompt 中請強制要求繪製出與本課隱喻相符的結構路徑圖。🚨【結構文字鐵律】：displayText 【絕對禁止】只寫空泛摘要！你【必須】提取完整的「全課邏輯骨架（如：起因➔經過➔結果）」，以層次分明的條列式排版在畫面上！
-- **[ContentFocus]**: 根據段落大意繪製場景。🚨【動態生圖與情境鎖定鐵律】：(維持剛才設定的三步生圖流程與終極防呆...)。🚨【文字搬運鐵律】：displayText 必須包含【段落導航小標題】、【段落大意】與【難詞顯影】。其中【段落大意】你【必須 100% 精準擷取並照抄】傳入資料中的原文，【絕對禁止】為了縮減字數而擅自改寫、刪減關鍵字或腦補情節！【難詞顯影】則必須強制附上簡短解釋。
-- **[DeepDive]**: 視覺對焦該段落的具體教學情境. 若內容包含修辭，visual_prompt 可嘗試將修辭概念具象化（例如「類疊」畫一個大放大鏡）。
-- **[QuizCard]**: 提問表情特寫。displayText 必須包含【段落導航】，並分列【提取】與【推論】。
-- **[ShapeSimilar]**: 🚨【部首意象生圖鐵律】：在 visual_prompt 中，除了大字排版，你必須明確要求 AI 畫出「各個部首對應的具體小圖示 (icon)」來輔助視覺記憶（例如：手部畫一隻手、水部畫水滴）！displayText 絕對禁止使用 # 符號，請使用安全括號：⭕ 【 字A 】 (**部首A**) 注音：... / 造詞：... 💡 辨析口訣：(口訣內容)
-- **[Polyphonic]**: 🚨 絕對禁止使用 # 符號！你【必須】嚴格根據教育部字典寫出對應的「字義」，並編寫「情境辨析口訣」！格式：⭕ 【 讀音A 】 (注音) 字義：... 造詞：... 💡 辨析口訣：...
-- **[IdiomLoop]**: 🚨【生圖鐵律】：插圖必須「嚴格根據例句的具體情境」繪製！displayText 必須排版成語標題、釋義、例句，**絕對禁止**在畫面上疊加巨大的成語文字。
-- **[Assessment]**: 🌟全課綜合評量！你【必須】從深度分析資料中，優先挑選 2-3 題「策略思考 (DOK 3-4)」的高階提問（如：生活遷移、價值評鑑）作為壓軸討論題。絕對禁止只問事實記憶題！
-- **[Ending]**: 🌟結尾道別！除了感謝參與，請【務必】在 displayText 加入一個與本課主題相關的「課後小任務 (Call to Action)」。
-
-### 🎭 模組五：特殊風格對應指南 (Special Style Overrides)
-- **當全域風格為「學習漫畫風 (Manga Science)」時**：
-  - 🚨【文字格式鐵律】：你【必須】將 \`displayText\` 與 \`guideTalk\` 轉化為「漫畫腳本格式」！
-  - 格式範例：
-    **[畫面描述]**：(簡短描述分鏡內容)
-    **[狀聲詞]**：(例如：碰！閃！咻！砰！)
-    **[對話/旁白]**：(誇張且具戲劇性的台詞)
-  - 🚨【生圖提示詞】：\`visual_prompt\` 必須強制包含 "Manga panel, black and white ink, screentones, speed lines, chibi scientist, distinct speech bubbles"。
-  - 🚨【隱喻對應】：若隱喻為「Q版博士腳本」，請確保導師以 Q 版形象出現，並強調「畫面/音效/台詞」的三維度呈現。
 `;
