@@ -61,6 +61,7 @@ export const useStep3Segments = () => {
       validateGroundedness(parsedSegments, rawSourceText);
 
       let validSegments = parsedSegments.segments || (Array.isArray(parsedSegments) ? parsedSegments : []);
+      const macroStructure = parsedSegments.macroStructure || "N1 故事山";
 
       // ==========================================
       // 第二階段：為全課生成共用的「語文百寶箱策略」
@@ -69,9 +70,10 @@ export const useStep3Segments = () => {
       
       // 🌟 [修復點]：統一 JSON Schema 鍵值為 teachingPoint 與 application
       const prompt2 = `
-        你現在是一位「創意教學設計師」。請根據以下段落，設計 3 個極具啟發性、細節豐富的教學策略卡片。
+        你現在是一位「創意教學設計師」。請根據以下段落與宏觀架構「${macroStructure}」，設計 3 個極具啟發性、細節豐富的教學策略卡片。
         
         【課文段落參考】：${JSON.stringify(validSegments.map((s:any) => s.summary))}
+        【宏觀架構】：${macroStructure}
 
         🚨 撰寫最高準則：
         1. 內容具體化：禁止寫「引導學生思考」這種廢話。必須寫出具體的引導情境（例：引導學生對比「鈍掉的斧頭」與「鋒利的草葉」）。
@@ -98,6 +100,7 @@ export const useStep3Segments = () => {
 
       // 🌟 [防呆更新]：防呆預設值也必須對應正確的 Key
       const finalResult = {
+          macroStructure: macroStructure,
           segments: validSegments,
           strategies: validStrategies.length > 0 ? validStrategies : [
               { 
@@ -128,12 +131,15 @@ export const useStep3Segments = () => {
     dispatch({ type: 'SET_STEP', payload: AppStep.STEP_4_VISUALS });
   };
 
-  const handleRegenerateStrategies = async (currentSegments: any) => {
+  const handleRegenerateStrategies = async (currentData: any) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const strategies = currentSegments.strategies || [];
+      const strategies = currentData.strategies || [];
       const existingTitles = strategies.map((s: any) => s.title).join('、');
-      const prompt = `${REGENERATE_STRATEGIES_PROMPT}\n[歷史排除清單]：${existingTitles}\n[課文Context]：${JSON.stringify(currentSegments)}\n[Seed]：${Date.now()}`;
+      const macroStructure = currentData.macroStructure || "N1 故事山";
+      const prompt = REGENERATE_STRATEGIES_PROMPT
+        .replace("{MACRO_STRUCTURE}", macroStructure) + 
+        `\n[歷史排除清單]：${existingTitles}\n[課文Context]：${JSON.stringify(currentData).substring(0, 2000)}\n[Seed]：${Date.now()}`;
       const response = await sendMessageToGemini(prompt, [], 0);
       return sanitizeAndParseJSON(response); 
     } catch (error: any) { throw error; } finally { dispatch({ type: 'SET_LOADING', payload: false }); }

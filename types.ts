@@ -87,6 +87,7 @@ export interface BasicInfo {
 export interface SegmentItem {
   segmentIndex?: number;
   title: string;
+  type?: string;        // 🌟 新增：意義段類型 (背景、衝突、轉折、解決、結論等)
   summary: string;
   keywords: string[];
   difficultWords: string[];
@@ -127,6 +128,7 @@ export interface StrategyItem {
 export interface AnalysisData {
   fullText: string; 
   mode: string;
+  macroStructure?: string; // 🌟 新增：宏觀架構 (N1-N5)
   basicInfo: BasicInfo; 
   visualStructureRecommendation: string; 
   

@@ -16,33 +16,83 @@ const safeRender = (val: any): string => {
 };
 
 // 🌟 新增：語文活動卡片組件 (處理局部狀態)
-const LanguageActivityCard = ({ activity, idx, onGenerateExtraActivity, grade }: { 
+const LanguageActivityCard = ({ activity, idx, onGenerateExtraActivity, grade, onUpdate, onDelete }: { 
   activity: any, 
   idx: number, 
   onGenerateExtraActivity: (title: string, content: string, grade: string) => Promise<any>,
-  grade: string
+  grade: string,
+  onUpdate: (idx: number, updated: any) => void,
+  onDelete: (idx: number) => void
 }) => {
   const [extensions, setExtensions] = useState<any[]>(activity.extensions || []);
   const [isExpanding, setIsExpanding] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempTitle, setTempTitle] = useState(activity.title);
+  const [tempContent, setTempContent] = useState(activity.content);
 
   const onExpand = async () => {
     setIsExpanding(true);
     const result = await onGenerateExtraActivity(activity.title, activity.content, grade);
-    if (result) setExtensions(result.extension);
+    if (result) {
+      setExtensions(result.extension);
+      onUpdate(idx, { ...activity, extensions: result.extension });
+    }
     setIsExpanding(false);
   };
 
+  const handleSave = () => {
+    onUpdate(idx, { ...activity, title: tempTitle, content: tempContent });
+    setIsEditing(false);
+  };
+
   return (
-    <div className="bg-indigo-50/50 border-2 border-indigo-100 rounded-3xl p-5 hover:border-indigo-300 transition-all group">
+    <div className="bg-indigo-50/50 border-2 border-indigo-100 rounded-3xl p-5 hover:border-indigo-300 transition-all group relative">
+      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button onClick={() => setIsEditing(!isEditing)} className="p-1.5 bg-white text-slate-400 hover:text-blue-600 rounded-lg shadow-sm border border-slate-100">
+          {isEditing ? <X size={14} /> : <Edit2 size={14} />}
+        </button>
+        <button onClick={() => onDelete(idx)} className="p-1.5 bg-white text-slate-400 hover:text-red-600 rounded-lg shadow-sm border border-slate-100">
+          <Trash2 size={14} />
+        </button>
+      </div>
+
       <div className="flex items-center gap-2 mb-3">
         <div className="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
           {idx + 1}
         </div>
-        <h4 className="font-black text-slate-800">{activity.title}</h4>
+        {isEditing ? (
+          <input 
+            className="font-black text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 text-sm flex-1"
+            value={tempTitle}
+            onChange={(e) => setTempTitle(e.target.value)}
+          />
+        ) : (
+          <h4 className="font-black text-slate-800">{activity.title}</h4>
+        )}
       </div>
-      <div className="bg-white/80 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed border border-indigo-50 group-hover:shadow-inner transition-all">
-        {activity.content}
-      </div>
+
+      {isEditing ? (
+        <textarea 
+          className="w-full bg-white border border-indigo-200 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none"
+          value={tempContent}
+          onChange={(e) => setTempContent(e.target.value)}
+        />
+      ) : (
+        <div className="bg-white/80 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed border border-indigo-50 group-hover:shadow-inner transition-all">
+          {activity.content}
+        </div>
+      )}
+
+      {isEditing && (
+        <div className="mt-3 flex justify-end">
+          <button 
+            onClick={handleSave}
+            className="bg-indigo-600 text-white px-4 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-100"
+          >
+            <Check size={14} /> 儲存修改
+          </button>
+        </div>
+      )}
 
       {/* 🌟 擴充結果顯示區 */}
       {extensions.length > 0 && (
@@ -144,6 +194,7 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
       // Merge Segments Data with Previous Data
       const mergedData: AnalysisData = {
           ...currentData, 
+          macroStructure: parsed.macroStructure || currentData.macroStructure || "N1 故事山",
           segments: parsed.segments || [],
           strategies: parsed.strategies || [],
           languageActivities: parsed.languageActivities || currentData.languageActivities || [],
@@ -286,6 +337,42 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
       }
   };
 
+  const handleUpdateLanguageActivity = (idx: number, updated: any) => {
+    if (!data) return;
+    const newActivities = [...(data.languageActivities || [])];
+    newActivities[idx] = updated;
+    setData({ ...data, languageActivities: newActivities });
+  };
+
+  const handleDeleteLanguageActivity = (idx: number) => {
+    if (!data) return;
+    const newActivities = [...(data.languageActivities || [])];
+    newActivities.splice(idx, 1);
+    setData({ ...data, languageActivities: newActivities });
+  };
+
+  const handleAddLanguageActivity = () => {
+    if (!data) return;
+    const newActivities = [...(data.languageActivities || [])];
+    newActivities.push({ title: "新活動", content: "活動內容描述..." });
+    setData({ ...data, languageActivities: newActivities });
+  };
+
+  const handleAddStrategyItem = () => {
+    if (!data) return;
+    const newItem: StrategyItem = {
+        type: "Thinking",
+        title: "新策略",
+        method: "引導提問",
+        teachingPoint: "教學重點描述...",
+        application: "課堂應用步驟..."
+    };
+    const newData = { ...data };
+    newData.strategies.push(newItem);
+    setData(newData);
+    startEdit('strategy', newData.strategies.length - 1, newItem);
+  };
+
   // --- CRUD Operations ---
   const deleteItem = (section: 'segments' | 'strategies', index: number) => {
     if (!data) return;
@@ -310,7 +397,14 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
   const addNewSegmentItem = () => {
     if (!data) return;
     const newItem: SegmentItem = {
-        title: "新段落", summary: "段落大意", keywords: [], difficultWords: [], rhetorics: [], sentencePatterns: [], deepDive: ""
+        title: "新段落", 
+        type: "背景",
+        summary: "段落大意", 
+        keywords: [], 
+        difficultWords: [], 
+        rhetorics: [], 
+        sentencePatterns: [], 
+        deepDive: ""
     };
     const newData = { ...data };
     newData.segments.push(newItem);
@@ -410,6 +504,32 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                 <p className="text-slate-700 text-sm">
                     Step 2.75 階段確認：意義段劃分與教學策略發想。確認無誤後，AI 將進行「形式與風格 (Step 3)」。
                 </p>
+
+                {/* 🌟 宏觀架構選擇器 (Macro Structure) */}
+                <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-indigo-600 text-white p-2 rounded-xl">
+                      <Layers size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-indigo-900 text-sm">全課宏觀架構 (Macro Structure)</h3>
+                      <p className="text-xs text-indigo-600/70 font-bold">決定本課的邏輯骨架與視覺隱喻</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select 
+                      className="bg-white border-2 border-indigo-200 rounded-xl px-4 py-2 text-sm font-black text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
+                      value={data.macroStructure}
+                      onChange={(e) => setData({ ...data, macroStructure: e.target.value })}
+                    >
+                      <option value="N1 故事山">N1 故事山 (起因-經過-結果)</option>
+                      <option value="N2 流程圖">N2 流程圖 (順序步驟)</option>
+                      <option value="N3 SWBST">N3 SWBST (故事摘要)</option>
+                      <option value="N4 階梯圖">N4 階梯圖 (層層遞進)</option>
+                      <option value="N5 循環圖">N5 循環圖 (自然循環)</option>
+                    </select>
+                  </div>
+                </div>
             </div>
 
             {/* 1. Segments Section */}
@@ -428,7 +548,23 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                         <button onClick={cancelEdit} className="text-slate-500 hover:text-slate-700"><X size={16}/></button>
                                     </div>
                                     
-                                    <input className="bg-white border border-slate-300 rounded p-2 text-slate-900 text-sm w-full font-bold focus:ring-2 focus:ring-blue-500 outline-none" value={tempEditValue.title} onChange={(e) => setTempEditValue({...tempEditValue, title: e.target.value})} placeholder="段落標題" />
+                                    <div className="flex gap-2">
+                                      <select 
+                                        className="bg-white border border-slate-300 rounded p-2 text-slate-900 text-sm w-1/3 font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={tempEditValue.type || "背景"}
+                                        onChange={(e) => setTempEditValue({...tempEditValue, type: e.target.value})}
+                                      >
+                                        <option value="背景">背景 (Background)</option>
+                                        <option value="起因">起因 (Beginning)</option>
+                                        <option value="經過">經過 (Middle)</option>
+                                        <option value="衝突">衝突 (Conflict)</option>
+                                        <option value="轉折">轉折 (Climax)</option>
+                                        <option value="解決">解決 (Resolution)</option>
+                                        <option value="結果">結果 (Ending)</option>
+                                        <option value="結論">結論 (Conclusion)</option>
+                                      </select>
+                                      <input className="bg-white border border-slate-300 rounded p-2 text-slate-900 text-sm flex-1 font-bold focus:ring-2 focus:ring-blue-500 outline-none" value={tempEditValue.title} onChange={(e) => setTempEditValue({...tempEditValue, title: e.target.value})} placeholder="段落標題" />
+                                    </div>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                          {/* Keywords Chip Editor */}
@@ -623,7 +759,12 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                              ) : (
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
-                                        <h4 className="text-emerald-700 font-bold text-sm mb-1">{item.title}</h4>
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                            {item.type || "意義段"}
+                                          </span>
+                                          <h4 className="text-emerald-700 font-bold text-sm">{item.title}</h4>
+                                        </div>
                                         
                                         {item.keywords && item.keywords.length > 0 && (
                                             <div className="flex flex-wrap gap-1 items-center mb-2">
@@ -810,9 +951,18 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
             {/* 🌟 新增：語文活動輻射看板 */}
             {activityList.length > 0 && (
               <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                <div className="flex items-center gap-2 text-indigo-600 font-black px-2">
-                  <Sparkles size={20} />
-                  <h3>課本語文活動（延伸技能）</h3>
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-2 text-indigo-600 font-black">
+                    <Sparkles size={20} />
+                    <h3>課本語文活動（延伸技能）</h3>
+                  </div>
+                  <button 
+                    onClick={handleAddLanguageActivity}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+                  >
+                    <Plus size={14} />
+                    手動新增活動
+                  </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {activityList.map((activity: any, idx: number) => (
@@ -822,6 +972,8 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                       idx={idx}
                       onGenerateExtraActivity={onGenerateExtraActivity}
                       grade={data?.grade || currentData?.grade || '小學三年級'}
+                      onUpdate={handleUpdateLanguageActivity}
+                      onDelete={handleDeleteLanguageActivity}
                     />
                   ))}
                 </div>
@@ -835,9 +987,22 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                         <h3 className="font-bold text-slate-800 text-sm">語文百寶箱 (Strategies)</h3>
                         <span className="text-xs text-slate-600">{data.strategies.length} 策略</span>
                     </div>
-                    <button onClick={handleRegenerateStrategiesClick} disabled={isGeneratingAnyStrategy || isEditingAny} className={`text-xs flex items-center gap-1 px-3 py-1.5 rounded-full transition-all border ${isRegeneratingStrategies ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600 border-blue-200'}`}>
-                        <RefreshCw size={12} className={isRegeneratingStrategies ? "animate-spin" : ""} /> 重新發想
-                    </button>
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={handleRegenerateStrategiesClick} 
+                            disabled={isRegeneratingStrategies || isEditingAny} 
+                            className={`text-xs flex items-center gap-1 px-3 py-1.5 rounded-full transition-all border ${isRegeneratingStrategies ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600 border-blue-200'}`}
+                        >
+                            <RefreshCw size={12} className={isRegeneratingStrategies ? "animate-spin" : ""} /> 重新發想
+                        </button>
+                        <button 
+                            onClick={handleAddStrategyItem} 
+                            disabled={isEditingAny}
+                            className="text-xs flex items-center gap-1 px-3 py-1.5 rounded-full transition-all border bg-emerald-50 text-emerald-600 border-emerald-200"
+                        >
+                            <Plus size={12} /> 手動新增
+                        </button>
+                    </div>
                 </div>
                 <div className="divide-y divide-slate-100 grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-100">
                     {data.strategies.map((item, idx) => {

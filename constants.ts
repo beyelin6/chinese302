@@ -233,14 +233,45 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
     1.  意義段分析 (Logical Segments): Break text into 3-5 Logical Segments.
     2.  🧠 語文百寶箱 (Teaching Strategies) 強制生成: 利用「三神器」邏輯腦力激盪出 3 個全新的教學策略。'application' 欄位必須包含：[連結課文] + [操作步驟 1] -> [操作步驟 2]。
 
+### 🧠 教學策略邏輯 (Teaching Strategy Logic)
+請根據文本特性，從以下「宏觀架構 (Macro-Structure)」中選擇最適合的一項作為 macroStructure：
+- **N1 故事山 (Story Mountain)**: 適用於記敘文、小說。包含：起因-經過-衝突-轉折-解決-結果。
+- **N2 流程圖 (Flow Map)**: 適用於說明文、遊記。強調順序與步驟。
+- **N3 SWBST (Somebody-Wanted-But-So-Then)**: 適用於故事摘要與角色動機分析。
+- **N4 階梯圖 (Staircase Map)**: 適用於論說文、層層遞進的抒情文。
+- **N5 循環圖 (Cycle Map)**: 適用於自然現象、生命週期、循環往復的結構。
+
 ### 📥 唯一合法來源
 <SOURCE_TEXT>
 {INPUT_TEXT}
 </SOURCE_TEXT>
 
-請直接輸出 JSON 格式 (包含 segments 與 strategies)：
+請直接輸出 JSON 格式 (包含 macroStructure, segments 與 strategies)：
 {
-  "segments": [ { "segmentIndex": 0, "title": "...", "summary": "段落大意", "evidence_quote": "原文原句", "difficultWords": ["..."], "keywords": ["..."], "rhetorics": [], "dokQuestions": [ { "type": "DOK 3-4", "question": "...", "intent": "..." } ], "sentencePatterns": [], "deepDive": "..." } ],
+  "macroStructure": "N1-N5 (例如: N1 故事山)",
+  "segments": [ 
+    { 
+      "segmentIndex": 0, 
+      "title": "段落標題", 
+      "type": "意義段類型 (例如: 背景、衝突、轉折、解決、結論)",
+      "summary": "段落大意", 
+      "evidence_quote": "原文原句", 
+      "difficultWords": ["..."], 
+      "keywords": ["..."], 
+      "rhetorics": [
+        {
+          "name": "修辭名稱",
+          "example": "原文例句",
+          "analysis": "修辭分析",
+          "pedagogicalPoint": "教學重點 (給老師的建議)",
+          "application": "課堂應用 (給學生的任務)"
+        }
+      ], 
+      "dokQuestions": [ { "type": "DOK 3-4", "question": "...", "intent": "..." } ], 
+      "sentencePatterns": [], 
+      "deepDive": "..." 
+    } 
+  ],
   "strategies": [ { "type": "...", "title": "...", "method": "...", "teachingPoint": "...", "application": "..." } ]
 }
 `;
@@ -248,16 +279,13 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 export const REGENERATE_STRATEGIES_PROMPT = `
 [INSTRUCTION]
 # ROLE: V-MAX 核心教研專家
-使用者剛剛對目前的「語文百寶箱」策略不滿意，要求「全面換新」。
-請根據課文深度分析，利用「三神器」邏輯，腦力激盪出 3 個全新的教學策略。
-
-⚠️ 核心要求：
-1. 創意性：避開老掉牙的教學法，必須具備 V-MAX 科技感或遊戲化元素。
-2. 深度性：策略必須能觸及課文的深層意義或修辭美感。
-3. 結構性：包含策略名稱、核心方法、教學痛點與具體應用步驟。
-
-⚠️ 輸出格式：Valid JSON Array ONLY.
-[ { "type": "Thinking", "title": "...", "method": "...", "teachingPoint": "...", "application": "..." } ]
+# MISSION: 根據本課文本與當前選擇的宏觀架構「{MACRO_STRUCTURE}」，重新生成 3 個「語文百寶箱」教學策略。
+# REQUIREMENTS:
+- 必須包含三種不同類型：[修辭引導]、[思考支架]、[任務挑戰]。
+- 策略必須與「{MACRO_STRUCTURE}」的邏輯骨架緊密結合。
+- 輸出格式：Valid JSON Array ONLY.
+- [ { "type": "...", "title": "...", "method": "...", "teachingPoint": "...", "application": "..." } ]
+- 嚴禁幻覺，100% 遵守格式。
 `;
 
 export const GENERATE_SINGLE_STRATEGY_PROMPT = `
