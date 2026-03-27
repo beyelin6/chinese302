@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   User, Users, Check, AlertCircle, Play, 
   Info, Edit2, X, ArrowLeft, Sparkles, ImagePlus, Loader2,
-  CheckCircle, Wand2, Upload, Image as ImageIcon
+  CheckCircle, Wand2, Upload, Image as ImageIcon, Plus
 } from 'lucide-react';
 import { CastingData, GuideCandidate, MediaData } from '../types';
 import ReactMarkdown from 'react-markdown';
@@ -251,6 +251,7 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
   
   const [selectedGuide, setSelectedGuide] = useState<string | null>(null);
   const [editingCandidate, setEditingCandidate] = useState<GuideCandidate | null>(null);
+  const [isCreatingCustom, setIsCreatingCustom] = useState(false);
   const [customProtagonist, setCustomProtagonist] = useState<string>('');
   
   // 🌟 新增：自訂角色表單的狀態管理 (從零捏臉功能)
@@ -311,16 +312,32 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
     setEditingCandidate({ ...guide });
   };
 
+  const handleCreateCustomClick = () => {
+    setIsCreatingCustom(true);
+  };
+
   const handleSaveGuide = (updatedGuide: any) => {
     if (!data) return;
-    const updatedCandidates = data.candidates.map((c: any) => 
-      c.id === updatedGuide.id ? updatedGuide : c
-    );
     
-    setData({
-      ...data,
-      candidates: updatedCandidates
-    });
+    if (updatedGuide.id === 'NEW_CUSTOM') {
+      // 生成一個隨機 ID
+      const newId = `CUSTOM_${Date.now()}`;
+      const newCandidate = { ...updatedGuide, id: newId };
+      setData({
+        ...data,
+        candidates: [...data.candidates, newCandidate]
+      });
+      setSelectedGuide(newId);
+    } else {
+      const updatedCandidates = data.candidates.map((c: any) => 
+        c.id === updatedGuide.id ? updatedGuide : c
+      );
+      
+      setData({
+        ...data,
+        candidates: updatedCandidates
+      });
+    }
   };
 
   const handleConfirm = () => {
@@ -559,14 +576,31 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
                  </div>
                );
              })}
+
+             {/* 🌟 新增：自訂引導者按鈕 */}
+             <div 
+               onClick={handleCreateCustomClick}
+               className="border-2 border-dashed border-slate-200 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 hover:border-teal-400 hover:bg-teal-50/30 transition-all cursor-pointer group min-h-[200px]"
+             >
+               <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-teal-100 group-hover:text-teal-600 transition-colors">
+                 <Plus size={24} />
+               </div>
+               <div className="text-center">
+                 <div className="font-bold text-slate-600 group-hover:text-teal-700">自訂引導者</div>
+                 <div className="text-[10px] text-slate-400">從零開始捏臉</div>
+               </div>
+             </div>
            </div>
         </div>
       </div>
 
       <GuideEditModal 
-        isOpen={!!editingCandidate}
-        initialData={editingCandidate}
-        onClose={() => setEditingCandidate(null)}
+        isOpen={!!editingCandidate || isCreatingCustom}
+        initialData={editingCandidate || { id: 'NEW_CUSTOM', name: '', description: '', gender: '未指定', age: '30s', persona: '專業溫暖', visualDNA: '' }}
+        onClose={() => {
+          setEditingCandidate(null);
+          setIsCreatingCustom(false);
+        }}
         onSave={handleSaveGuide}
       />
 
