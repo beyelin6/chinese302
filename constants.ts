@@ -148,14 +148,16 @@ Please Execute STEP 2.5: 語文輻射 (Deep Vocabulary Radiation).
 `;
 
 export const STEP_2_DEEP_VOCAB_PROMPT_SUFFIX = `
-[V-MAX DEEP VOCABULARY ENGINE: ANCHOR-LOCK V8.8]
-🚨🚨🚨 【多音字教育部字典鐵律】(CRITICAL)
-所有的多音字讀音 (zhuyin) 與造詞，【必須 100% 遵守】台灣教育部標準字典！嚴禁口語音！
-例如：「結果」是二聲ㄐㄧㄝˊ，「結實(強壯)」才是一聲ㄐㄧㄝ。
+[V-MAX DEEP VOCABULARY ENGINE: TAIWAN MOE ANCHOR]
+
+🚨🚨🚨 【台灣教育部最高防禦鐵律】(CRITICAL)
+1. 語系鎖定：強制切換至「台灣繁體中文 (zh-TW)」與「台灣國小教學慣用語」。
+2. 字典標準：所有的注音 (zhuyin)、字義與造詞，【必須 100% 嚴格遵守】台灣《教育部國語辭典簡編本》與《重編國語辭典修訂本》！
+3. 封殺大陸讀音：【絕對禁止】混入中國大陸普通話的讀音與造詞！(例如：「結果」在台灣絕對是二聲 ㄐㄧㄝˊ，「結實(強壯)」才是一聲 ㄐㄧㄝ)。
 
 🚨🚨🚨 【形近字自動補完協定】(CRITICAL)
 對於 coreVocabulary 中的每一個生字，你【必須】主動找出 1-2 個形近字進行辨析。
-即使原始資料中沒有提供形近字，你也必須根據你的知識庫自動補完！
+即使原始資料中沒有提供形近字，你也必須根據台灣教育部字典的知識庫自動補完！
 
 請只輸出純 JSON，格式如下：
 {
@@ -171,7 +173,6 @@ export const STEP_2_DEEP_VOCAB_PROMPT_SUFFIX = `
   "deepIdiomsDetails": [ { "word": "成語", "definition": "釋義", "example": "例句", "synonyms": ["近義詞"], "antonyms": ["反義詞"], "context": "情境" } ]
 }
 `;
-
 export const DEEP_VOCABULARY_PROMPT = `
 [V-MAX VOCABULARY ENGINE V8.8]
 請針對以下生字進行深度辨析。
@@ -218,8 +219,9 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 
 ### ⛔ 數據忠誠度協定 (DATA_FAITHFULNESS)
 1. 嚴禁任何形式的創作：禁止加入原文不存在的背景故事、人物、物件。
-2. 證據鏈要求：每一個生成的段落大意，都必須伴隨一段至少 15 字的原文原句作為證據。
-3. 語言：100% 繁體中文，禁止夾雜英文或注音。
+2. 🚨【意義段大意：精準尋標與絕對搬運】(CRITICAL)：請直接掃描 <SOURCE_TEXT> 中的 **「【意義段大意】」** 區塊（例如：一、事件一...，二、事件二...）。你必須將這些條列好的大意【100% 一字不漏地逐字照抄】！第一點的大意填入 segmentIndex 0 的 summary，第二點填入 segmentIndex 1，依此類推。【絕對禁止】AI 自己重新讀課文寫摘要！
+3. 證據鏈要求：每一個生成的段落大意，都必須伴隨一段至少 15 字的原文原句作為證據。
+4. 語言：100% 繁體中文，禁止夾雜英文或注音。
 
 🚨🚨🚨 【修辭與句型：絕對物理搬運鐵律】(CRITICAL) 🚨🚨🚨
 1. 只能從原文中「明確標示」為修辭、句型、寫作手法的區塊提取資料！
@@ -230,7 +232,7 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 你必須將大意「拆解」並「精準對應」到正確的 segment 中。每個段落只能有屬於自己的那一小句話，絕對禁止將全文摘要塞進同一個 segment。
 
 * Execution Logic:
-    1.  意義段分析 (Logical Segments): Break text into 3-5 Logical Segments.
+    1.  意義段分析 (Logical Segments): 嚴格跟隨 <SOURCE_TEXT> 裡標示的「【意義段大意】」數量來建立 Segments 陣列；若原文無提供大意，才允許自行切分為 3-5 個邏輯段落。
     2.  🧠 語文百寶箱 (Teaching Strategies) 強制生成: 利用「三神器」邏輯腦力激盪出 3 個全新的教學策略。'application' 欄位必須包含：[連結課文] + [操作步驟 1] -> [操作步驟 2]。
 
 ### 🧠 教學策略邏輯 (Teaching Strategy Logic)
@@ -254,7 +256,7 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
       "segmentIndex": 0, 
       "title": "段落標題", 
       "type": "意義段類型 (例如: 背景、衝突、轉折、解決、結論)",
-      "summary": "段落大意", 
+      "summary": "🚨必須 100% 照抄資料中的【意義段大意】對應項目", 
       "evidence_quote": "原文原句", 
       "difficultWords": ["..."], 
       "keywords": ["..."], 
@@ -352,10 +354,11 @@ export const GENERATE_MNEMONIC_PROMPT = `
 export const GENERATE_POLYPHONIC_PROMPT = `
 [INSTRUCTION]
 List all standard Traditional Chinese pronunciations for the input character.
-🚨 **教育部字典絕對防禦協定**：
-1. 你必須【100% 嚴格遵守】台灣「教育部重編國語辭典修訂本」的標準讀音。
-2. 絕對禁止使用網路口語音或俗讀音（例如：結果必須標註為二聲 ㄐㄧㄝˊ）。
-3. 字義解釋必須精確對齊字典定義。
+🚨 **【台灣教育部絕對防禦協定】(zh-TW Strict)**：
+1. 語系與地區：強制切換為「台灣繁體中文 (zh-TW)」與「台灣慣用語」。
+2. 字典標準：你必須【100% 嚴格遵守】台灣「教育部國語辭典簡編本」的標準讀音。
+3. 封殺大陸讀音：【絕對禁止】混入中國大陸普通話讀音與造詞！(例如：「結果」的「結」在台灣絕對是二聲 ㄐㄧㄝˊ)。
+4. 字義解釋必須精確對齊台灣教育部定義。
 
 ⚠️ Output format: Valid JSON Array ONLY. No Markdown.
 [ { "zhuyin": "Zhuyin (e.g. ㄅㄟ)", "words": "Common Word", "usage": "Brief Usage Context" } ]
