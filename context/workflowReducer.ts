@@ -20,6 +20,7 @@ export const initialState: WorkflowState = {
   outputKb: null,
   outputNotebookLMGuide: null,
   outputGamifiedQuiz: null,
+  outputInteractiveQuiz: null,
   apiKeys: getApiKeys(),
   showApiKeyModal: false,
 };

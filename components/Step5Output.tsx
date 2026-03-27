@@ -2,9 +2,11 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { 
   Layout, FileText, Check, Download, ArrowLeft, Loader2, 
-  Sparkles, BookOpen, Database, Copy, Printer, Wand2, CheckCircle
+  Sparkles, BookOpen, Database, Copy, Printer, Wand2, CheckCircle,
+  Gamepad2, Zap
 } from 'lucide-react';
 import { useWorkflowContext } from '../context/WorkflowContext';
+import InteractiveQuiz from './InteractiveQuiz';
 
 interface Step5OutputProps {
   outputScript: string | null;
@@ -13,6 +15,7 @@ interface Step5OutputProps {
   outputKb: string | null;
   outputNotebookLMGuide: string | null;
   outputGamifiedQuiz: string | null;
+  outputInteractiveQuiz: string | null;
   onScriptPipeline: () => void;
   onManualModule: (key: string) => void;
   onRegenerateSingleSlide?: (slideData: any) => Promise<any>; // 🌟 新增 API 接口
@@ -22,8 +25,8 @@ interface Step5OutputProps {
 
 const Step5Output: React.FC<Step5OutputProps> = ({ 
   outputScript, outputWorksheet, outputAssessment, outputKb, 
-  outputNotebookLMGuide, outputGamifiedQuiz, onScriptPipeline, 
-  onManualModule, onRegenerateSingleSlide, isLoading, onBack 
+  outputNotebookLMGuide, outputGamifiedQuiz, outputInteractiveQuiz,
+  onScriptPipeline, onManualModule, onRegenerateSingleSlide, isLoading, onBack 
 }) => {
   const { state, dispatch } = useWorkflowContext();
   const [activeTab, setActiveTab] = useState('script');
@@ -215,6 +218,8 @@ slides:\n`;
     { id: 'script', title: '教學腳本', icon: Layout, data: outputScript, action: onScriptPipeline },
     { id: 'worksheet', title: '學習單', icon: FileText, data: outputWorksheet, action: () => onManualModule('worksheet') },
     { id: 'assessment', title: '評量卷', icon: CheckCircle, data: outputAssessment, action: () => onManualModule('assessment') },
+    { id: 'interactive', title: '互動測驗', icon: Zap, data: outputInteractiveQuiz, action: () => onManualModule('interactive') },
+    { id: 'gamified', title: '遊戲化題庫', icon: Gamepad2, data: outputGamifiedQuiz, action: () => onManualModule('gamified') },
     { id: 'kb', title: '知識庫', icon: Database, data: outputKb, action: () => onManualModule('kb') },
     { id: 'notebooklm', title: '生成指令', icon: BookOpen, data: outputNotebookLMGuide, action: () => onManualModule('notebooklm') },
   ];
@@ -367,6 +372,17 @@ slides:\n`;
                   <p className="font-bold text-sm tracking-widest uppercase">產出視覺分鏡中...</p>
                 </div>
               )
+            ) : activeTab === 'interactive' ? (
+              <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm min-h-[600px]">
+                {outputInteractiveQuiz ? (
+                  <InteractiveQuiz quizData={outputInteractiveQuiz} />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-slate-400 mt-20">
+                    <Loader2 size={40} className="animate-spin mb-4 text-indigo-500" />
+                    <p className="font-bold tracking-widest uppercase">AI 正在為您生成互動測驗題庫...</p>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="bg-white rounded-2xl p-8 border border-slate-200 prose prose-slate max-w-none shadow-sm min-h-[600px] print:border-none print:shadow-none">
                 {syncRawCode ? (

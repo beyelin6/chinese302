@@ -11,7 +11,8 @@ import {
   PROMPT_GENERATE_WORKSHEET,
   PROMPT_GENERATE_ASSESSMENT,
   PROMPT_GENERATE_KB,
-  PROMPT_GENERATE_GAMIFIED_QUIZ
+  PROMPT_GENERATE_GAMIFIED_QUIZ,
+  PROMPT_GENERATE_INTERACTIVE_QUIZ
 } from '../../constants';
 import { sanitizeAndParseJSON } from '../../utils/jsonParser';
 
@@ -276,7 +277,8 @@ export const useStep5Output = () => {
       worksheet: { prompt: PROMPT_GENERATE_WORKSHEET, status: '正在生成素養學習單...', stateKey: 'outputWorksheet' },
       assessment: { prompt: PROMPT_GENERATE_ASSESSMENT, status: '正在生成複習講義...', stateKey: 'outputAssessment' },
       kb: { prompt: PROMPT_GENERATE_KB, status: '正在生成知識庫資料...', stateKey: 'outputKb' },
-      gamified: { prompt: PROMPT_GENERATE_GAMIFIED_QUIZ, status: '正在生成遊戲化測驗...', stateKey: 'outputGamifiedQuiz' }
+      gamified: { prompt: PROMPT_GENERATE_GAMIFIED_QUIZ, status: '正在生成遊戲化測驗...', stateKey: 'outputGamifiedQuiz' },
+      interactive: { prompt: PROMPT_GENERATE_INTERACTIVE_QUIZ, status: '正在生成互動式測驗...', stateKey: 'outputInteractiveQuiz' }
     };
     
     const config = moduleMap[moduleKey];

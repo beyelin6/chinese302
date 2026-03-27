@@ -212,6 +212,7 @@ export default function StepRouter() {
                 outputKb={state.outputKb}
                 outputNotebookLMGuide={state.outputNotebookLMGuide}
                 outputGamifiedQuiz={state.outputGamifiedQuiz}
+                outputInteractiveQuiz={state.outputInteractiveQuiz}
                 onScriptPipeline={handleScriptPipeline}
                 onManualModule={handleManualModule}
                 isLoading={state.isLoading}

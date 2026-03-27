@@ -243,6 +243,7 @@ export interface WorkflowState {
   outputKb: string | null;
   outputNotebookLMGuide: string | null;
   outputGamifiedQuiz: string | null;
+  outputInteractiveQuiz: string | null;
   apiKeys: string[];
   showApiKeyModal: boolean;
 }

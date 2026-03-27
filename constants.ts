@@ -677,6 +677,43 @@ export const PROMPT_GENERATE_GAMIFIED_QUIZ = `
 題目,選項1,選項2,選項3,選項4,正確答案(填寫數字1-4),時間限制(秒)
 `;
 
+export const PROMPT_GENERATE_INTERACTIVE_QUIZ = `
+[INSTRUCTION]
+# ROLE: V-MAX 互動測驗設計師
+# MISSION: 請根據傳入的全課分析資料，產出一份「JSON 格式」的互動式測驗題庫，包含選擇題與填空題。
+
+### 🎯 題型配置 (共 8 題)：
+1. **選擇題 (Multiple Choice)**：4 題 (涵蓋課文理解、修辭、成語)。
+2. **填空題 (Fill-in-the-blank)**：4 題 (涵蓋形近字辨析、多音字應用、關鍵詞語)。
+
+### 📋 輸出格式 (嚴格遵守 JSON 結構)：
+請直接輸出純 JSON 字串，不要包含任何 Markdown \`\`\`json 標籤。格式如下：
+{
+  "quiz": [
+    {
+      "id": 1,
+      "type": "choice",
+      "question": "題目內容...",
+      "options": ["選項A", "選項B", "選項C", "選項D"],
+      "answer": 0, // 正確選項的索引 (0-3)
+      "explanation": "解析說明..."
+    },
+    {
+      "id": 5,
+      "type": "blank",
+      "question": "題目內容，請用 ___ 代表空格...",
+      "answer": "正確答案",
+      "explanation": "解析說明..."
+    }
+  ]
+}
+
+[VMAX_EXECUTION_PROTOCOL]
+1. 100% 純繁體中文，禁止英文翻譯。
+2. 題目必須具備教學意義，能有效檢驗學生對本課重點的掌握度。
+3. 🚨【純淨輸出鐵律】：請直接輸出完整的 JSON 內容！絕對禁止任何開場白或結尾廢話！
+`;
+
 export const GENERATE_LANGUAGE_ACTIVITY_PROMPT = `
 [V-MAX PEDAGOGY EXTENSION ENGINE]
 請根據提供的【原始語文活動】邏輯，額外產生 5 組適合該年級（{GRADE}）的練習題。
