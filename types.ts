@@ -1,5 +1,7 @@
 // 檔案路徑: src/types.ts
 
+import { StyleOption, VISUAL_STYLES } from './visual-library';
+
 export enum AppStep {
   IDLE = 0,
   STEP_1_INPUT = 1,
@@ -263,24 +265,5 @@ export type WorkflowAction =
   | { type: 'SET_SHOW_API_KEY_MODAL', payload: boolean }
   | { type: 'ADD_LANGUAGE_ACTIVITIES', payload: { title: string, content: string }[] };
 
-export interface StyleOption {
-  code: string;
-  name: string;
-  desc: string;
-}
-
-export const VISUAL_STYLES: StyleOption[] = [
-  { code: 'A', name: '溫暖吉卜力', desc: 'Studio Ghibli style, hand-painted anime art, lush greenery, warm golden lighting, detailed background art, Hayao Miyazaki aesthetic.' },
-  { code: 'B', name: '現代扁平', desc: 'Modern Flat Design, vector art, clean geometric shapes, bold solid colors, minimalist composition, corporate memphis style.' },
-  { code: 'C', name: '清新水彩', desc: 'Soft watercolor painting, wet-on-wet technique, paper texture, pastel colors, dreamy atmosphere, gentle brushstrokes.' },
-  { code: 'D', name: '精緻剪紙', desc: 'Layered paper cut art, depth of field, subtle drop shadows, vibrant colors, craft aesthetic, diorama look.' },
-  { code: 'E', name: '新海誠光影', desc: 'Makoto Shinkai style, hyper-realistic sky, lens flares, high contrast, emotional lighting, cinematic anime background.' },
-  { code: 'F', name: '新國風水墨', desc: 'Traditional Chinese Ink wash, brush strokes, negative space, Zen minimalism, elegant calligraphy vibes, black and white with red accents.' },
-  { code: 'G', name: '3D 軟陶', desc: '3D Claymorphism, rounded edges, soft matte finish, stop-motion look, cute and tactile, plasticine texture.' },
-  { code: 'H', name: '像素積木', desc: 'Voxel art, 3D pixel blocks, isometric view, LEGO-like aesthetic, digital construction, minecraft style.' },
-  { code: 'I', name: '塗鴉手帳', desc: 'Hand-drawn doodle, ballpoint pen lines, grid notebook background, casual and sketchy, bullet journal aesthetic.' },
-  { code: 'J', name: '奇幻繪本', desc: 'Vintage storybook collage, mixed media textures, whimsical fantasy, magical realism, warm saturated colors.' },
-  { code: 'K', name: '療癒色鉛筆', desc: 'Colored pencil, waxy texture, visible hatching, soft warm tones, childlike innocence, rough paper grain.' },
-  { code: 'L', name: '幾何資訊圖', desc: 'Isometric infographic, clean blocks, technical lines, logical structure, data visualization style, blueprint aesthetic.' },
-  { code: 'M', name: '復古浮世繪', desc: 'Ukiyo-e woodblock print, mineral pigments, bold outlines, decorative waves, traditional Japanese art, flat perspective.' },
-];
+export type { StyleOption };
+export { VISUAL_STYLES };

@@ -1,6 +1,7 @@
 // 檔案路徑: src/constants.ts
 
 import { AppStep } from './types';
+import { getVisualLibraryPrompt } from './visual-library';
 
 export enum AppStepEnum {
   IDLE = 0,
@@ -468,53 +469,7 @@ export const STEP_3_VISUAL_GENERIC_PROMPT = `
 # ROLE: V-MAX 視覺策略師 (Visual Strategist)
 # MISSION: 為本課推薦 6 種「視覺隱喻 (Metaphor)」與「視覺風格 (Style)」組合。
 
-### 🎨 1️⃣ Style SSOT (視覺風格 A-Y)
-⚠️ 你必須從以下清單中挑選風格，並在 reason 中說明為何適合：
-A. 溫暖吉卜力: "Studio Ghibli style, hand-painted anime art, lush greenery, warm golden lighting, detailed background art, Hayao Miyazaki aesthetic."
-B. 現代扁平: "Modern Flat Design, vector art, clean geometric shapes, bold solid colors, minimalist composition, corporate memphis style."
-C. 清新水彩: "Soft watercolor painting, wet-on-wet technique, paper texture, pastel colors, dreamy atmosphere, gentle brushstrokes."
-D. 精緻剪紙: "Layered paper cut art, depth of field, subtle drop shadows, vibrant colors, craft aesthetic, diorama look."
-E. 新海誠光影: "Makoto Shinkai style, hyper-realistic sky, lens flares, high contrast, emotional lighting, cinematic anime background."
-F. 新國風水墨: "Traditional Chinese Ink wash, brush strokes, negative space, Zen minimalism, elegant calligraphy vibes, black and white with red accents."
-G. 3D 軟陶: "3D Claymorphism, rounded edges, soft matte finish, stop-motion look, cute and tactile, plasticine texture."
-H. 像素積木: "Voxel art, 3D pixel blocks, isometric view, LEGO-like aesthetic, digital construction, minecraft style."
-I. 塗鴉手帳: "Hand-drawn doodle, ballpoint pen lines, grid notebook background, casual and sketchy, bullet journal aesthetic."
-J. 奇幻繪本: "Vintage storybook collage, mixed media textures, whimsical fantasy, magical realism, warm saturated colors."
-K. 療癒色鉛筆: "Colored pencil, waxy texture, visible hatching, soft warm tones, childlike innocence, rough paper grain."
-L. 幾何資訊圖: "Isometric infographic, clean blocks, technical lines, logical structure, data visualization style, blueprint aesthetic."
-M. 復古浮世繪: "Ukiyo-e woodblock print, mineral pigments, bold outlines, decorative waves, traditional Japanese art, flat perspective."
-N. 熱血少年戰鬥: "Shonen manga style, dynamic fish-eye lens, speed lines, impact sparks, red/black high contrast."
-O. Vtuber 學院: "Vtuber stream overlay design, anime academy theme, chat box UI, digital vibrant colors."
-P. 賽博龐克: "Cyberpunk aesthetic, neon lights, rainy night city, high-tech low-life, purple and teal palette."
-Q. 極簡包浩斯: "Bauhaus style, primary colors (red/blue/yellow), geometric abstraction, functionalist design."
-R. 蒸氣龐克: "Steampunk, Victorian industrial, brass gears, clockwork, sepia tones, intricate machinery."
-S. 黑白漫畫: "Classic B&W Manga, screentones, dramatic ink hatching, high contrast storytelling."
-T. 波普藝術: "Pop Art, Andy Warhol style, Ben-Day dots, vibrant repetitive patterns, comic book aesthetic."
-U. 可愛像素: "Kawaii Pixel Art, 8-bit/16-bit retro game style, pastel colors, simple and charming."
-V. 超現實主義: "Surrealism, Salvador Dali vibes, melting objects, dream-like logic, unexpected juxtapositions."
-W. 暗黑哥德: "Dark Gothic, Victorian mystery, ornate lace, candle lighting, moody atmosphere."
-X. 科幻藍圖: "Sci-fi blueprint, holographic lines, technical schematics, glowing blue UI elements."
-Y. 低多邊形: "Low Poly art, faceted surfaces, sharp edges, stylized 3D look, vibrant lighting."
-
-### 🗺️ 2️⃣ Visual Metaphor Mapping (視覺隱喻庫)
-⚠️ 邏輯：根據文體與內容選擇最契合的隱喻。
-Type A: 探索與順序 (適用：說明文/遊記/發展史)
-- [M1] 冒險地圖 (Adventure Map): 羊皮紙、虛線、羅盤。
-- [M2] 生態解構圖 (Anatomy/Ecosystem): 放大鏡、標籤、中心放射。
-- [M7] 漫步小徑 (Winding Path Timeline): 🌟 蜿蜒的小路、時間軸、沿途散布著代表故事發展的小場景節點。
-Type B: 情感與流動 (適用：記敘文/抒情文)
-- [M3] 故事絲帶 (Story Ribbon): 緞帶、節點、柔和路徑。
-- [M4] 情緒溫度計 (Emotion Thermometer): 刻度、天氣圖示、起伏。
-Type C: 對照與觀點 (適用：議論文/古文)
-- [M5] 雙軌對照圖 (Double-Track Split): 分割畫面、左右對比。
-- [M6] 運鏡膠捲 (Cinematic Lens): 膠捲、分鏡、視角切換。
-Special Structures (特殊文體)
-- [S1] 五感雷達圖: 雷達圖、感官標籤。
-- [S2] 想像力氣球: 氣球、漂浮、連結。
-- [S3] 時光列車: 車廂、橫向連結。
-- [S4] 觀點天平: 天平、平衡、對比。
-- [S5] 奧利奧圖: 夾心餅乾、層次。
-- [S6] 漢堡圖: 漢堡、層次。
+${getVisualLibraryPrompt()}
 
 ### 📤 輸出規範 (Strict JSON)
 {
@@ -791,7 +746,7 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
 ### 📜 模組四：版型內容填充指南
 - 🚨【字數防爆破鐵律】：為了確保簡報視覺舒適，所有投影片的 \`displayText\` 總字數【絕對禁止】超過 130 字！請善用精簡的敘述或條列式重點！
 - 🚨【段落導航小標題】：對於 [ContentFocus]、[DeepDive]、[QuizCard] 這三種類型的投影片，你【必須】在 \`displayText\` 的最上方第一行，用粗體印出目前的段落進度與標題（例如：**【段落一：發現問題】**），讓學生一眼看出目前在哪個段落！
-- **[FusionMap]**: 🌟這是全課結構視圖！請強制使用「蜿蜒路徑故事地圖 (Winding path journey map)」的概念，在 visual_prompt 中明確要求繪製出「一條蜿蜒的小徑，沿途散布著幾個代表故事發展的小場景節點 (A winding path timeline connecting small distinct scenes along the way)」，展現全課的宏觀時間軸與結構！
+- **[FusionMap]**: 🌟這是全課結構視圖！在 visual_prompt 中請強制要求繪製出「一條蜿蜒的小徑與代表故事發展的小場景節點 (A winding path timeline connecting small scenes)」。🚨【結構文字鐵律】：displayText 【絕對禁止】只寫幾句空泛的摘要！你【必須】從傳入的資料中提取完整的「全課結構邏輯（例如：起因➔經過➔結果，或是 總➔分➔總）」，並精煉出各個「意義段/結構分枝」的核心關鍵字，以層次分明的「條列式邏輯骨架」排版在畫面上。必須讓學生一眼看穿作者是怎麼把這篇文章組裝起來的！
 - **[ContentFocus]**: 根據段落大意繪製場景。🚨【動態生圖鐵律】：插圖必須「嚴格擷取該段落的具體人、事、物」來繪製！你必須將傳入的【段落大意】直接轉化為具體的視覺畫面，【絕對禁止】無腦套用全域主題的空泛背景。displayText 必須包含【段落導航小標題】、【段落大意】與【難詞顯影】。🚨【難詞顯影格式鐵律】：絕對禁止只列出單字！你必須強制為每一個難詞附上簡短解釋。
 - **[DeepDive]**: 視覺對焦該段落的具體教學情境，生圖同樣必須【嚴格貼合本段落的具體事物】。displayText 必須包含【段落導航小標題】。若內容包含難詞探究，同樣必須遵守上述【難詞顯影格式鐵律】。
 - **[QuizCard]**: 提問表情特寫。displayText 必須包含【段落導航小標題】，並分列【提取】與【推論】。
