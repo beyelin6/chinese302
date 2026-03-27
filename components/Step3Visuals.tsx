@@ -8,35 +8,10 @@ import {
 } from 'lucide-react';
 import { VisualData, RecStyleItem, RecMetaphorItem } from '../types';
 import { sanitizeAndParseJSON } from '../utils/jsonParser';
+import { ALL_STYLE_OPTIONS } from '../visual-library';
 
-// 🌟 [SSOT 對齊] 載入 A-Y 全量風格庫
-const ALL_STYLE_OPTIONS: RecStyleItem[] = [
-  { code: 'A', name: '溫暖吉卜力', reason: 'Studio Ghibli style, hand-painted anime art, lush greenery, warm golden lighting.' },
-  { code: 'B', name: '現代扁平', reason: 'Modern Flat Design, vector art, clean geometric shapes, bold solid colors.' },
-  { code: 'C', name: '清新水彩', reason: 'Soft watercolor painting, paper texture, dreamy atmosphere.' },
-  { code: 'D', name: '精緻剪紙', reason: 'Layered paper cut art, depth of field, subtle drop shadows.' },
-  { code: 'E', name: '新海誠光影', reason: 'Makoto Shinkai style, hyper-realistic sky, cinematic anime.' },
-  { code: 'F', name: '新國風水墨', reason: 'Traditional Chinese Ink wash, Zen minimalism, elegant calligraphy.' },
-  { code: 'G', name: '3D 軟陶', reason: '3D Claymorphism, rounded edges, soft matte finish.' },
-  { code: 'H', name: '像素積木', reason: 'Voxel art, 3D pixel blocks, LEGO-like aesthetic.' },
-  { code: 'I', name: '塗鴉手帳', reason: 'Hand-drawn doodle, ballpoint pen lines, bullet journal aesthetic.' },
-  { code: 'J', name: '奇幻繪本', reason: 'Vintage storybook collage, whimsical fantasy, saturated colors.' },
-  { code: 'K', name: '療癒色鉛筆', reason: 'Colored pencil, waxy texture, soft warm tones.' },
-  { code: 'L', name: '幾何資訊圖', reason: 'Isometric infographic, clean blocks, technical lines.' },
-  { code: 'M', name: '復古浮世繪', reason: 'Ukiyo-e woodblock print, bold outlines, traditional Japanese art.' },
-  { code: 'N', name: '熱血少年戰鬥', reason: 'Shonen manga style, speed lines, impact sparks, high contrast.' },
-  { code: 'O', name: 'Vtuber 學院', reason: 'Vtuber stream overlay, anime theme, chat box UI, vibrant.' },
-  { code: 'P', name: '黏土擬真世界', reason: '3D Claymorphism, macaron colors, rounded shapes.' },
-  { code: 'Q', name: '學習漫畫風', reason: 'Educational manga paneling, black and white ink, screentones.' },
-  { code: 'R', name: '虛擬立體書', reason: '3D Pop-up book paper engineering, realistic shadows.' },
-  { code: 'S', name: '工程藍圖風', reason: 'Technical blueprint, cyanotype, white lines on blue grid.' },
-  { code: 'T', name: '等距微縮世界', reason: 'Isometric diorama, voxel art style, tilt-shift effect.' },
-  { code: 'U', name: '即時通訊介面', reason: 'Mobile chat interface, text bubbles, pastel gradient.' },
-  { code: 'V', name: '拼貼誌手作感', reason: 'Mixed media zine collage, ripped paper, washi tape.' },
-  { code: 'W', name: '暗黑學院風', reason: 'Dark academia, vintage library, parchment texture.' },
-  { code: 'X', name: '吉卜力探索日誌', reason: 'Ghibli exploration journal, oil painting, botanical sketches.' },
-  { code: 'Y', name: '卡哇伊貼紙美學', reason: 'Kawaii sticker bomb, white die-cut borders, grid paper.' }
-];
+// 🌟 [SSOT 對齊] 載入 A-Z 全量風格庫
+// ALL_STYLE_OPTIONS is now imported from visual-library.ts
 
 interface Step3VisualsProps {
   visualResult: string | null;
@@ -151,35 +126,40 @@ const Step3Visuals: React.FC<Step3VisualsProps> = ({ visualResult, onConfirmVisu
 
           <div className="space-y-4">
             {/* 🌟 風格網格選擇區 */}
-            <div className="bg-slate-50 border border-slate-200 rounded-[2rem] p-4 max-h-[300px] overflow-y-auto custom-scrollbar shadow-inner">
-               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                 {ALL_STYLE_OPTIONS.map(style => {
-                   const isSelected = selectedStyles.some(s => s.code === style.code);
-                   return (
-                     <button
-                       key={style.code}
-                       onClick={() => handleToggleStyle(style)}
-                       className={`p-3 rounded-xl border-2 text-left transition-all relative overflow-hidden flex flex-col ${
-                         isSelected 
-                           ? 'bg-indigo-50 border-indigo-500 shadow-md' 
-                           : 'bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-100/50'
-                       }`}
-                     >
-                       <span className={`text-[10px] font-black mb-1 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`}>
-                         [{style.code}]
-                       </span>
-                       <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-indigo-900' : 'text-slate-600'}`}>
-                         {style.name}
-                       </span>
-                       {isSelected && (
-                         <div className="absolute top-2 right-2 text-indigo-500">
-                           <Check size={14} strokeWidth={4} />
-                         </div>
-                       )}
-                     </button>
-                   );
-                 })}
-               </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-[2rem] p-6 max-h-[400px] overflow-y-auto custom-scrollbar shadow-inner space-y-8">
+              {[...new Set(ALL_STYLE_OPTIONS.map(s => s.category))].map(cat => (
+                <div key={cat} className="space-y-3">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">{cat}</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {ALL_STYLE_OPTIONS.filter(s => s.category === cat).map(style => {
+                      const isSelected = selectedStyles.some(s => s.code === style.code);
+                      return (
+                        <button
+                          key={style.code}
+                          onClick={() => handleToggleStyle(style)}
+                          className={`p-3 rounded-xl border-2 text-left transition-all relative overflow-hidden flex flex-col ${
+                            isSelected 
+                              ? 'bg-indigo-50 border-indigo-500 shadow-md' 
+                              : 'bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-100/50'
+                          }`}
+                        >
+                          <span className={`text-[10px] font-black mb-1 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`}>
+                            [{style.code}]
+                          </span>
+                          <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-indigo-900' : 'text-slate-600'}`}>
+                            {style.name}
+                          </span>
+                          {isSelected && (
+                            <div className="absolute top-2 right-2 text-indigo-500">
+                              <Check size={14} strokeWidth={4} />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* 🌟 編輯區域 */}

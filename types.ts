@@ -167,6 +167,7 @@ export interface RecStyleItem {
   code: string;
   name: string;
   reason: string;
+  category?: string;
 }
 
 export interface RecMetaphorItem {
