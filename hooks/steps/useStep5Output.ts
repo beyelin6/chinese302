@@ -12,7 +12,11 @@ import {
   PROMPT_GENERATE_ASSESSMENT,
   PROMPT_GENERATE_KB,
   PROMPT_GENERATE_GAMIFIED_QUIZ,
-  PROMPT_GENERATE_INTERACTIVE_QUIZ
+  PROMPT_GENERATE_INTERACTIVE_QUIZ,
+  // 🌟 新增：匯入 DNA 鎖定的變數與模板
+  CHARACTER_VISUAL_REF_PLACEHOLDER,
+  CHARACTER_ORIGINAL_PROMPT_TEMPLATE,
+  CHARACTER_EXTERNAL_ANCHOR_PROMPT_TEMPLATE
 } from '../../constants';
 import { sanitizeAndParseJSON } from '../../utils/jsonParser';
 
@@ -26,6 +30,35 @@ export const useStep5Output = () => {
   };
 
   /**
+   * 🌟 [核心新增] 智能切換引擎：動態組裝最終的 System Prompt
+   * 根據使用者是否開啟「外部圖片模式」來決定要注入哪一種 DNA 鎖定指令
+   */
+  const getCompiledSystemPrompt = (castingData: any, visualData: any) => {
+    const useRefMode = castingData?.useRefMode === true;
+    const refUrl = castingData?.characterRefUrl || '';
+    const guideName = castingData?.guide?.name || 'V-MAX 導師';
+    const guidePersona = castingData?.guide?.persona || '專業、溫暖、具啟發性';
+    const stylePrompt = visualData?.style?.description || visualData?.style?.prompt || 'Clean, high-quality educational vector art.';
+
+    let finalCharacterRefPrompt = '';
+
+    if (useRefMode && refUrl) {
+      // 模式 B：寫入外部圖片鎖定指令，叫 NotebookLM 去看圖
+      finalCharacterRefPrompt = CHARACTER_EXTERNAL_ANCHOR_PROMPT_TEMPLATE
+        .replace(/{GUIDE_NAME}/g, guideName);
+    } else {
+      // 模式 A：使用文字詳細描述
+      finalCharacterRefPrompt = CHARACTER_ORIGINAL_PROMPT_TEMPLATE
+        .replace(/{PERSONA_DESC}/g, guidePersona)
+        .replace(/{GUIDE_NAME}/g, guideName)
+        .replace(/{STYLE_PROMPT}/g, stylePrompt);
+    }
+
+    // 將組裝好的 DNA 指令替換進萬用通則中
+    return FINAL_ATOMIC_SCRIPT_PROMPT.replace(CHARACTER_VISUAL_REF_PLACEHOLDER, finalCharacterRefPrompt);
+  };
+
+  /**
    * 🌟 [終極武裝版] 一體化 JSON 標頭 (供 UI 層轉為 YAML)
    */
   const wrapScriptWithYAML = (slides: any[], data: any) => {
@@ -35,11 +68,15 @@ export const useStep5Output = () => {
     const styleCode = visualDNA?.style?.code || "F";
     const styleDesc = visualDNA?.style?.description || visualDNA?.style?.prompt || "Clean, high-quality educational vector art.";
 
-    // 2. 深度萃取角色 DNA
+    // 2. 深度萃取角色 DNA (判斷是否開啟外部模式)
     const protagDNA = casting?.protagonist || "符合課文情境的核心人物";
     const guideName = casting?.guide?.name || "V-MAX 導師";
     const guidePersona = casting?.guide?.persona || "專業、溫暖、具啟發性";
+    
     let guideDNA = casting?.guide?.visualDNA || "身穿俐落的現代教學套裝，帶著親切且自信的微笑。";
+    if (casting?.useRefMode && casting?.characterRefUrl) {
+       guideDNA = `[EXTERNAL_IMAGE_MODE] 🚨 絕對視覺鎖定：請強制讀取隨附的外部圖片檔案作為此角色的唯一長相標準。`;
+    }
 
     // 3. 絕對頁碼注入器
     const numberedSlides = slides.map((slide, index) => {
@@ -66,8 +103,7 @@ export const useStep5Output = () => {
         scaffolding_logic: {
           macro_structure: analysisData?.visualStructureRecommendation || "鷹架導航結構",
           micro_thinking: "C1 氣泡圖 (分析) / T1 對比圖 (辨析)",
-          // 🛡️ 防禦：嚴禁在普通場景中畫出隱喻絲帶
-          visual_description: "請專注於畫面主體與場景，嚴禁在背景隨意加上不相關的隱喻裝飾物（如絲帶等）。"
+          visual_description: "請專注於畫面主體與場景，嚴禁在背景隨意加上不相關的隱喻裝飾物。"
         },
         visual_dna_anchor: {
           protagonist_dna: protagDNA,
@@ -92,6 +128,9 @@ export const useStep5Output = () => {
       const visualData = getSafeData(state.visualResult);
       const castingData = getSafeData(state.castingResult);
 
+      // 🌟 獲取注入好 DNA 的最終 System Prompt
+      const compiledSystemPrompt = getCompiledSystemPrompt(castingData, visualData);
+
       const segments = segmentsData?.segments || [];
       const vocabulary = vocabData?.vocabulary || [];
       const idioms = vocabData?.deepIdiomsDetails || [];
@@ -105,12 +144,10 @@ export const useStep5Output = () => {
         { 
           part: 'PART A', type: 'FusionMap', title: '結構視圖',
           quickGrasp: segments.map((s: any, idx: number) => ({ label: `段落 ${idx + 1}`, keywords: s.keywords?.slice(0, 4).join('、') })),
-          // 🛡️ 只有這張圖可以收到絲帶的隱喻！
           visualMetaphor: visualData?.metaphor?.label
         },
         
         ...segments.flatMap((s: any, idx: number) => {
-          // 🚀 優化 1：Token 瘦身大作戰！只給大意跟關鍵字，丟掉冗長原文
           const slimSegment = { summary: s.summary, keywords: s.keywords };
           const chunk: any[] = [{ part: 'PART B', type: 'ContentFocus', title: `段落 ${idx+1}: 內容對焦`, segment: slimSegment }];
           
@@ -149,7 +186,7 @@ export const useStep5Output = () => {
 
         const prompt = `
           ${SYSTEM_PROMPT}
-          ${FINAL_ATOMIC_SCRIPT_PROMPT}
+          ${compiledSystemPrompt}
           # ⚙️ NOTEBOOKLM DRIVER
           - 視覺 DNA：${castingData?.protagonist}
           - 語氣校準：導師為 ${castingData?.guide?.name}，展現「${castingData?.guide?.persona}」特質。
@@ -190,10 +227,12 @@ export const useStep5Output = () => {
    */
   const handleRegenerateSingleSlide = async (slideData: any): Promise<any> => {
     const castingData = getSafeData(state.castingResult);
+    const visualData = getSafeData(state.visualResult);
+    const compiledSystemPrompt = getCompiledSystemPrompt(castingData, visualData);
     
     const prompt = `
       ${SYSTEM_PROMPT}
-      ${FINAL_ATOMIC_SCRIPT_PROMPT}
+      ${compiledSystemPrompt}
       
       # 任務：【單頁重繪】
       請幫我重新改寫以下這張投影片的內容（displayText 與 guideTalk），讓教學引導更生動、更有啟發性。
@@ -239,15 +278,20 @@ export const useStep5Output = () => {
       });
     }
 
+    // 🌟 在指南中明確註明外部圖片的需求
+    const guideDnaInstruction = castingData?.useRefMode
+      ? `[最高優先級] 請務必讀取左側上傳的外部圖片檔案，以該圖片的長相作為導師生成的唯一標準！`
+      : guide.visualDNA || "預設";
+
     return PROMPT_GENERATE_NOTEBOOKLM_GUIDE
-      .replace(/{KERNEL_VERSION}/g, "v60.5-DNA-Purity")
+      .replace(/{KERNEL_VERSION}/g, "v60.8-DNA-Purity")
       .replace(/{GRADE}/g, grade)
       .replace(/{UNIT_NAME}/g, unitName)
       .replace(/{GUIDE_NAME}/g, guide.name || '導師')
       .replace(/{GUIDE_PERSONA}/g, guide.persona || '專業')
       .replace(/{VISUAL_STYLE}/g, visualData?.style?.name || '預設')
       .replace(/{DATE}/g, today)
-      .replace(/{GUIDE_DNA}/g, guide.visualDNA || "")
+      .replace(/{GUIDE_DNA}/g, guideDnaInstruction)
       .replace(/{AUDIO_FOCUS}/g, audioFocus)
       .replace(/{BATCHING_DIRECTORY}/g, batchingDirectory);
   };
