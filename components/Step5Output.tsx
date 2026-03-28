@@ -1,3 +1,5 @@
+// 檔案路徑: src/components/Step5Output.tsx
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { 
@@ -18,7 +20,7 @@ interface Step5OutputProps {
   outputInteractiveQuiz: string | null;
   onScriptPipeline: () => void;
   onManualModule: (key: string) => void;
-  onRegenerateSingleSlide?: (slideData: any) => Promise<any>; // 🌟 新增 API 接口
+  onRegenerateSingleSlide?: (slideData: any) => Promise<any>;
   isLoading: boolean;
   onBack: () => void;
 }
@@ -35,7 +37,6 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   const prevSlidesLength = useRef(0);
   const [viewMode, setViewMode] = useState<'json' | 'human'>('human'); 
   
-  // 🌟 單頁重繪的 Loading 狀態
   const [regeneratingIdx, setRegeneratingIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -62,7 +63,6 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     }
   }, [outputScript]);
 
-  // 🌟 單頁重寫執行函數
   const handleRegenerateClick = async (idx: number, slide: any) => {
     if (!onRegenerateSingleSlide) return;
     setRegeneratingIdx(idx);
@@ -73,7 +73,6 @@ const Step5Output: React.FC<Step5OutputProps> = ({
         newSlides[idx] = { ...newSlides[idx], ...newSlideData, page_number: slide.page_number };
         setEditableSlides(newSlides);
         
-        // 將更新後的 slides 重新封裝寫回 Context 儲存
         const currentPayload = JSON.parse(outputScript || '{}');
         const newPayload = { ...currentPayload, slides: newSlides };
         dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: JSON.stringify(newPayload, null, 2) } });
@@ -108,10 +107,18 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     const analysis = state.analysisData;
     const lessonTitle = analysis?.basicInfo?.unitName || analysis?.title || analysis?.subject || '未命名課文';
 
+    // 🌟 解析主角與導師的 DNA，並處理雙軌模式 (useRefMode)
+    const protagDNA = casting?.protagonist?.visualDNA || casting?.protagonist?.description || '無特殊主角設定';
+    const guideDNA = casting?.guide?.visualDNA || '標準人設';
+    const isImageAnchorMode = !!casting?.guide?.useRefMode;
+    const finalGuideInstruction = isImageAnchorMode 
+      ? `[IMAGE_ANCHOR_MODE] 🚨 絕對鎖定！請完全以「上傳之基準圖」作為唯一長相標準。參考輔助特徵：${guideDNA}`
+      : `[TEXT_DNA_MODE] 請嚴格依照以下文字設定繪製：${guideDNA}`;
+
     if (viewMode === 'human') {
       let humanReadableText = `# 📚 視覺化教學腳本：${lessonTitle}\n\n`;
       humanReadableText += `> 🎨 **視覺風格**：${visual?.style?.description || '保持一致'}\n`;
-      humanReadableText += `> 👤 **導師設定**：${casting?.guide?.name || '標準導師'}\n\n---\n\n`;
+      humanReadableText += `> 👤 **導師設定**：${casting?.guide?.name || '標準導師'} ${isImageAnchorMode ? '(🔗 已啟用基準圖鎖定)' : ''}\n\n---\n\n`;
 
       editableSlides.forEach((slide, idx) => {
         humanReadableText += `## 🎬 投影片 P${slide.page_number || (idx + 1)}：${slide.title || '未命名場景'}\n`;
@@ -150,8 +157,8 @@ const Step5Output: React.FC<Step5OutputProps> = ({
   artistic_consistency: "${visual?.style?.code || "A"}"
   style_prompt: "${visual?.style?.description || "Maintain stylistic consistency."}"
   dna_traits:
-    protagonist: "${(casting?.protagonist || "主角視覺特徵").replace(/"/g, '\\"')}"
-    guide: "${(casting?.guide?.name || '導師')} | ${(casting?.guide?.visualDNA || '標準人設').replace(/"/g, '\\"')}"
+    protagonist: "${protagDNA.replace(/"/g, '\\"')}"
+    guide: "${(casting?.guide?.name || '導師')} | ${finalGuideInstruction.replace(/"/g, '\\"')}"
 VMAX_STRUCTURE_YAML:
   global_visual_protocol:
     artistic_consistency: "${visual?.style?.code || "A"}"
@@ -160,10 +167,10 @@ VMAX_STRUCTURE_YAML:
   scaffolding_logic:
     macro_structure: "${analysis?.visualStructureRecommendation || "N1 故事山"}"
     micro_thinking: "C1 氣泡圖 / T1 對比圖"
-    visual_description: "請專注於畫面主體與場景，嚴禁在背景隨意加上不相關的隱喻裝飾物（如絲帶等）。"
+    visual_description: "請專注於畫面主體與場景，嚴禁在背景隨意加上不相關的隱喻裝飾物。"
   visual_dna_anchor:
-    protagonist_dna: "${(casting?.protagonist || "主角視覺 DNA").replace(/"/g, '\\"')}"
-    guide_dna: "${(casting?.guide?.visualDNA || "導師視覺 DNA").replace(/"/g, '\\"')}"
+    protagonist_dna: "${protagDNA.replace(/"/g, '\\"')}"
+    guide_dna: "${finalGuideInstruction.replace(/"/g, '\\"')}"
 slides:\n`;
 
     editableSlides.forEach((slide) => {
@@ -187,7 +194,6 @@ slides:\n`;
     newSlides[index] = { ...newSlides[index], [field]: value };
     setEditableSlides(newSlides);
     
-    // 即時寫回 Context 進行儲存
     const currentPayload = JSON.parse(outputScript || '{}');
     const newPayload = { ...currentPayload, slides: newSlides };
     dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: JSON.stringify(newPayload, null, 2) } });
