@@ -45,15 +45,16 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     }
   }, [outputScript, isLoading, onScriptPipeline]);
 
-  useEffect(() => {
+useEffect(() => {
     if (outputScript) {
       try {
-        const parsed = typeof outputScript === 'string' && outputScript.includes('notebooklm_driver') 
-          ? JSON.parse(outputScript) 
-          : JSON.parse(outputScript);
+        // 安全解析字串
+        const parsed = typeof outputScript === 'string' ? JSON.parse(outputScript) : outputScript;
         
-        const incomingSlides = parsed.slides || (Array.isArray(parsed) ? parsed : []);
+        // 🌟 強化容錯：支援各種資料結構 (陣列、包含 slides 的物件、包含 presentation_data 的物件)
+        const incomingSlides = parsed?.presentation_data?.slides || parsed?.slides || (Array.isArray(parsed) ? parsed : []);
         
+        // 只要一拿到任何新頁面，就立刻渲染到畫面上 (這就是分段顯示的關鍵！)
         if (incomingSlides.length > 0) {
           setEditableSlides(incomingSlides);
         }
@@ -62,7 +63,6 @@ const Step5Output: React.FC<Step5OutputProps> = ({
       }
     }
   }, [outputScript]);
-
   const handleRegenerateClick = async (idx: number, slide: any) => {
     if (!onRegenerateSingleSlide) return;
     setRegeneratingIdx(idx);
