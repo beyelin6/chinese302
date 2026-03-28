@@ -79,11 +79,13 @@ const GuideEditModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: bool
         - 年齡：${formData.age}
         - 個性/語氣：${formData.persona}
         
-        ⚠️ 嚴格規範：
+        ⚠️ 終極生圖規範 (為了方便後續去背應用)：
         1. 必須以英文輸出，特徵之間用 Pipe (|) 分隔。
-        2. 開頭【必須】是明確的年齡與性別鎖定 (例如: Age: ${formData.age}, ${formData.gender === '男' ? 'Male' : formData.gender === '女' ? 'Female' : 'Person'})。
-        3. 包含髮型、眼神、代表性服裝或配件。
-        絕對不要輸出 markdown 外框或任何解釋廢話。
+        2. 開頭必須鎖定：Age: ${formData.age}, ${formData.gender === '男' ? 'Male' : formData.gender === '女' ? 'Female' : 'Person'}。
+        3. 必須包含：[Full-body shot] (全身像)、[Standing position] (站姿)、[Frontal view] (正面)。
+        4. 🚨 背景指令 (核心)：必須加上 "isolated on a pure white background" (在純白背景中孤立) 與 "clean edges" (邊緣整潔)。
+        5. 畫風指令：watercolor style illustration (水彩風格) 但嚴禁任何背景渲染或陰影。
+        6. 包含髮型、服裝配件，但絕對不要輸出 markdown 外框或解釋。
       `;
       const result = await sendMessageToGemini(prompt, [], 0.7);
       setFormData(prev => ({ ...prev, visualDNA: result.replace(/```yaml|```|`/g, '').trim() }));

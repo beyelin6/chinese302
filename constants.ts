@@ -48,7 +48,10 @@ export const PROMPT_GENERATE_CHARACTER_DNA_FOR_EXTERNAL = `
 # MISSION: 根據本課視覺風格「{STYLE}」與導師人設「{PERSONA}」，產出一組專門給 NANOBANANA (DALL-E 3) 使用的「基準人設提示詞 (Master DNA Prompt)」。
 # REQUIREMENTS:
 - Subject: Must be a single, full-body character (Named: {GUIDE_NAME}).
-- Format: Friendly, three-quarter view, standing on a neutral background.
+- Format: Full-body shot, standing, frontal view.
+- 🚨 Background: MUST be isolated on a PURE WHITE BACKGROUND for easy background removal (cutout style).
+- Style: {STYLE}
+- 🚨 NO SHADOWS: Ensure no ground shadows or environmental occlusion.
 - Details: Describe materials, lighting, and exact color palette based on the persona.
 - 🚨 NO TEXT: Absolutely no letters, words, or labels in the image.
 - Language: Prompt must be in ENGLISH for maximum AI accuracy.
