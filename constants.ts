@@ -25,23 +25,24 @@ export const GEMINI_MODEL = "gemini-3-flash-preview";
 
 export const CHARACTER_VISUAL_REF_PLACEHOLDER = "{CHARACTER_VISUAL_REF}"; 
 
-// 模式 A：內建文字描述模式 (原本設定)
+// 🛤️ 模式 A：內建文字描述模式 (純文字 DNA 鎖定，原本設定)
 export const CHARACTER_ORIGINAL_PROMPT_TEMPLATE = `
-[CHARACTER_DNA_INTERNAL]
-- Subject Identity: {PERSONA_DESC} (Character Name: {GUIDE_NAME})
-- Style: {STYLE_PROMPT}
-- Consistency: Maintain 100% visual consistency of this character's features across all slides.
+[VISUAL_STRICT_SETTING: TEXT_DNA_LOCK]
+- **Identity**: {PERSONA_DESC} (Character Name: {GUIDE_NAME})
+- **Visual DNA**: {VISUAL_DNA_TEXT}
+- **Style**: {STYLE_PROMPT}
+- **Strict Protocol**: You MUST maintain absolute character consistency. Render {GUIDE_NAME} with the exact same hair, eyes, clothing style, and age on every slide based on the Visual DNA above.
 `;
 
-// 模式 B：外部基準圖模式 (專門給 NotebookLM 讀取外部圖片使用)
+// 🛤️ 模式 B：外部基準圖模式 (專門給 NotebookLM 讀取 人物.png 使用)
 export const CHARACTER_EXTERNAL_ANCHOR_PROMPT_TEMPLATE = `
-[CHARACTER_DNA_EXTERNAL_ANCHOR]
-- **Visual Truth Source**: PLEASE REFER TO THE SEPARATE UPLOADED CHARACTER IMAGE FILE AS THE PRIMARY SOURCE.
-- **Instruction**: Ignore textual character details. Use the visual DNA (shape, color, proportions) from the external image file as the SOLE TRUTH for the guide character {GUIDE_NAME}.
-- **Consistency**: Ensure {GUIDE_NAME} looks identical to the image file in every generated scene.
+[VISUAL_STRICT_SETTING: IMAGE_ANCHOR_IP]
+- **THE SOLE TRUTH SOURCE**: PLEASE REFER TO THE SEPARATE UPLOADED CHARACTER IMAGE FILE AS THE PRIMARY SOURCE.
+- **AUTHORITY**: Ignore any textual character descriptions in the following script. The facial features, hair, clothing colors, and body proportions from the UPLOADED IMAGE are the ONLY source of truth for the guide character {GUIDE_NAME}.
+- **INSTRUCTION**: Ensure {GUIDE_NAME} looks 100% identical to the image file in every generated scene. Only apply the 'guideAction' to this fixed character model.
 `;
 
-// [NANOBANANA 專用發電機]：產出給使用者去生基準圖的 Master Prompt
+// 🎨 [NANOBANANA 專用發電機]：產出給使用者去生基準圖的 Master Prompt (已強化去背需求)
 export const PROMPT_GENERATE_CHARACTER_DNA_FOR_EXTERNAL = `
 [INSTRUCTION]
 # ROLE: 視覺藝術總監 (Art Director)
@@ -49,9 +50,8 @@ export const PROMPT_GENERATE_CHARACTER_DNA_FOR_EXTERNAL = `
 # REQUIREMENTS:
 - Subject: Must be a single, full-body character (Named: {GUIDE_NAME}).
 - Format: Full-body shot, standing, frontal view.
-- 🚨 Background: MUST be isolated on a PURE WHITE BACKGROUND for easy background removal (cutout style).
+- 🚨 Background: MUST be isolated on a PURE WHITE BACKGROUND with NO SHADOWS and CLEAN EDGES. (This is strictly required for background removal cutout style).
 - Style: {STYLE}
-- 🚨 NO SHADOWS: Ensure no ground shadows or environmental occlusion.
 - Details: Describe materials, lighting, and exact color palette based on the persona.
 - 🚨 NO TEXT: Absolutely no letters, words, or labels in the image.
 - Language: Prompt must be in ENGLISH for maximum AI accuracy.
@@ -387,11 +387,17 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 ### 🚨 終極禁令：禁止虛構主角、禁止預設角色。
 請依據真實性與行動力驗證來尋找故事主角。並為本課推演出 3 位不同風格的「引導者」。
 
+### 🚨 去背與連貫性協定 (CRITICAL)
+為了方便後續去背應用，AI 在生成引導者候選人的 visualDNA 描述時【必須強制包含】以下三個元素：
+1. **[Full-body shot]** (全身像), **[Standing position]** (站姿), **[Frontal view]** (正面).
+2. **[Isolated on a pure white background]** (在純白背景中孤立).
+3. **[Clean edges, no shadows]** (邊緣整潔，無陰影).
+
 ### 📥 輸出規範 (Strict JSON)
 { 
   "mode": "Drama Mode" | "Guide Mode", 
-  "protagonist": { "name": "...", "description": "...", "visualDNA": "Gender: [男/女] | Age: [明確年齡] | ...", "isNone": false, "verification": "..." }, 
-  "candidates": [ { "id": "C1", "name": "...", "persona": "...", "description": "...", "visualDNA": "Gender: [男/女] | Age: [明確年齡] | ..." } ] 
+  "protagonist": { "name": "...", "description": "...", "visualDNA": "Gender: [男/女] | Age: [明確年齡] | Full-body shot, isolated on pure white background, no shadows ...", "isNone": false, "verification": "..." }, 
+  "candidates": [ { "id": "C1", "name": "...", "persona": "...", "description": "...", "visualDNA": "Gender: [男/女] | Age: [明確年齡] | Full-body shot, isolated on pure white background, no shadows ..." } ] 
 }
 `;
 
@@ -656,7 +662,7 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 1. 【畫面生成｜視覺 DNA 鎖定】
    請嚴格依照每頁 YAML 節點中的 \`visual_prompt\` 生成畫面。
    ★ 引導者 DNA【全程不得改變】：
-   {GUIDE_DNA}
+   {GUIDE_DNA_MODE_INSTRUCTION}
    禁止出現與設定不符的年齡或性別。
 
 2. 【投影片文字｜逐字鎖定】
@@ -689,9 +695,9 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 🟨 模組三：單頁精準修復指令 (Precision Revise)
 位置：投影片產出後 → 特定頁面右上角的 ✏️ Revise
 ───────────────────────────────────────────────────────────────
-【情況 A：角色年齡或長樣跑掉】
+【情況 A：角色年齡或長相跑掉】
 請維持本頁文字完全不動。重新讀取來源文件本頁的視覺提示詞。強制修正角色外觀為：
-{GUIDE_DNA}
+{GUIDE_DNA_MODE_INSTRUCTION}
 
 【情況 B：投影片文字漏印或被亂改】
 請維持本頁圖片完全不動。重新讀取本頁的 \`displayText\` 欄位，100% 逐字補回繁體中文。
