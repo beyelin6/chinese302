@@ -75,7 +75,7 @@ export default function StepRouter() {
     handleGenerateVisualOptions,
     handleGenerateCastingOptions
   } = useStep4VisualsAndCasting();
-  const { handleScriptPipeline, handleManualModule } = useStep5Output();
+  const { handleScriptPipeline, handleManualModule, handleRegenerateSingleSlide } = useStep5Output();
 
   // 🌟 [優化] 使用全域 JSON 解析工具，增加容錯與修復能力
   const parseJSON = (json: any) => {
@@ -215,6 +215,7 @@ export default function StepRouter() {
                 outputInteractiveQuiz={state.outputInteractiveQuiz}
                 onScriptPipeline={handleScriptPipeline}
                 onManualModule={handleManualModule}
+                onRegenerateSingleSlide={handleRegenerateSingleSlide}
                 isLoading={state.isLoading}
                 onBack={handleBack}
               />

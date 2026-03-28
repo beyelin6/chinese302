@@ -102,7 +102,7 @@ export const useStep2Vocabulary = () => {
         `;
         
         // 🌟 [核心修復] 將 temperature 調低至 0.2，防止 AI 亂發明「轄」這種字
-        const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.2 });
+        const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.2, responseMimeType: "application/json" });
         const chunkResult = sanitizeAndParseJSON(response);
 
         // 相容多種欄位命名
@@ -142,7 +142,7 @@ export const useStep2Vocabulary = () => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const prompt = `請針對成語「${idiom}」提供深度教學解析 JSON：{"definition": "...", "example": "...", "synonyms": ["..."], "antonyms": ["..."]}`;
-      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.5 });
+      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.5, responseMimeType: "application/json" });
       return sanitizeAndParseJSON(response);
     } catch (e) {
       return null;
@@ -155,7 +155,7 @@ export const useStep2Vocabulary = () => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const prompt = `${GENERATE_SHAPE_SIMILAR_PROMPT.replace('{CHAR}', char)}`;
-      const response = await sendMessageToGemini(prompt, [], 0);
+      const response = await sendMessageToGemini(prompt, [], 0, { responseMimeType: "application/json" });
       return sanitizeAndParseJSON(response);
     } finally { dispatch({ type: 'SET_LOADING', payload: false }); }
   };
@@ -173,7 +173,7 @@ export const useStep2Vocabulary = () => {
         【參考資料】：
         ${rawContext}
       `;
-      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.2 });
+      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.2, responseMimeType: "application/json" });
       return sanitizeAndParseJSON(response);
     } catch (error) {
       throw error;
@@ -201,7 +201,7 @@ export const useStep2Vocabulary = () => {
         【參考資料】：
         ${rawContext}
       `;
-      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.2 });
+      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.2, responseMimeType: "application/json" });
       return sanitizeAndParseJSON(response);
     } finally { dispatch({ type: 'SET_LOADING', payload: false }); }
   };

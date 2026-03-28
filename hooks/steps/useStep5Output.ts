@@ -196,7 +196,7 @@ export const useStep5Output = () => {
           ${JSON.stringify(chunk)}
         `;
 
-        const response = await sendMessageToGemini(prompt, [], 0);
+        const response = await sendMessageToGemini(prompt, [], 0, { responseMimeType: "application/json" });
         const scriptData = sanitizeAndParseJSON(response);
         const newSlides = Array.isArray(scriptData) ? scriptData : (scriptData.slides || []);
         
@@ -245,7 +245,7 @@ export const useStep5Output = () => {
       請只輸出包含這 1 張投影片的 JSON 陣列！
     `;
 
-    const response = await sendMessageToGemini(prompt, [], 0);
+    const response = await sendMessageToGemini(prompt, [], 0, { responseMimeType: "application/json" });
     const parsed = sanitizeAndParseJSON(response);
     return Array.isArray(parsed) ? parsed[0] : (parsed.slides ? parsed.slides[0] : parsed);
   };
@@ -332,9 +332,44 @@ export const useStep5Output = () => {
     dispatch({ type: 'SET_LOADING_STATUS', payload: config.status });
 
     try {
-      const prompt = `${SYSTEM_PROMPT}\n[任務]：${config.prompt}\n原文參考：${state.analysisData.fullText.substring(0, 2000)}`;
-      const response = await sendMessageToGemini(prompt, [], 0);
-      dispatch({ type: 'SET_OUTPUTS', payload: { [config.stateKey]: response } });
+      if (!state.analysisData) {
+        throw new Error('分析資料尚未準備就緒');
+      }
+
+      const context = {
+        basicInfo: state.analysisData.basicInfo,
+        coreVocabulary: state.analysisData.coreVocabulary,
+        segments: state.analysisData.segments,
+        strategies: state.analysisData.strategies,
+        languageActivities: state.analysisData.languageActivities || [],
+        macroStructure: state.analysisData.macroStructure || "N1 故事山",
+        fullText: (state.analysisData.fullText || "").substring(0, 3000)
+      };
+
+      const prompt = `
+        ${SYSTEM_PROMPT}
+        
+        # 任務：${config.prompt}
+        
+        # 參考數據 (JSON)：
+        ${JSON.stringify(context, null, 2)}
+      `;
+
+      const isJson = moduleKey === 'interactive';
+      const response = await sendMessageToGemini(prompt, [], 0, isJson ? { responseMimeType: "application/json" } : {});
+      
+      let finalResponse = response;
+      if (isJson) {
+        // 確保 JSON 格式正確
+        try {
+          const parsed = sanitizeAndParseJSON(response);
+          finalResponse = JSON.stringify(parsed);
+        } catch (e) {
+          console.error("JSON 格式化失敗", e);
+        }
+      }
+      
+      dispatch({ type: 'SET_OUTPUTS', payload: { [config.stateKey]: finalResponse } });
     } catch (error: any) {
       dispatch({ type: 'SET_ERROR', payload: '生成失敗: ' + error.message });
     } finally {

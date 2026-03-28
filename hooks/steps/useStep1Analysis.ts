@@ -84,7 +84,7 @@ export const useStep1Analysis = () => {
       let basicAnalysisObj: any = null;
 
       try {
-        responseText = await sendMessageToGemini(fullPrompt, filteredMediaFiles, 0); 
+        responseText = await sendMessageToGemini(fullPrompt, filteredMediaFiles, 0, { responseMimeType: "application/json" }); 
         basicAnalysisObj = sanitizeAndParseJSON(responseText);
       } catch (parseError) {
         console.warn("Standard analysis failed, attempting Fast Scan fallback...");
@@ -96,7 +96,7 @@ export const useStep1Analysis = () => {
             [USER_SOURCE_DATA]${finalInputText}[/USER_SOURCE_DATA]
             ${STEP_1_FAST_SCAN_PROMPT}
           `;
-          const fastResponse = await sendMessageToGemini(fastPrompt, filteredMediaFiles, 0);
+          const fastResponse = await sendMessageToGemini(fastPrompt, filteredMediaFiles, 0, { responseMimeType: "application/json" });
           basicAnalysisObj = sanitizeAndParseJSON(fastResponse);
           console.warn("極速掃描回退成功");
         } catch (fastError) {
@@ -221,7 +221,7 @@ export const useStep1Analysis = () => {
         ${grade}
       `;
 
-      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.7 });
+      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.7, responseMimeType: "application/json" });
       const additionalActivities = sanitizeAndParseJSON(response);
 
       if (Array.isArray(additionalActivities)) {

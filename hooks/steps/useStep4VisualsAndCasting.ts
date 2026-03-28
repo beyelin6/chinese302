@@ -36,7 +36,7 @@ export const useStep4VisualsAndCasting = () => {
       // 這裡的 prompt 是通用的，它會根據 sourceText 的不同，產出不同的視覺結果
       const prompt = STEP_3_VISUAL_GENERIC_PROMPT.replace('{INPUT_TEXT}', sourceText);
       
-      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.1 });
+      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.1, responseMimeType: "application/json" });
       const parsed = sanitizeAndParseJSON(response);
 
       dispatch({ type: 'SET_VISUAL_RESULT', payload: JSON.stringify(parsed) });
@@ -111,7 +111,7 @@ export const useStep4VisualsAndCasting = () => {
         ${STEP_4_DYNAMIC_CASTING_PROMPT}
       `;
 
-      const response = await sendMessageToGemini(prompt, [], 0);
+      const response = await sendMessageToGemini(prompt, [], 0, { responseMimeType: "application/json" });
       const castingOptions = sanitizeAndParseJSON(response);
       
       // 檢查回傳結構是否完整

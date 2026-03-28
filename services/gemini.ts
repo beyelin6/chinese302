@@ -86,7 +86,7 @@ export const sendMessageToGemini = async (
   prompt: string, 
   media: MediaData[] = [], 
   retryCount = 0,
-  config: { temperature?: number } = { temperature: 0.7 } // 預設 0.7
+  config: { temperature?: number, responseMimeType?: string } = { temperature: 0.7, responseMimeType: "text/plain" }
 ): Promise<string> => {
   // 1. 取得金鑰清單
   const allKeys = loadInitialApiKeys();
@@ -120,8 +120,9 @@ export const sendMessageToGemini = async (
       config: {
         systemInstruction: SYSTEM_PROMPT,
         temperature: config?.temperature ?? 0.7,
-        responseMimeType: "application/json",
-        maxOutputTokens: 8192,
+        responseMimeType: config?.responseMimeType ?? "text/plain",
+        maxOutputTokens: 16384,
+        thinkingConfig: { thinkingLevel: "LOW" }
       },
     });
 

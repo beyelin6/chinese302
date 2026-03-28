@@ -87,10 +87,15 @@ const Step5Output: React.FC<Step5OutputProps> = ({
 
   const syncRawCode = useMemo(() => {
     if (activeTab !== 'script') {
-      return activeTab === 'worksheet' ? outputWorksheet || "" : 
-             activeTab === 'assessment' ? outputAssessment || "" : 
-             activeTab === 'kb' ? outputKb || "" : 
-             activeTab === 'notebooklm' ? outputNotebookLMGuide || "" : outputGamifiedQuiz || "";
+      switch (activeTab) {
+        case 'worksheet': return outputWorksheet || "";
+        case 'assessment': return outputAssessment || "";
+        case 'kb': return outputKb || "";
+        case 'notebooklm': return outputNotebookLMGuide || "";
+        case 'gamified': return outputGamifiedQuiz || "";
+        case 'interactive': return outputInteractiveQuiz || "";
+        default: return "";
+      }
     }
 
     const safeParse = (data: any) => {
@@ -175,7 +180,7 @@ slides:\n`;
     });
 
     return yamlString;
-  }, [editableSlides, activeTab, viewMode, state.visualResult, state.castingResult, state.analysisData, outputWorksheet, outputAssessment, outputKb, outputNotebookLMGuide, outputGamifiedQuiz]);
+  }, [editableSlides, activeTab, viewMode, state.visualResult, state.castingResult, state.analysisData, outputWorksheet, outputAssessment, outputKb, outputNotebookLMGuide, outputGamifiedQuiz, outputInteractiveQuiz]);
 
   const updateSlide = (index: number, field: string, value: string) => {
     const newSlides = [...editableSlides];

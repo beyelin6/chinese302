@@ -55,7 +55,7 @@ export const useStep3Segments = () => {
         2. 若該段落包含清單中的詞彙，請務必將其列入該段落的 \`difficultWords\` 欄位中。
       `;
       
-      const response1 = await sendMessageToGemini(prompt1, [], 0, { temperature: 0.1 });
+      const response1 = await sendMessageToGemini(prompt1, [], 0, { temperature: 0.1, responseMimeType: "application/json" });
       const parsedSegments = sanitizeAndParseJSON(response1);
 
       validateGroundedness(parsedSegments, rawSourceText);
@@ -87,14 +87,14 @@ export const useStep3Segments = () => {
               "title": "具備吸引力的標題 (例：銳利邊緣的秘密)",
               "type": "Thinking | Inquiry | Creative Writing | Roleplay",
               "method": "教學方法論 (例：比較觀察法、第一人稱敘事法)",
-              "teachingPoint": "深入的教學引導內容 (至少 50 字，解釋本策略要解決的痛點或目標)",
+              "teachingPoint": "深入的教學引導內容 (至少 50 字，解釋本策略要解決的痛點 or 目標)",
               "application": "[連結課文具體段落] + [步驟 1] -> [步驟 2] (具體的學生互動任務)"
             }
           ]
         }
       `;
       
-      const response2 = await sendMessageToGemini(prompt2, [], 0, { temperature: 0.5 });
+      const response2 = await sendMessageToGemini(prompt2, [], 0, { temperature: 0.5, responseMimeType: "application/json" });
       const strategiesData = sanitizeAndParseJSON(response2);
       const validStrategies = strategiesData.strategies || [];
 
@@ -140,7 +140,7 @@ export const useStep3Segments = () => {
       const prompt = REGENERATE_STRATEGIES_PROMPT
         .replace("{MACRO_STRUCTURE}", macroStructure) + 
         `\n[歷史排除清單]：${existingTitles}\n[課文Context]：${JSON.stringify(currentData).substring(0, 2000)}\n[Seed]：${Date.now()}`;
-      const response = await sendMessageToGemini(prompt, [], 0);
+      const response = await sendMessageToGemini(prompt, [], 0, { responseMimeType: "application/json" });
       return sanitizeAndParseJSON(response); 
     } catch (error: any) { throw error; } finally { dispatch({ type: 'SET_LOADING', payload: false }); }
   };
@@ -148,7 +148,7 @@ export const useStep3Segments = () => {
   const handleGenerateSingleStrategy = async (data: any, existingStrategies: any[], targetType: string = 'Thinking') => {
     try {
       const prompt = `${GENERATE_SINGLE_STRATEGY_PROMPT}\nTarget Type: ${targetType}\nAvoid Titles: ${JSON.stringify(existingStrategies.map(s => s.title))}\nData: ${JSON.stringify(data).substring(0, 1000)}`;
-      const response = await sendMessageToGemini(prompt, [], 0);
+      const response = await sendMessageToGemini(prompt, [], 0, { responseMimeType: "application/json" });
       return sanitizeAndParseJSON(response); 
     } catch (error: any) { throw error; }
   };
@@ -159,7 +159,7 @@ export const useStep3Segments = () => {
         .replace('{SEGMENT_TITLE}', segmentTitle)
         .replace('{RHETORIC_NAME}', rhetoricName)
         .replace('{RHETORIC_EXAMPLE}', rhetoricExample);
-      const response = await sendMessageToGemini(prompt, [], 0);
+      const response = await sendMessageToGemini(prompt, [], 0, { responseMimeType: "application/json" });
       return sanitizeAndParseJSON(response);
     } catch (error: any) { throw error; }
   };
@@ -171,7 +171,7 @@ export const useStep3Segments = () => {
         .replace('{ACTIVITY_TITLE}', title)
         .replace('{ACTIVITY_CONTENT}', content)
         .replace('{GRADE}', grade);
-      const response = await sendMessageToGemini(prompt, [], 0);
+      const response = await sendMessageToGemini(prompt, [], 0, { responseMimeType: "application/json" });
       return sanitizeAndParseJSON(response); 
     } catch (error: any) { return null; } finally { dispatch({ type: 'SET_LOADING', payload: false }); }
   };
