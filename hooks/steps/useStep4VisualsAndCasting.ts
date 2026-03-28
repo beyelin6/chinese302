@@ -14,7 +14,8 @@ import {
   STEP_3_VISUAL_GENERIC_PROMPT,
   STEP_4_DYNAMIC_CASTING_PROMPT,
   // 🌟 建議在 constants.ts 將此 Prompt 改名或確保其包含 {AGE} 標籤
-  PROTAGONIST_TRAITS_SUGGESTION_PROMPT 
+  PROTAGONIST_TRAITS_SUGGESTION_PROMPT,
+  PROMPT_GENERATE_CHARACTER_DNA_FOR_EXTERNAL 
 } from '../../constants';
 
 export const useStep4VisualsAndCasting = () => {
@@ -235,6 +236,34 @@ export const useStep4VisualsAndCasting = () => {
     });
   };
 
+  /**
+   * 🌟 [新增]：專門用來生成給 NANOBANANA 的英文提示詞
+   */
+  const handleGenerateExternalDnaPrompt = async (guideName: string, persona: string) => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_LOADING_STATUS', payload: '正在為 NANOBANANA 撰寫專屬英文提示詞...' });
+    
+    try {
+      // 從 state 中抓取老師在 Step 3 選的視覺風格
+      const visualData = typeof state.visualResult === 'string' ? JSON.parse(state.visualResult) : state.visualResult;
+      const styleName = visualData?.style?.name || 'Clean vector art';
+
+      const prompt = PROMPT_GENERATE_CHARACTER_DNA_FOR_EXTERNAL
+        .replace('{STYLE}', styleName)
+        .replace('{PERSONA}', persona)
+        .replace('{GUIDE_NAME}', guideName);
+        
+      const response = await sendMessageToGemini(prompt, [], 0);
+      return response.replace(/```/g, '').trim(); // 清理可能出現的 markdown 標籤
+    } catch (error: any) {
+      console.error("DNA 提示詞生成失敗", error);
+      return "生成失敗，請確認網路連線或 API Key。";
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+      dispatch({ type: 'SET_LOADING_STATUS', payload: null });
+    }
+  };
+
   return {
     handleGenerateVisualOptions,
     handleGenerateCastingOptions,
@@ -242,6 +271,7 @@ export const useStep4VisualsAndCasting = () => {
     handleCastingConfirm,
     handleSuggestTraits,
     handleSuggestTeachingStyle,
-    handleExtractImageTraits
+    handleExtractImageTraits,
+    handleGenerateExternalDnaPrompt
   };
 };

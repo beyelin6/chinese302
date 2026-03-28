@@ -197,6 +197,7 @@ export default function StepRouter() {
                 onConfirmCasting={handleCastingConfirm}
                 onSuggestTraits={handleSuggestTraits}
                 onGenerateCasting={handleGenerateCastingOptions}
+                onGenerateExternalDnaPrompt={handleGenerateExternalDnaPrompt}
                 handleExtractImageTraits={handleExtractImageTraits}
                 isLoading={state.isLoading}
                 onBack={handleBack}

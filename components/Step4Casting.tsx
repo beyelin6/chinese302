@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   User, Users, Check, AlertCircle, Play, 
   Info, Edit2, X, ArrowLeft, Sparkles, ImagePlus, Loader2,
-  CheckCircle, Wand2, Upload, Image as ImageIcon, Plus
+  CheckCircle, Wand2, Upload, Image as ImageIcon, Plus, Copy
 } from 'lucide-react';
 import { CastingData, GuideCandidate, MediaData } from '../types';
 import ReactMarkdown from 'react-markdown';
@@ -222,6 +222,7 @@ interface Step4CastingProps {
   onConfirmCasting: (protagonistTraits: string, guide: GuideCandidate, customGuideVisuals?: string) => void;
   onSuggestTraits: (gender: string, age: string, toneLabel: string) => Promise<string>;
   onGenerateCasting: () => void;
+  onGenerateExternalDnaPrompt: (guideName: string, persona: string) => Promise<string>;
   handleExtractImageTraits?: (media: MediaData) => Promise<string | null>;
   isLoading: boolean;
   onBack: () => void;
@@ -241,6 +242,7 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
   onConfirmCasting, 
   onSuggestTraits,
   onGenerateCasting,
+  onGenerateExternalDnaPrompt,
   handleExtractImageTraits,
   isLoading, 
   onBack 
@@ -253,6 +255,9 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
   const [editingCandidate, setEditingCandidate] = useState<GuideCandidate | null>(null);
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
   const [customProtagonist, setCustomProtagonist] = useState<string>('');
+
+  const [generatedDnaPrompt, setGeneratedDnaPrompt] = useState<string>('');
+  const [isPromptCopied, setIsPromptCopied] = useState(false);
   
   // 🌟 新增：自訂角色表單的狀態管理 (從零捏臉功能)
   const [customGuideData, setCustomGuideData] = useState({
