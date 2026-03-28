@@ -29,7 +29,7 @@ export const useStep5Output = () => {
     catch { return null; }
   };
 
-  /**
+/**
    * 🌟 [核心新增] 智能切換引擎：動態組裝最終的 System Prompt
    * 根據使用者是否開啟「外部圖片模式」來決定要注入哪一種 DNA 鎖定指令
    */
@@ -59,7 +59,7 @@ export const useStep5Output = () => {
   };
 
   /**
-   * 🌟 [終極武裝版] 一體化 JSON 標頭 (供 UI 層轉為 YAML)
+   * 🌟 [究極武裝版] 融合 Strict Transcription Mode 的 YAML 標頭
    */
   const wrapScriptWithYAML = (slides: any[], data: any) => {
     const { analysisData, visualDNA, casting } = data;
@@ -68,54 +68,47 @@ export const useStep5Output = () => {
     const styleCode = visualDNA?.style?.code || "F";
     const styleDesc = visualDNA?.style?.description || visualDNA?.style?.prompt || "Clean, high-quality educational vector art.";
 
-    // 2. 深度萃取角色 DNA (判斷是否開啟外部模式)
-    const protagDNA = casting?.protagonist || "符合課文情境的核心人物";
+    // 2. 萃取角色 DNA 與判斷外部圖片模式
     const guideName = casting?.guide?.name || "V-MAX 導師";
-    const guidePersona = casting?.guide?.persona || "專業、溫暖、具啟發性";
+    const unitName = analysisData?.basicInfo?.unitName || "未命名課程";
+    const hasExternalImage = casting?.useRefMode === true;
     
-    let guideDNA = casting?.guide?.visualDNA || "身穿俐落的現代教學套裝，帶著親切且自信的微笑。";
-    if (casting?.useRefMode && casting?.characterRefUrl) {
-       guideDNA = `[EXTERNAL_IMAGE_MODE] 🚨 絕對視覺鎖定：請強制讀取隨附的外部圖片檔案作為此角色的唯一長相標準。`;
-    }
+    // 🌟 這裡就是魔法：把引導角色變成指定的 IP，並精準分離「長相」與「動作」
+    const ipInstruction = hasExternalImage
+      ? `1. 專屬人物 IP 植入與動態演繹 (CRITICAL)：
+   - 【外貌鎖定】：必須在每張簡報適當的畫面處，加上引導者【${guideName}】。其長相、服裝與特徵請【絕對參考】一併上傳的「外部角色設計圖檔案」。
+   - 【動作解鎖】：參考圖【僅限於鎖定長相】！你必須嚴格讀取腳本中每一頁的 'guideAction' (動作) 與 'guideTalk' (情緒)，讓角色做出對應的「生動表情與肢體動作」（例如：驚訝、思考、指著黑板、大笑）。絕對禁止每一頁都畫出跟參考圖一模一樣的死板姿勢！`
+      : `1. 專屬人物 IP 植入：必須在每張簡報適當的畫面處，加上引導者【${guideName}】。視覺設定：${casting?.guide?.visualDNA || '使用預設視覺設定'}`;
 
-    // 3. 絕對頁碼注入器
+    // 3. 組合高階 System Instructions (融合高級防禦指令)
+    const systemInstructions = `[⚠️ SYSTEM META - STRICT TRANSCRIPTION MODE & DESIGN SYSTEM]
+【NotebookLM 簡報生成絕對守則】
+${ipInstruction}
+2. 頁數與結構鐵律：必須嚴格依照 'slides' 陣列的長度製作，嚴禁自行增減頁數、合併頁面或省略任何內容。
+3. 內容忠實性 (CRITICAL)：'displayText' 內的文字為核心文案，您必須「100% 逐字照抄」。絕對禁止縮寫、改寫、潤飾或發揮創意。
+4. 視覺美學絕對禁令 (Negative Prompts)：為確保現代高級感，生成設計時絕對禁止使用「漸層(Gradient)」、「發光(Glow)」、「立體浮雕(Bevel)」。禁止高飽和度純色與純黑(#000000)。所有文字方塊邊緣必須保持至少 20% 的呼吸留白。
+5. 佈局與邏輯視覺化：請嚴格遵守各頁的 'layout' (版面) 與 'lens' (鏡頭) 指示。若遇到形近字或多音字辨析，強制使用「多欄卡片式網格 (Multi-column Card Grid)」或高對比色塊進行水平分割排版。
+6. 導師對白強制顯影：'guideTalk' 的內容必須以「對話框 (Speech Bubble)」或「引述框」的形式，直接視覺化渲染在投影片畫面上！
+7. 絕對無字化生圖：'visual_prompt' 生成的畫面背景中，絕對不可出現任何亂碼、英文或中文字元。`;
+
+    // 4. 絕對頁碼注入器
     const numberedSlides = slides.map((slide, index) => {
       const { page_number, ...restProps } = slide; 
       return { page_number: index + 1, ...restProps };
     });
 
+    // 5. 輸出符合高級規範的 Payload (捨棄舊的 notebooklm_driver)
     const unifiedPayload = {
-      notebooklm_driver: {
-        system_role: "You are the V-MAX Slide Architect. Your absolute priority is to strictly follow the VMAX_STRUCTURE_YAML protocols and the dynamic slide blueprints.",
-        artistic_consistency: styleCode,
-        style_prompt: `Artistic VIS [${styleCode}]: ${styleDesc}.`,
-        dna_traits: {
-          protagonist: protagDNA,
-          guide: `[Name: ${guideName}] | [Persona: ${guidePersona}] | [Visual Prompt: ${guideDNA}]`
-        }
-      },
-      VMAX_STRUCTURE_YAML: {
-        global_visual_protocol: {
-          artistic_consistency: styleCode,
-          image_ratio: "16:9",
-          rendering_priority: "1. Protagonist DNA -> 2. Action Accuracy"
-        },
-        scaffolding_logic: {
-          macro_structure: analysisData?.visualStructureRecommendation || "鷹架導航結構",
-          micro_thinking: "C1 氣泡圖 (分析) / T1 對比圖 (辨析)",
-          visual_description: "請專注於畫面主體與場景，嚴禁在背景隨意加上不相關的隱喻裝飾物。"
-        },
-        visual_dna_anchor: {
-          protagonist_dna: protagDNA,
-          guide_dna: guideDNA
-        }
-      },
-      slides: numberedSlides
+      presentation_data: {
+        suggested_filename: `${unitName}_VMAX_教案腳本`,
+        system_instructions: systemInstructions,
+        artistic_consistency: `Artistic VIS [${styleCode}]: ${styleDesc}`,
+        slides: numberedSlides
+      }
     };
     
     return JSON.stringify(unifiedPayload, null, 2);
   };
-
   const handleScriptPipeline = async () => {
     if (isProcessing.current || !state.analysisData) return;
     isProcessing.current = true;
