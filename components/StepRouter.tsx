@@ -73,7 +73,8 @@ export default function StepRouter() {
     handleSuggestTraits, 
     handleExtractImageTraits,
     handleGenerateVisualOptions,
-    handleGenerateCastingOptions
+    handleGenerateCastingOptions,
+    handleGenerateExternalDnaPrompt
   } = useStep4VisualsAndCasting();
   const { handleScriptPipeline, handleManualModule, handleRegenerateSingleSlide } = useStep5Output();
 

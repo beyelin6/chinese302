@@ -1,6 +1,6 @@
 // 檔案路徑: src/services/gemini.ts
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { SYSTEM_PROMPT, GEMINI_MODEL } from '../constants';
 import { MediaData } from '../types';
 
@@ -122,7 +122,7 @@ export const sendMessageToGemini = async (
         temperature: config?.temperature ?? 0.7,
         responseMimeType: config?.responseMimeType ?? "text/plain",
         maxOutputTokens: 16384,
-        thinkingConfig: { thinkingLevel: "LOW" }
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
       },
     });
 
