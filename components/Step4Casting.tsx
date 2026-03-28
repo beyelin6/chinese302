@@ -347,7 +347,9 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
   const handleConfirm = () => {
     if (!data || !selectedGuide) return;
     
-    // 強制把我們選擇的引導者（包含可能是 AI 生成的長相描述），回傳給 Step 5
+    // 如果老師有產出 Dna Prompt，代表他打算開外部模式
+    const hasPrompt = !!generatedDnaPrompt;
+
     if (selectedGuide === 'CUSTOM_GUIDE') {
       const customGuide: GuideCandidate = {
         id: 'CUSTOM_GUIDE',
@@ -358,14 +360,14 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
         age: customGuideData.age,
         visualDNA: customGuideVisuals || '使用預設視覺設定'
       };
-      // 如果老師有產出 Dna Prompt，代表他打算開外部模式
-      const finalGuide = generatedDnaPrompt ? { ...customGuide, useRefMode: true } : customGuide;
+      
+      const finalGuide = hasPrompt ? { ...customGuide, useRefMode: true } : customGuide;
       onConfirmCasting(customProtagonist, finalGuide as any, customGuideVisuals);
     } else {
       const guide = data.candidates.find(g => g.id === selectedGuide);
       if (guide) {
-        // 同樣，如果老師有按過按鈕，我們就在回傳時掛上 useRefMode
-        const finalGuide = generatedDnaPrompt ? { ...guide, useRefMode: true } : guide;
+        // 在回傳時根據是否生成過 prompt，自動掛上 useRefMode
+        const finalGuide = hasPrompt ? { ...guide, useRefMode: true } : guide;
         onConfirmCasting(customProtagonist, finalGuide as any);
       }
     }
@@ -601,6 +603,65 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
              </div>
            </div>
         </div>
+
+        {/* 👇 魔法按鈕區塊 👇 */}
+        {selectedGuide && data.candidates.find(g => g.id === selectedGuide) && (
+          <div className="p-6 bg-indigo-50/50 border-2 border-indigo-100 rounded-2xl relative overflow-hidden animate-in fade-in slide-in-from-top-4">
+            <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+              <Wand2 size={64} className="text-indigo-900" />
+            </div>
+            
+            <h3 className="text-lg font-black text-indigo-900 flex items-center gap-2 mb-2">
+              <ImagePlus size={20} className="text-indigo-600" />
+              生成高階生圖提示詞 (NANOBANANA 專用)
+            </h3>
+            <p className="text-xs text-indigo-700/70 mb-4 font-medium max-w-2xl">
+              若您希望在 NotebookLM 中獲得 100% 完美的角色連貫性，請先點擊下方按鈕，生成專屬的英文提示詞，並前往 NANOBANANA 生成角色圖片。系統將自動啟用基準圖鎖定模式。
+            </p>
+
+            {!generatedDnaPrompt ? (
+              <button 
+                onClick={async () => {
+                  const currentObj = data.candidates.find(g => g.id === selectedGuide);
+                  if (currentObj) {
+                    const prompt = await onGenerateExternalDnaPrompt(currentObj.name, currentObj.persona);
+                    setGeneratedDnaPrompt(prompt);
+                  }
+                }}
+                disabled={isLoading}
+                className="px-6 py-3 bg-white border-2 border-indigo-200 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all flex items-center gap-2 shadow-sm"
+              >
+                {isLoading ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
+                幫我寫生圖提示詞
+              </button>
+            ) : (
+              <div className="space-y-3 relative z-10 animate-in fade-in slide-in-from-bottom-2">
+                <textarea 
+                  readOnly 
+                  value={generatedDnaPrompt}
+                  className="w-full h-32 p-4 bg-white border-2 border-indigo-200 rounded-xl text-sm font-mono text-slate-700 focus:outline-none resize-none shadow-inner"
+                />
+                <div className="flex justify-end items-center gap-3">
+                  <span className="text-xs text-teal-600 font-bold bg-teal-50 px-3 py-1.5 rounded-md border border-teal-100">
+                    ✅ 已自動為您啟用「基準圖鎖定模式」
+                  </span>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedDnaPrompt);
+                      setIsPromptCopied(true);
+                      setTimeout(() => setIsPromptCopied(false), 2000);
+                    }}
+                    className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-500 transition-all flex items-center gap-2 shadow-md active:scale-95"
+                  >
+                    {isPromptCopied ? <CheckCircle size={16} /> : <Copy size={16} />}
+                    {isPromptCopied ? '已複製！快去貼給 NANOBANANA' : '複製提示詞'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {/* 👆 魔法按鈕區塊結束 👆 */}
       </div>
 
       <GuideEditModal 
