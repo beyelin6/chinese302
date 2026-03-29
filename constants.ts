@@ -358,14 +358,26 @@ export const GENERATE_MNEMONIC_PROMPT = `
 export const GENERATE_POLYPHONIC_PROMPT = `
 [INSTRUCTION]
 List all standard Traditional Chinese pronunciations for the input character.
+
 🚨 **【台灣教育部絕對防禦協定】(zh-TW Strict)**：
-1. 語系與地區：強制切換為「台灣繁體中文 (zh-TW)」與「台灣慣用語」。
-2. 字典標準：你必須【100% 嚴格遵守】台灣「教育部國語辭典簡編本」的標準讀音。
-3. 封殺大陸讀音：【絕對禁止】混入中國大陸普通話讀音與造詞！(例如：「結果」的「結」在台灣絕對是二聲 ㄐㄧㄝˊ)。
-4. 🚨同詞異音防錯亂：若造詞會因讀音不同而改變意義（如結實），\`usage\` 必須精準對應當前注音，嚴禁解釋錯亂！請在造詞後方加上括號備註意義，例如："結實(強壯)"。
+1. 語系與字典強制規定（最高優先級）：所有注音（zhuyin）、字義、造詞必須 100% 遵守台灣《教育部國語辭典簡編本》。
+2. 嚴禁混入中國大陸普通話讀音與造詞。例：「結果」台灣讀 ㄐㄧㄝˊㄍㄨㄛˇ（二聲）；「期」在「期待」中讀 ㄑㄧˊ（二聲）。
+3. 所有輸出語言鎖定為台灣繁體中文（zh-TW）與台灣國小教學慣用語。
+4. 🚨 分離輸出協定：你必須把「每一個不同的讀音」獨立成一個 JSON 物件，絕對禁止把不同讀音的字義寫在同一個 usage 裡面！
 
 ⚠️ Output format: Valid JSON Array ONLY. No Markdown.
-[ { "zhuyin": "Zhuyin (e.g. ㄅㄟ)", "words": "Common Word", "usage": "Brief Usage Context" } ]
+[ 
+  { 
+    "zhuyin": "注音 (例如: ㄐㄧㄝ)", 
+    "words": "對應造詞 (例如: 結實)", 
+    "usage": "精簡字義 (例如: 堅固、強壯)" 
+  },
+  { 
+    "zhuyin": "注音 (例如: ㄐㄧㄝˊ)", 
+    "words": "對應造詞 (例如: 結果、打結)", 
+    "usage": "精簡字義 (例如: 植物長出果實，或事物收束)" 
+  }
+]
 `;
 
 export const STEP_3_VISUAL_GENERIC_PROMPT = `
