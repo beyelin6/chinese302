@@ -435,7 +435,7 @@ ${CHARACTER_VISUAL_REF_PLACEHOLDER}
 ### 📜 模組三：版型內容填充萬用通則
 - **角色演繹**：guideTalk 必須使用導師 Persona 專屬口頭禪。
 - **無文字生圖**：visual_prompt 禁止出現文字，結尾強制加上「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS IN THE IMAGE.」
-- **[ContentFocus]**：🌟🚨 displayText 必須強制以「【意義段 X】」(X為對應的段落序號) 作為開頭，接著再【100% 絕對照抄】參考數據中的 summary 欄位！(例如：【意義段一】介紹生活中隨處可見的...)
+- **[ContentFocus]**：🌟🚨 displayText 必須恢復純淨，【100% 絕對照抄】原文 summary 欄位！請將「【意義段X】」的標籤寫入該頁的 \`title\` 欄位（例如：title: "【意義段一】內容對焦"）。
 - **[IdiomLoop]**：🌟🚨 visual_prompt 必須根據成語的「引申意義」或「生活應用例句」作畫！絕對禁止照字面直譯！
 `;
 
@@ -641,6 +641,10 @@ V-MAX {KERNEL_VERSION} NotebookLM 操作指南
 4. 【導師台詞強制入鏡】(CRITICAL)
    請將 YAML 裡的 \`guideTalk\` 內容，以「對話框 (Speech Bubble)」或「導師提示框」的視覺形式，直接排版顯示在每一頁投影片的畫面上！
    (\`guideAction\` 僅供畫面生成參考，絕對不可印成文字。)
+
+5. 【懸浮標籤優化 (Floating Badge)】(NEW!)
+   如果投影片的 \`title\` 欄位中包含「【意義段Ｘ】」等段落標籤，請將該標籤獨立繪製成一個「懸浮標籤框 (Badge)」，優雅地貼在畫面的左上角或右上角。
+   🚨 絕對禁止將標籤文字與主內文 (displayText) 混在一起顯示。
 
 ───────────────────────────────────────────────────────────────
 🟩 模組二：語音摘要煉成指令 (Audio Overview)
