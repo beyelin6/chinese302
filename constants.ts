@@ -193,73 +193,40 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 # ROLE: V-MAX Master Kernel [STRICT_GROUNDING_MODE]
 # MISSION: 執行精準座標搬運與高階策略腦力激盪。將 <SOURCE_TEXT> 內容轉化為 JSON 結構。
 
+### ⛔ 數據忠誠度協定 (DATA_FAITHFULNESS) - 最高強制優先級
+1. 🚨【陣列長度強制鎖定】：請精準計算 <SOURCE_TEXT> 裡面「【意義段大意】」總共有幾個條目（例如原文有標示一到五，共 5 點）。你的 \`segments\` 陣列長度【必須絕對等於】該數量！絕對禁止 AI 自行把 5 段合併成 3 段或刪減任何段落！
+2. 🚨【大意內容絕對物理搬運】：
+   - segmentIndex: 0 的 summary 必須「100% 一字不漏」照抄第一點的大意。
+   - segmentIndex: 1 的 summary 必須「100% 一字不漏」照抄第二點的大意。
+   - 嚴禁 AI 自己換句話說、嚴禁寫出「介紹生活中...」、「總結人類...」這種摘要口吻。必須照抄原文（例如原文寫「從通知單看到節目流程...」，你就必須照抄這句話）。
+3. 證據鏈要求：每一個生成的段落大意，都必須伴隨一段至少 15 字的原文原句作為 \`evidence_quote\`。
+4. 🚨【修辭與句型】：只能從原文中「明確標示」為修辭、句型的區塊提取資料！絕對禁止 AI 自行通靈修辭。若該段無標示，陣列必須保持空白 \`[]\`。
+
 ### 🏫 1️⃣ Teaching Strategy Logic (教學策略庫)
+請根據文本特性，選擇最適合的一項作為 macroStructure（如 N1 故事山、N2 流程圖）。
+⚠️ 警告：macroStructure 僅作為教學策略標籤，【絕對不可以】因此去改變或壓縮 \`segments\` 的數量！
+
 2.1 Teaching Modes (教學模式)
-- Mode 1 扎實導學: Avatar = Expert Teacher. Verbs: 觀察、分析、歸納. (適合知識密度高的說明文)
-- Mode 2 情境遊戲: Avatar = NPC/Leader. Verbs: 挑戰、尋找、破解. (適合任務導向學習)
-- Mode 3 專題實作: Avatar = PM/Coach. Verbs: 設計、訪談、製作. (適合綜合活動)
+- Mode 1 扎實導學: Avatar = Expert Teacher.
+- Mode 2 情境遊戲: Avatar = NPC/Leader.
+- Mode 3 專題實作: Avatar = PM/Coach.
 
 2.2 Macro-Structure (宏觀架構)
-- N1 故事山 (Story Mountain): 起因-經過-結果 (記敘文)
-- N2 流程圖 (Flow Map): 順序步驟 (說明文/實驗)
-- N3 SWBST: Somebody-Wanted-But-So-Then (故事摘要)
-- N4 階梯圖 (Staircase): 層層遞進 (情節升溫)
-- N5 循環圖 (Cycle): 自然循環 (生態/規律)
-
-2.3 Micro-Structure (微觀思考嵌入)
-- L1 括號圖 (Brace): 整體-部分 (構造分析).
-- L2 樹狀圖 (Tree Map): 總-分-總 (分類說明).
-- L3 魚骨圖 (Fishbone): 因果分析 (問題探討).
-- L4 多重流程圖 (Multi-Flow): 多因多果 (事件影響).
-- L5 問題解決圖 (P-S Map): 問題-解決方案.
-- L6 金字塔圖 (Pyramid): 論點-論據 (議論文).
-- C1 氣泡圖 (Bubble): 特質描寫 (人物/物品).
-- C2 太陽圖 (Sun): 發散思考 (聯想).
-- C3 維恩圖 (Venn): 比較異同 (雙物件).
-- C4 雙氣泡圖 (Double Bubble): 比較特質 (進階對比).
-- C5 T型圖 (T-Chart): 正方-反方 (辯證).
-- D1 冰山圖 (Iceberg): 顯性-隱性 (深層含義).
-- D4 曼陀羅 (Mandala): 九宮格思考 (全面擴散).
-
-### ⛔ 數據忠誠度協定 (DATA_FAITHFULNESS)
-1. 嚴禁任何形式的創作：禁止加入原文不存在的背景故事、人物、物件。
-2. 🚨【意義段大意：精準尋標與絕對搬運】(CRITICAL)：請直接掃描 <SOURCE_TEXT> 中的 **「【意義段大意】」** 區塊（例如：一、事件一...，二、事件二...）。你必須將這些條列好的大意【100% 一字不漏地逐字照抄】！第一點的大意填入 segmentIndex 0 的 summary，第二點填入 segmentIndex 1，依此類推。【絕對禁止】AI 自己重新讀課文寫摘要！
-3. 證據鏈要求：每一個生成的段落大意，都必須伴隨一段至少 15 字的原文原句作為證據。
-4. 語言：100% 繁體中文，禁止夾雜英文或注音。
-
-🚨🚨🚨 【修辭與句型：絕對物理搬運鐵律】(CRITICAL) 🚨🚨🚨
-1. 只能從原文中「明確標示」為修辭、句型、寫作手法的區塊提取資料！
-2. 絕對禁止 AI 擅自閱讀課文並自行通靈修辭！
-3. 若無明確標示，陣列必須保持空白 \`[]\`。
-
-⚠️ 【段落大意精準分配準則】(CRITICAL)
-你必須將大意「拆解」並「精準對應」到正確的 segment 中。每個段落只能有屬於自己的那一小句話，絕對禁止將全文摘要塞進同一個 segment。
-
-* Execution Logic:
-    1.  意義段分析 (Logical Segments): 嚴格跟隨 <SOURCE_TEXT> 裡標示的「【意義段大意】」數量來建立 Segments 陣列；若原文無提供大意，才允許自行切分為 3-5 個邏輯段落。
-    2.  🧠 語文百寶箱 (Teaching Strategies) 強制生成: 利用「三神器」邏輯腦力激盪出 3 個全新的教學策略。'application' 欄位必須包含：[連結課文] + [操作步驟 1] -> [操作步驟 2]。
-
-### 🧠 教學策略邏輯 (Teaching Strategy Logic)
-請根據文本特性，從以下「宏觀架構 (Macro-Structure)」中選擇最適合的一項作為 macroStructure：
-- **N1 故事山 (Story Mountain)**: 適用於記敘文、小說。包含：起因-經過-衝突-轉折-解決-結果。
-- **N2 流程圖 (Flow Map)**: 適用於說明文、遊記。強調順序與步驟。
-- **N3 SWBST (Somebody-Wanted-But-So-Then)**: 適用於故事摘要與角色動機分析。
-- **N4 階梯圖 (Staircase Map)**: 適用於論說文、層層遞進的抒情文。
-- **N5 循環圖 (Cycle Map)**: 適用於自然現象、生命週期、循環往復的結構。
+- N1 故事山 (Story Mountain) / N2 流程圖 (Flow Map) / N3 SWBST / N4 階梯圖 / N5 循環圖
 
 ### 📥 唯一合法來源
 <SOURCE_TEXT>
 {INPUT_TEXT}
 </SOURCE_TEXT>
 
-請直接輸出 JSON 格式 (包含 macroStructure, segments 與 strategies)：
+請直接輸出 JSON 格式：
 {
   "macroStructure": "N1-N5 (例如: N1 故事山)",
   "segments": [ 
     { 
       "segmentIndex": 0, 
       "title": "段落標題", 
-      "type": "意義段類型 (例如: 背景、衝突、轉折、解決、結論)",
+      "type": "意義段類型",
       "summary": "🚨必須 100% 照抄資料中的【意義段大意】對應項目", 
       "evidence_quote": "原文原句", 
       "difficultWords": ["..."], 
@@ -269,8 +236,8 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
           "name": "修辭名稱",
           "example": "原文例句",
           "analysis": "修辭分析",
-          "pedagogicalPoint": "教學重點 (給老師的建議)",
-          "application": "課堂應用 (給學生的任務)"
+          "pedagogicalPoint": "教學重點",
+          "application": "課堂應用"
         }
       ], 
       "dokQuestions": [ { "type": "DOK 3-4", "question": "...", "intent": "..." } ], 
@@ -363,14 +330,19 @@ List all standard Traditional Chinese pronunciations for the input character.
 1. 語系與字典強制規定（最高優先級）：所有注音（zhuyin）、字義、造詞必須 100% 遵守台灣《教育部國語辭典簡編本》。
 2. 嚴禁混入中國大陸普通話讀音與造詞。例：「結果」台灣讀 ㄐㄧㄝˊㄍㄨㄛˇ（二聲）；「期」在「期待」中讀 ㄑㄧˊ（二聲）。
 3. 所有輸出語言鎖定為台灣繁體中文（zh-TW）與台灣國小教學慣用語。
-4. 🚨 分離輸出協定：你必須把「每一個不同的讀音」獨立成一個 JSON 物件，絕對禁止把不同讀音的字義寫在同一個 usage 裡面！
+4. 🚨 分離輸出協定：你必須把「每一個不同的讀音」獨立成一個 JSON 物件，絕對禁止把不同讀音的字義寫在同一個格子裡！
 
 ⚠️ Output format: Valid JSON Array ONLY. No Markdown.
-[
-  {
-    "zhuyin": "注音",
-    "meaning": "字義摘要",
-    "usage": ["造詞1", "造詞2"]
+[ 
+  { 
+    "zhuyin": "注音 (例如: ㄐㄧㄝ)", 
+    "words": "對應造詞 (例如: 結實)", 
+    "usage": "精簡字義說明 (例如: 堅固、強壯)" 
+  },
+  { 
+    "zhuyin": "注音 (例如: ㄐㄧㄝˊ)", 
+    "words": "對應造詞 (例如: 結果、打結)", 
+    "usage": "精簡字義說明 (例如: 植物長出果實，或事物收束)" 
   }
 ]
 `;
