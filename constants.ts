@@ -366,16 +366,11 @@ List all standard Traditional Chinese pronunciations for the input character.
 4. 🚨 分離輸出協定：你必須把「每一個不同的讀音」獨立成一個 JSON 物件，絕對禁止把不同讀音的字義寫在同一個 usage 裡面！
 
 ⚠️ Output format: Valid JSON Array ONLY. No Markdown.
-[ 
-  { 
-    "zhuyin": "注音 (例如: ㄐㄧㄝ)", 
-    "words": "對應造詞 (例如: 結實)", 
-    "usage": "精簡字義 (例如: 堅固、強壯)" 
-  },
-  { 
-    "zhuyin": "注音 (例如: ㄐㄧㄝˊ)", 
-    "words": "對應造詞 (例如: 結果、打結)", 
-    "usage": "精簡字義 (例如: 植物長出果實，或事物收束)" 
+[
+  {
+    "zhuyin": "注音",
+    "meaning": "字義摘要",
+    "usage": ["造詞1", "造詞2"]
   }
 ]
 `;
@@ -442,17 +437,11 @@ export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 ${CHARACTER_VISUAL_REF_PLACEHOLDER}
 
 ### 📐 模組一：Layout 與 Lens 版面代碼庫 (SSOT)
-AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` 代碼：
-- [ContentFocus] 課文內容對焦 -> layout: "wide-scene" | lens: "廣角 (Exhale)"
-- [DeepDive] 修辭與句型深究 -> layout: "close-tool" | lens: "特寫 (Inhale)"
-- [QuizCard] 閱讀小挑戰 -> layout: "quiz-card" | lens: "單圖資訊板 (Single Info Board)"
-- [ShapeSimilar] 形近字辨析 -> lens: "左右分割對比大字排版 (Split Screen, Large Text)"。layout 依字組數決定："split-2"(2字), "grid-3"(3字), "grid-4"(4字)。
-- [Polyphonic] 多音字辨析 -> lens: "天平對比大字排版 (Balance Screen, Large Text)"。layout 依讀音數決定："compare-scale"(2讀音), "triptych"(3讀音)。
-- [IdiomLoop] 成語解析 -> layout: "story-panel" | lens: "上下分割故事版 (Split Story Board)"
-- [LanguageActivity] 語文活動 -> layout: "pattern-drill" 或 "speech-stage" | lens: "單圖大字互動舞台"
-- [Strategy/FusionMap] 教學策略 -> layout: "info-flow" 或 "step-flow" | lens: "單圖大字百寶箱"
-- [Assessment] 綜合評量 -> layout: "single-board" | lens: "單圖資訊板 (Single Info Board)"
-- **[Cover]**: 🌟這是課程封面！displayText 必須明確列出【課名】、【文體】與【作者】。
+- [Cover]: 課程封面。displayText 必須明確列出【課名】、【文體】與【作者】。
+- [ContentFocus]: 課文內容對焦 -> layout: "wide-scene" | lens: "廣角鏡頭 (去背景優化)"
+- [ShapeSimilar]: 形近字辨析 -> lens: "左右分割對比大字排版"。layout: "split-2" 或 "grid-4"。
+- [IdiomLoop]: 成語解析 -> layout: "story-panel" | lens: "意境/生活應用故事版"
+- [Assessment]: 綜合評量 -> layout: "single-board" | lens: "單圖資訊板"
 
 ### 📥 模組二：輸出規範 (Strict JSON Array)
 請輸出純 JSON 陣列。每個物件必須包含：
@@ -472,18 +461,10 @@ AI 必須為每一頁投影片嚴格指定最適合的 \`layout\` 與 \`lens\` �
 ]
 
 ### 📜 模組三：版型內容填充萬用通則
-
-【全域排版鐵律】
-- **角色演繹**：guideTalk 必須使用導師 Persona 專屬口頭禪，展現劇場感互動。
-- **無文字生圖**：visual_prompt 禁止出現文字指令，結尾強制加上「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS IN THE IMAGE.」
-- **字數防爆破**：所有投影片的 \`displayText\` 總字數【絕對禁止】超過 130 字！請善用精簡敘述！
-
-【版型專屬通則】
-- **[FusionMap] (萬用結構圖)**: 🌟無論何種文體，你必須提取「邏輯骨架」。🚨【文字鐵律】：必須以「📍 節點名稱 (關鍵詞) - 簡短摘要」的格式排版，禁止寫空泛摘要！
-- **[ContentFocus] (情境鎖定)**: 🌟🚨【欄位綁定鐵律】：投影片的 \`displayText\` 必須【100% 絕對照抄】參考數據中的 \`segment.summary\` 欄位資料！【絕對禁止】AI 看到關鍵字就自行腦補、發明新劇情或偏離原文！
-- **[ShapeSimilar] (形近字)**: 🌟視覺化部首。visual_prompt 需為部首畫出輔助小圖示。禁止使用 # 標題符號。
-- **[IdiomLoop] (成語解析)**: 🌟🚨【意境生圖鐵律】：visual_prompt 必須根據成語的「引申意義」或「生活應用例句」來構築真實生活情境！【絕對禁止】照字面直譯作畫（例如「七嘴八舌」絕對不能畫出嘴巴和舌頭，必須畫眾人熱絡討論的畫面），確保學生能一秒看懂成語的實際應用！
-- **[Assessment] (高階提問)**: 🌟必須優先從分析資料中提取 2-3 題「DOK 3-4 策略思考題」(生活遷移、價值評鑑) 作為壓軸。
+- **角色演繹**：guideTalk 必須使用導師 Persona 專屬口頭禪。
+- **無文字生圖**：visual_prompt 禁止出現文字，結尾強制加上「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS IN THE IMAGE.」
+- **[ContentFocus]**：🌟🚨 displayText 必須強制以「【意義段 X】」(X為對應的段落序號) 作為開頭，接著再【100% 絕對照抄】參考數據中的 summary 欄位！(例如：【意義段一】介紹生活中隨處可見的...)
+- **[IdiomLoop]**：🌟🚨 visual_prompt 必須根據成語的「引申意義」或「生活應用例句」作畫！絕對禁止照字面直譯！
 `;
 
 // ============================================================
