@@ -154,14 +154,13 @@ export const STEP_2_DEEP_VOCAB_PROMPT_SUFFIX = `
 [V-MAX DEEP VOCABULARY ENGINE: TAIWAN MOE ANCHOR]
 
 🚨🚨🚨 【台灣教育部最高防禦鐵律】(CRITICAL)
-1. 語系鎖定：強制切換至「台灣繁體中文 (zh-TW)」與「台灣國小教學慣用語」。
-2. 字典標準：所有的注音 (zhuyin)、字義與造詞，【必須 100% 嚴格遵守】台灣《教育部國語辭典簡編本》與《重編國語辭典修訂本》！
-3. 封殺大陸讀音：【絕對禁止】混入中國大陸普通話的讀音與造詞！(例如：「結果」在台灣絕對是二聲 ㄐㄧㄝˊ)。
-4. 🚨同詞異音防錯亂協定 (CRITICAL)：當同一個造詞（如「結實」）有不同讀音與意義時，你的 \`usage\`（用法說明）必須與當前的 \`zhuyin\` 【完全精準對齊】！絕對禁止張冠李戴！（例如：讀 ㄐㄧㄝ 時，結實是強壯的意思，\`usage\` 絕對不能寫成植物結果；讀 ㄐㄧㄝˊ 時，才是植物結果）。必要時，請在 \`words\` 造詞後加上括號備註，例如："結實(強壯)"。
+1. 語系鎖定：所有輸出語言鎖定為台灣繁體中文（zh-TW）與台灣國小教學慣用語。
+2. 字典標準：所有注音（zhuyin）、字義、造詞必須 100% 遵守台灣《教育部國語辭典簡編本》。
+3. 嚴禁混入中國大陸普通話讀音與造詞。例：「結果」台灣讀 ㄐㄧㄝˊㄍㄨㄛˇ（二聲）；「期」在「期待」中讀 ㄑㄧˊ（二聲）。
+4. 🚨同詞異音精準對齊：當同一個字有不同讀音時，你的 \`usage\`（用法說明）必須與當前的 \`zhuyin\` 【完全精準對齊】，嚴禁將不同讀音的意思混在一起解釋！
 
 🚨🚨🚨 【形近字自動補完協定】(CRITICAL)
 對於 coreVocabulary 中的每一個生字，你【必須】主動找出 1-2 個形近字進行辨析。
-即使原始資料中沒有提供形近字，你也必須根據台灣教育部字典的知識庫自動補完！
 
 請只輸出純 JSON，格式如下：
 {
@@ -171,12 +170,13 @@ export const STEP_2_DEEP_VOCAB_PROMPT_SUFFIX = `
       "type": "形近字/多音字/成語",
       "zhuyin": "注音",
       "shapeSimilar": [ { "char": "辨析字", "zhuyin": "注音", "radical": "部首", "words": "造詞", "explanation": "說明", "mnemonic": "辨析口訣" } ],
-      "polyphonic": [ { "zhuyin": "讀音", "words": "造詞", "usage": "用法說明" } ]
+      "polyphonic": [ { "zhuyin": "讀音", "words": "造詞", "usage": "精簡字義說明" } ]
     }
   ],
   "deepIdiomsDetails": [ { "word": "成語", "definition": "釋義", "example": "例句", "synonyms": ["近義詞"], "antonyms": ["反義詞"], "context": "情境" } ]
 }
 `;
+
 export const DEEP_VOCABULARY_PROMPT = `
 [V-MAX VOCABULARY ENGINE V8.8]
 請針對以下生字進行深度辨析。
