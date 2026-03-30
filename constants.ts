@@ -435,7 +435,9 @@ ${CHARACTER_VISUAL_REF_PLACEHOLDER}
 ### 📜 模組三：版型內容填充萬用通則
 - **角色演繹**：guideTalk 必須使用導師 Persona 專屬口頭禪。
 - **無文字生圖**：visual_prompt 禁止出現文字，結尾強制加上「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS IN THE IMAGE.」
-- **[ContentFocus]**：🌟🚨 displayText 必須恢復純淨，【100% 絕對照抄】原文 summary 欄位！請將「【意義段X】」的標籤寫入該頁的 \`title\` 欄位（例如：title: "【意義段一】內容對焦"）。
+- **[ContentFocus] 生圖與文字雙重精準鎖定**：🌟🚨 
+  1. 【文字鐵律】：displayText 必須恢復純淨，【100% 絕對照抄】原文 summary 欄位！請將「【意義段X】」的標籤寫入該頁的 \`title\` 欄位（例如：title: "【意義段一】內容對焦"）。
+  2. 【生圖鐵律】：visual_prompt 必須根據 summary 構築具體的故事情境，且【必須強制比對並包含】傳入資料中的 keywords（關鍵詞）作為畫面核心物件，確保生圖細節與課文精準對齊，不產生誤差！
 - **[IdiomLoop]**：🌟🚨 visual_prompt 必須根據成語的「引申意義」或「生活應用例句」作畫！絕對禁止照字面直譯！
 `;
 
