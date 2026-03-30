@@ -395,8 +395,6 @@ export const EXTRACT_IMAGE_TRAITS_PROMPT = `
 ⚠️ 輸出格式：Strict YAML ONLY. No Markdown.
 `;
 
-export const STEP_5_MATERIALS_PROMPT = `[INSTRUCTION] Execute STEP 6: 輔助產出 (Material Linkage).`;
-
 // ============================================================
 // 🚀 最終排版大腦 (The Slide Architect)
 // ============================================================
@@ -413,6 +411,7 @@ ${CHARACTER_VISUAL_REF_PLACEHOLDER}
 - [ContentFocus]: 課文內容對焦 -> layout: "wide-scene" | lens: "廣角鏡頭 (去背景優化)"
 - [ShapeSimilar]: 形近字辨析 -> lens: "左右分割對比大字排版"。layout: "split-2" 或 "grid-4"。
 - [IdiomLoop]: 成語解析 -> layout: "story-panel" | lens: "意境/生活應用故事版"
+- [LanguageActivity]: 語文活動 -> layout: "pattern-drill" | lens: "單圖大字互動舞台"
 - [Assessment]: 綜合評量 -> layout: "single-board" | lens: "單圖資訊板"
 
 ### 📥 模組二：輸出規範 (Strict JSON Array)
@@ -435,9 +434,11 @@ ${CHARACTER_VISUAL_REF_PLACEHOLDER}
 ### 📜 模組三：版型內容填充萬用通則
 - **角色演繹**：guideTalk 必須使用導師 Persona 專屬口頭禪。
 - **無文字生圖**：visual_prompt 禁止出現文字，結尾強制加上「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS IN THE IMAGE.」
+- **字數防爆破與自動分頁 (Pagination)**：🌟🚨 每一頁的 \`displayText\` 總字數【絕對禁止】超過 130 字！如果「語文活動」或「綜合評量」的題目與範例過多，你【必須主動】將其拆分為多張投影片生成（例如：在 JSON 陣列中連續產出兩個物件，標題分別命名為「語文活動：...(1)」與「語文活動：...(2)」），確保每頁排版寬鬆舒適。
 - **[ContentFocus] 生圖與文字雙重精準鎖定**：🌟🚨 
-  1. 【文字鐵律】：displayText 必須恢復純淨，【100% 絕對照抄】原文 summary 欄位！請將「【意義段X】」的標籤寫入該頁的 \`title\` 欄位（例如：title: "【意義段一】內容對焦"）。
-  2. 【生圖鐵律】：visual_prompt 必須根據 summary 構築具體的故事情境，且【必須強制比對並包含】傳入資料中的 keywords（關鍵詞）作為畫面核心物件，確保生圖細節與課文精準對齊，不產生誤差！
+  1. 【文字鐵律】：displayText 必須恢復純淨，【100% 絕對照抄】原文 summary 欄位！請將「【意義段X】」的標籤寫入該頁的 \`title\` 欄位。
+  2. 【生圖鐵律】：visual_prompt 必須根據 summary 構築具體的故事情境，且【必須強制比對並包含】傳入資料中的 keywords 作為畫面核心物件。
+- **[LanguageActivity] 排版鐵律**：🌟🚨 displayText 必須將「練習內容與範例」進行結構化條列排版！若遇到「修改句子、改錯字、句型比較」，必須強制換行，並主動加上 ❌ 與 ✅ 等對比符號進行上下排列，絕對禁止把所有文字擠在同一行！
 - **[IdiomLoop]**：🌟🚨 visual_prompt 必須根據成語的「引申意義」或「生活應用例句」作畫！絕對禁止照字面直譯！
 `;
 
