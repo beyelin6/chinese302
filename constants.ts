@@ -191,14 +191,24 @@ export const DEEP_VOCABULARY_PROMPT = `
 
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 # ROLE: V-MAX Master Kernel [STRICT_GROUNDING_MODE]
-# MISSION: 執行精準座標搬運。將 <SOURCE_TEXT> 內容轉化為 JSON 結構。
+# MISSION: 執行精準座標搬運與高階策略腦力激盪。將 <SOURCE_TEXT> 內容轉化為 JSON 結構。
 
 ### ⛔ 數據忠誠度協定 (DATA_FAITHFULNESS) - 最高強制優先級
-1. 🚨【意義段精準拆解】：請掃描 <SOURCE_TEXT> 中的「【意義段大意】」區塊。
-   - **標題 (title)**：必須 100% 照抄每一點「冒號前」的文字（例如：一、事件一）。
-   - **大意 (summary)**：必須 100% 照抄每一點「冒號後」的完整文字。
-2. 🚨【陣列長度強制鎖定】：原文有幾點大意，\`segments\` 陣列就必須有幾個物件，嚴禁合併或刪減！
-3. 證據鏈要求：每一個生成的段落，都必須伴隨一段至少 15 字的原文原句作為 \`evidence_quote\`。
+1. 🚨【意義段精準拆解與鎖定】：請精準掃描 <SOURCE_TEXT> 中的「【意義段大意】」區塊。
+   - 陣列長度：原文有幾點大意，\`segments\` 陣列就必須有幾個物件，嚴禁合併或刪減！
+   - 標題 (title)：必須 100% 照抄每一點「冒號前」的文字（例如：一、事件一）。
+   - 大意 (summary)：必須 100% 照抄每一點「冒號後」的完整文字。
+2. 證據鏈要求：每一個生成的段落，都必須伴隨一段至少 15 字的原文原句作為 \`evidence_quote\`。
+3. 🚨【修辭與句型絕對物理搬運】：請掃描 <SOURCE_TEXT> 裡面的「句型修辭與語文活動」區塊，將它們精準分配到對應的段落中。絕對禁止 AI 自己發明或通靈修辭！若該段沒有，請保持空陣列 \`[]\`。
+4. 🚨【DOK 提問提取】：請掃描 <SOURCE_TEXT> 裡的「認知層次提問矩陣」，把題目分配到對應的段落中。
+
+### 🏫 1️⃣ Teaching Strategy Logic (教學策略庫)
+請根據文本特性，選擇最適合的一項作為 macroStructure（如 N1 故事山、N2 流程圖）。
+⚠️ macroStructure 僅作為教學策略標籤，絕對不可以改變 \`segments\` 的數量！
+
+- N1 故事山 / N2 流程圖 / N3 SWBST / N4 階梯圖 / N5 循環圖
+
+★ 語文百寶箱 (Teaching Strategies) 強制生成：利用策略庫邏輯腦力激盪出 3 個全新的教學策略，放入 \`strategies\` 陣列中。
 
 ### 📥 唯一合法來源
 <SOURCE_TEXT>
@@ -211,15 +221,27 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
   "segments": [ 
     { 
       "segmentIndex": 0, 
-      "title": "🚨必須 100% 照抄冒號前的標題 (如：一、事件一)", 
+      "title": "🚨必須 100% 照抄冒號前的標題", 
+      "type": "意義段類型",
       "summary": "🚨必須 100% 照抄冒號後的內文", 
-      "type": "段落類型",
       "evidence_quote": "原文原句", 
-      "rhetorics": [], 
-      "dokQuestions": [] 
+      "difficultWords": ["難詞1", "難詞2"], 
+      "keywords": ["關鍵字1", "關鍵字2"], 
+      "rhetorics": [
+        {
+          "name": "修辭或句型名稱",
+          "example": "原文例句",
+          "analysis": "解析說明",
+          "pedagogicalPoint": "教學重點",
+          "application": "課堂應用"
+        }
+      ], 
+      "dokQuestions": [ { "type": "DOK 1-4", "question": "題目內容", "intent": "測驗意圖" } ], 
+      "sentencePatterns": [], 
+      "deepDive": "段落深究" 
     } 
   ],
-  "strategies": []
+  "strategies": [ { "type": "策略類型", "title": "策略名稱", "method": "操作方法", "teachingPoint": "教學重點", "application": "任務應用" } ]
 }
 `;
 
