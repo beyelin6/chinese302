@@ -191,7 +191,7 @@ export const DEEP_VOCABULARY_PROMPT = `
 
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 # ROLE: V-MAX Master Kernel [STRICT_COPY_MODE]
-# MISSION: 你的核心任務是「物理搬運」意義段，並在最後「發揮高階創意」生成三個教學策略。
+# MISSION: 你的核心任務是「物理搬運」意義段，並在最後「發揮破壞式創新」生成三個教學策略。
 
 ### 🚨 階段一：意義段絕對鎖定 (CRITICAL FATAL)
 請在 <SOURCE_TEXT> 中找到名為 **「【意義段大意】」** 的區塊。
@@ -225,18 +225,18 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 {INPUT_TEXT}
 </SOURCE_TEXT>
 
-請直接輸出 JSON 格式：
+請直接輸出純 JSON 格式 (不要包含 markdown 標籤，格式請參考以下結構)：
 {
   "macroStructure": "N1-N5",
   "segments": [ 
     { 
       "segmentIndex": 0, 
-      "title": "🚨(物理搬運) 照抄原文冒號前文字，例如：一、事件一", 
-      "type": "維持空白或照抄標題即可，絕對不可改變段落數量",
-      "summary": "🚨(物理搬運) 照抄原文冒號後文字", 
-      "evidence_quote": "從課文中找出一句符合該段大意的原句", 
-      "difficultWords": ["提取難詞"], 
-      "keywords": ["提取關鍵字"], 
+      "title": "一、事件一", 
+      "type": "段落標籤",
+      "summary": "從通知單看到節目流程，發現神奇密碼讓生活變得方便。", 
+      "evidence_quote": "原句擷取", 
+      "difficultWords": ["難詞"], 
+      "keywords": ["關鍵字"], 
       "rhetorics": [
         {
           "name": "修辭/句型名稱",
@@ -246,12 +246,12 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
           "application": "課堂任務"
         }
       ], 
-      "dokQuestions": [ { "type": "DOK 1-4", "question": "題目", "intent": "意圖" } ], 
+      "dokQuestions": [ { "type": "DOK 1", "question": "問題內容", "intent": "意圖" } ], 
       "sentencePatterns": [], 
       "deepDive": "深究" 
     } 
   ],
-  "strategies": [ { "type": "INQUIRY", "title": "寧靜破裂的瞬間", "method": "情境對比觀察法", "teachingPoint": "點出盲點與引導邏輯", "application": "[連結課文...] + [步驟 1]... -> [步驟 2]..." } ]
+  "strategies": [ { "type": "INQUIRY", "title": "寧靜破裂的瞬間", "method": "情境對比觀察法", "teachingPoint": "點出盲點與引導邏輯", "application": "[連結課文] + [步驟 1] 高階任務設計 -> [步驟 2] 預期的思辨產出" } ]
 }
 `;
 
