@@ -209,15 +209,15 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 🚨 創意突變強制協定 (CRITICAL MUTATION)：
 1. 【動詞封殺】：絕對禁止使用「畫線、圈出、找一找、朗讀、討論、分享」等傳統低階動詞！強制改用「辯論、偵查、解謎、改寫、法庭攻防、心理剖析」等高階互動動詞。
 2. 【視角強制啟動】：
-   - 策略一 (INQUIRY)：強制設計成「哲學思辨/極端情境」探討 (例如：如果剝奪了課文中的某個條件會怎樣？)。
+   - 策略一 (INQUIRY)：強制設計成「哲學思辨/極端情境」探討。
    - 策略二 (ROLEPLAY)：強制設計成「遊戲化/NPC視角/法庭辯論」任務。
    - 策略三 (CREATIVE)：強制設計成「跨界改編/感官重塑」任務。
 
 ⚠️ 策略生成的排版強制要求：
 - type: 英文標籤 (INQUIRY, ROLEPLAY, CREATIVE WRITING)。
-- title: 具備文學美感與吸引力的標題 (例如: 寧靜破裂的瞬間、法庭上的密碼戰)。
-- method: 方法論名稱 (例如: 心理定格分析法、極端情境假設法)。
-- teachingPoint: 必須點出「學生常見的痛點或盲點」，並說明此策略如何幫助學生理解底層邏輯。
+- title: 具備文學美感與吸引力的標題。
+- method: 方法論名稱。
+- teachingPoint: 點出「學生常見的痛點或盲點」，說明此策略如何幫助理解底層邏輯。
 - application: 必須包含明確的操作步驟，並強制使用以下格式排版：[連結課文段落] + [步驟 1] 高階任務設計 -> [步驟 2] 預期的思辨產出。
 
 ### 📥 唯一合法來源
@@ -232,7 +232,7 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
     { 
       "segmentIndex": 0, 
       "title": "一、事件一", 
-      "type": "段落標籤",
+      "type": "意義段", 
       "summary": "從通知單看到節目流程，發現神奇密碼讓生活變得方便。", 
       "evidence_quote": "原句擷取", 
       "difficultWords": ["難詞"], 
@@ -444,12 +444,13 @@ ${CHARACTER_VISUAL_REF_PLACEHOLDER}
 ### 📜 模組三：版型內容填充萬用通則
 - **角色演繹**：guideTalk 必須使用導師 Persona 專屬口頭禪。
 - **無文字生圖**：visual_prompt 禁止出現文字，結尾強制加上「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS IN THE IMAGE.」
-- **字數防爆破與自動分頁 (Pagination)**：🌟🚨 每一頁的 \`displayText\` 總字數【絕對禁止】超過 130 字！如果「語文活動」或「綜合評量」的題目與範例過多，你【必須主動】將其拆分為多張投影片生成（例如標題命名為「...(1)」、「...(2)」），確保每頁排版寬鬆。
-- **[ContentFocus] 標題與內文絕對對位鐵律**：🌟🚨 
-  1. 【標題鎖定】：投影片的 \`title\` 欄位必須「100% 絕對照抄」參考數據中 segment.title 的內容（例如：一、事件一、四、結果）。
-  2. 【文字鎖定】：\`displayText\` 欄位必須「100% 絕對照抄」參考數據中 segment.summary 的內容，嚴禁增減字數。
-  3. 【生圖鎖定】：\`visual_prompt\` 必須包含該段落的 keywords 作為核心物件，確保生圖細節與課文精準對齊。
-- **[LanguageActivity] 排版鐵律**：🌟🚨 displayText 必須將「練習內容與範例」進行結構化條列排版！若遇到「修改句子、改錯字」，必須強制換行，並主動加上 ❌ 與 ✅ 等對比符號進行上下排列，絕對禁止把所有文字擠在同一行！
+- **字數防爆破與自動分頁 (Pagination)**：🌟🚨 每一頁的 \`displayText\` 總字數【絕對禁止】超過 130 字！如果題目過多，你【必須主動】將其拆分為多張投影片。
+- **課文迴圈標題絕對鎖定 (CRITICAL)**：🌟🚨 針對每個意義段產出的投影片 (ContentFocus, DeepDive, QuizCard)，其 \`title\` 欄位【絕對禁止】使用「段落 1」這種字眼！你必須 100% 使用傳入的 segment.title 作為開頭：
+  1. 【內容對焦頁】：title 必須設定為「{segment.title}」（例如：一、事件一）
+  2. 【深究特寫頁】：title 必須設定為「{segment.title}：深究特寫」（例如：一、事件一：深究特寫）
+  3. 【閱讀小挑戰頁】：title 必須設定為「{segment.title}：閱讀小挑戰」（例如：一、事件一：閱讀小挑戰）
+- **[ContentFocus] 內文與生圖鎖定**：🌟🚨 \`displayText\` 必須「100% 絕對照抄」segment.summary 的內容。\`visual_prompt\` 必須包含該段落的 keywords 作為核心物件。
+- **[LanguageActivity] 排版鐵律**：🌟🚨 displayText 必須將「練習內容與範例」進行結構化條列排版！遇到「修改句子、改錯字」，必須換行並加上 ❌ 與 ✅ 進行上下排列。
 - **[IdiomLoop]**：🌟🚨 visual_prompt 必須根據成語的「引申意義」或「生活應用例句」作畫！絕對禁止照字面直譯！
 `;
 
