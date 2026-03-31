@@ -191,28 +191,14 @@ export const DEEP_VOCABULARY_PROMPT = `
 
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 # ROLE: V-MAX Master Kernel [STRICT_GROUNDING_MODE]
-# MISSION: 執行精準座標搬運與高階策略腦力激盪。將 <SOURCE_TEXT> 內容轉化為 JSON 結構。
+# MISSION: 執行精準座標搬運。將 <SOURCE_TEXT> 內容轉化為 JSON 結構。
 
 ### ⛔ 數據忠誠度協定 (DATA_FAITHFULNESS) - 最高強制優先級
-1. 🚨【陣列長度強制鎖定】：請精準計算 <SOURCE_TEXT> 裡面「【意義段大意】」總共有幾個條目（例如原文有標示一到五，共 5 點）。你的 \`segments\` 陣列長度【必須絕對等於】該數量！絕對禁止 AI 自行把 5 段合併成 3 段或刪減任何段落！
-2. 🚨【大意內容絕對物理搬運】：
-   - segmentIndex: 0 的 summary 必須「100% 一字不漏」照抄第一點的大意。
-   - segmentIndex: 1 的 summary 必須「100% 一字不漏」照抄第二點的大意。
-   - 嚴禁 AI 自己換句話說、嚴禁寫出「介紹生活中...」、「總結人類...」這種摘要口吻。必須照抄原文（例如原文寫「從通知單看到節目流程...」，你就必須照抄這句話）。
-3. 證據鏈要求：每一個生成的段落大意，都必須伴隨一段至少 15 字的原文原句作為 \`evidence_quote\`。
-4. 🚨【修辭與句型】：只能從原文中「明確標示」為修辭、句型的區塊提取資料！絕對禁止 AI 自行通靈修辭。若該段無標示，陣列必須保持空白 \`[]\`。
-
-### 🏫 1️⃣ Teaching Strategy Logic (教學策略庫)
-請根據文本特性，選擇最適合的一項作為 macroStructure（如 N1 故事山、N2 流程圖）。
-⚠️ 警告：macroStructure 僅作為教學策略標籤，【絕對不可以】因此去改變或壓縮 \`segments\` 的數量！
-
-2.1 Teaching Modes (教學模式)
-- Mode 1 扎實導學: Avatar = Expert Teacher.
-- Mode 2 情境遊戲: Avatar = NPC/Leader.
-- Mode 3 專題實作: Avatar = PM/Coach.
-
-2.2 Macro-Structure (宏觀架構)
-- N1 故事山 (Story Mountain) / N2 流程圖 (Flow Map) / N3 SWBST / N4 階梯圖 / N5 循環圖
+1. 🚨【意義段精準拆解】：請掃描 <SOURCE_TEXT> 中的「【意義段大意】」區塊。
+   - **標題 (title)**：必須 100% 照抄每一點「冒號前」的文字（例如：一、事件一）。
+   - **大意 (summary)**：必須 100% 照抄每一點「冒號後」的完整文字。
+2. 🚨【陣列長度強制鎖定】：原文有幾點大意，\`segments\` 陣列就必須有幾個物件，嚴禁合併或刪減！
+3. 證據鏈要求：每一個生成的段落，都必須伴隨一段至少 15 字的原文原句作為 \`evidence_quote\`。
 
 ### 📥 唯一合法來源
 <SOURCE_TEXT>
@@ -221,31 +207,19 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 
 請直接輸出 JSON 格式：
 {
-  "macroStructure": "N1-N5 (例如: N1 故事山)",
+  "macroStructure": "N1-N5",
   "segments": [ 
     { 
       "segmentIndex": 0, 
-      "title": "段落標題", 
-      "type": "意義段類型",
-      "summary": "🚨必須 100% 照抄資料中的【意義段大意】對應項目", 
+      "title": "🚨必須 100% 照抄冒號前的標題 (如：一、事件一)", 
+      "summary": "🚨必須 100% 照抄冒號後的內文", 
+      "type": "段落類型",
       "evidence_quote": "原文原句", 
-      "difficultWords": ["..."], 
-      "keywords": ["..."], 
-      "rhetorics": [
-        {
-          "name": "修辭名稱",
-          "example": "原文例句",
-          "analysis": "修辭分析",
-          "pedagogicalPoint": "教學重點",
-          "application": "課堂應用"
-        }
-      ], 
-      "dokQuestions": [ { "type": "DOK 3-4", "question": "...", "intent": "..." } ], 
-      "sentencePatterns": [], 
-      "deepDive": "..." 
+      "rhetorics": [], 
+      "dokQuestions": [] 
     } 
   ],
-  "strategies": [ { "type": "...", "title": "...", "method": "...", "teachingPoint": "...", "application": "..." } ]
+  "strategies": []
 }
 `;
 
@@ -401,45 +375,19 @@ export const EXTRACT_IMAGE_TRAITS_PROMPT = `
 
 export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 # ROLE: V-MAX System Master Kernel v60.8 (Layout & Anti-Hallucination Director)
-# MISSION: 嚴格根據傳入的資料，生成精準的四維對位腳本，並確保視覺提示詞的絕對安全。
+# MISSION: 根據傳入資料生成四維對位腳本。
 
-### 🎨 視覺 DNA 鎖定協定 (Character Consistency)
+### 🎨 視覺 DNA 鎖定協定
 ${CHARACTER_VISUAL_REF_PLACEHOLDER}
 
-### 📐 模組一：Layout 與 Lens 版面代碼庫 (SSOT)
-- [Cover]: 課程封面。displayText 必須明確列出【課名】、【文體】與【作者】。
+### 📐 模組一：Layout 與 Lens 版面代碼庫
 - [ContentFocus]: 課文內容對焦 -> layout: "wide-scene" | lens: "廣角鏡頭 (去背景優化)"
-- [ShapeSimilar]: 形近字辨析 -> lens: "左右分割對比大字排版"。layout: "split-2" 或 "grid-4"。
-- [IdiomLoop]: 成語解析 -> layout: "story-panel" | lens: "意境/生活應用故事版"
-- [LanguageActivity]: 語文活動 -> layout: "pattern-drill" | lens: "單圖大字互動舞台"
-- [Assessment]: 綜合評量 -> layout: "single-board" | lens: "單圖資訊板"
-
-### 📥 模組二：輸出規範 (Strict JSON Array)
-請輸出純 JSON 陣列。每個物件必須包含：
-[
-  {
-    "page_number": 數字,
-    "part_label": "PART A",
-    "type": "ContentFocus 等",
-    "title": "投影片標題",
-    "layout": "Layout 代碼",
-    "lens": "Lens 標準值",
-    "visual_prompt": "【英文】... 🚨加上 --no text",
-    "displayText": "顯示文字...",
-    "guideAction": "肢體動作",
-    "guideTalk": "台詞"
-  }
-]
 
 ### 📜 模組三：版型內容填充萬用通則
-- **角色演繹**：guideTalk 必須使用導師 Persona 專屬口頭禪。
-- **無文字生圖**：visual_prompt 禁止出現文字，結尾強制加上「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS IN THE IMAGE.」
-- **字數防爆破與自動分頁 (Pagination)**：🌟🚨 每一頁的 \`displayText\` 總字數【絕對禁止】超過 130 字！如果「語文活動」或「綜合評量」的題目與範例過多，你【必須主動】將其拆分為多張投影片生成（例如：在 JSON 陣列中連續產出兩個物件，標題分別命名為「語文活動：...(1)」與「語文活動：...(2)」），確保每頁排版寬鬆舒適。
-- **[ContentFocus] 生圖與文字雙重精準鎖定**：🌟🚨 
-  1. 【文字鐵律】：displayText 必須恢復純淨，【100% 絕對照抄】原文 summary 欄位！請將「【意義段X】」的標籤寫入該頁的 \`title\` 欄位。
-  2. 【生圖鐵律】：visual_prompt 必須根據 summary 構築具體的故事情境，且【必須強制比對並包含】傳入資料中的 keywords 作為畫面核心物件。
-- **[LanguageActivity] 排版鐵律**：🌟🚨 displayText 必須將「練習內容與範例」進行結構化條列排版！若遇到「修改句子、改錯字、句型比較」，必須強制換行，並主動加上 ❌ 與 ✅ 等對比符號進行上下排列，絕對禁止把所有文字擠在同一行！
-- **[IdiomLoop]**：🌟🚨 visual_prompt 必須根據成語的「引申意義」或「生活應用例句」作畫！絕對禁止照字面直譯！
+- **[ContentFocus] 標題與內文絕對對位鐵律**：🌟🚨 
+  1. 【標題鎖定】：投影片的 \`title\` 欄位必須「100% 絕對照抄」參考數據中 segment.title 的內容（例如：一、事件一、四、結果）。
+  2. 【文字鎖定】：\`displayText\` 欄位必須「100% 絕對照抄」參考數據中 segment.summary 的內容，嚴禁增減字數。
+  3. 【生圖鎖定】：\`visual_prompt\` 必須包含該段落的 keywords 作為核心物件，確保生圖細節與課文精準對齊。
 `;
 
 // ============================================================

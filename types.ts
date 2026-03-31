@@ -113,6 +113,7 @@ export interface SegmentItem {
     answer: string;
   }[];
   deepDive: string;
+  evidence_quote?: string;
 }
 
 export interface StrategyItem {

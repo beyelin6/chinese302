@@ -749,6 +749,7 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                             }} className="text-xs text-blue-600 flex items-center hover:text-blue-800 px-2 py-1 rounded hover:bg-slate-100 transition-colors w-fit"><Plus size={12} className="mr-1"/>新增 DOK 提問</button>
                                         </div>
 
+                                    <textarea className="w-full bg-white border border-slate-300 rounded p-3 text-slate-900 text-xs h-16 focus:ring-2 focus:ring-blue-500 outline-none" value={tempEditValue.evidence_quote || ''} onChange={(e) => setTempEditValue({...tempEditValue, evidence_quote: e.target.value})} placeholder="原文證據 (Evidence Quote)" />
                                     <textarea className="w-full bg-white border border-slate-300 rounded p-3 text-slate-900 text-xs h-16 focus:ring-2 focus:ring-blue-500 outline-none" value={tempEditValue.deepDive} onChange={(e) => setTempEditValue({...tempEditValue, deepDive: e.target.value})} placeholder="深究提問" />
 
                                     <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-slate-300">
@@ -775,6 +776,21 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                         )}
 
                                          <p className="text-xs text-slate-800 mb-2">{item.summary}</p>
+
+                                        {item.evidence_quote && (
+                                           <div className="mb-3 p-3 bg-slate-50 border-l-4 border-slate-300 rounded-r-xl italic text-xs text-slate-600">
+                                               「{item.evidence_quote}」
+                                           </div>
+                                        )}
+
+                                        {item.deepDive && (
+                                           <div className="mb-3 p-3 bg-indigo-50 border border-indigo-100 rounded-2xl text-xs text-indigo-700">
+                                               <div className="font-black mb-1 flex items-center gap-1">
+                                                   <Brain size={12} /> 深度探究提問
+                                               </div>
+                                               {item.deepDive}
+                                           </div>
+                                        )}
 
                                         {/* 💎 深度思維鑽石區 (DOK 3-4 Questions) */}
                                         {item.dokQuestions && item.dokQuestions.length > 0 && (
@@ -1033,6 +1049,19 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                         </select>
                                         <input className="bg-slate-50 border border-slate-300 rounded p-1.5 text-slate-800 text-sm font-bold flex-1" value={tempEditValue.title} onChange={(e) => setTempEditValue({...tempEditValue, title: e.target.value})} />
                                     </div>
+                                    <div className="flex gap-2">
+                                        <select 
+                                            className="bg-slate-50 border border-slate-300 rounded p-1.5 text-slate-800 text-xs w-full" 
+                                            value={tempEditValue.segmentIndex ?? -1} 
+                                            onChange={(e) => setTempEditValue({...tempEditValue, segmentIndex: parseInt(e.target.value) === -1 ? undefined : parseInt(e.target.value)})}
+                                        >
+                                            <option value={-1}>全課通用 (Global)</option>
+                                            {(data.segments || []).map((seg, sIdx) => (
+                                                <option key={sIdx} value={sIdx}>綁定段落：{seg.title}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <textarea className="bg-slate-50 border border-slate-300 rounded p-2 text-slate-800 text-xs w-full h-16" value={tempEditValue.content || ''} onChange={(e) => setTempEditValue({...tempEditValue, content: e.target.value})} placeholder="提問內容 (Question Content - 可選)" />
                                     <textarea className="bg-slate-50 border border-slate-300 rounded p-2 text-slate-800 text-xs w-full h-16" value={tempEditValue.method || ''} onChange={(e) => setTempEditValue({...tempEditValue, method: e.target.value})} placeholder="方法論 (Method)" />
                                     <textarea className="bg-slate-50 border border-slate-300 rounded p-2 text-slate-800 text-xs w-full h-16" value={tempEditValue.teachingPoint} onChange={(e) => setTempEditValue({...tempEditValue, teachingPoint: e.target.value})} placeholder="教學引導 (Insight)" />
                                     <textarea className="bg-slate-50 border border-slate-300 rounded p-2 text-slate-800 text-xs w-full h-16" value={tempEditValue.application} onChange={(e) => setTempEditValue({...tempEditValue, application: e.target.value})} placeholder="微任務 (Interaction)" />
@@ -1050,6 +1079,11 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
                                                 {item.type}
                                             </span>
                                             <h4 className={`font-bold text-sm mt-2 ${headerColor}`}>{item.title}</h4>
+                                            {item.segmentIndex !== undefined && data.segments?.[item.segmentIndex] && (
+                                                <div className="text-[10px] text-teal-600 font-bold mt-1 bg-teal-50 px-2 py-0.5 rounded-full w-fit">
+                                                    📍 綁定：{data.segments[item.segmentIndex].title}
+                                                </div>
+                                            )}
                                         </div>
                                          <div className={`flex gap-1 transition-opacity ${isEditingAny ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'}`}>
                                             <button 
@@ -1066,6 +1100,11 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
 
                                     {/* Content Blocks */}
                                     <div className="space-y-3 flex-1 text-xs">
+                                        {item.content && (
+                                            <div className="p-2 bg-indigo-50 border border-indigo-100 rounded italic text-indigo-700">
+                                                「{item.content}」
+                                            </div>
+                                        )}
                                         {item.method && (
                                             <div>
                                                 <div className="text-[10px] text-slate-500 font-bold uppercase mb-0.5">方法論 (Method)</div>
