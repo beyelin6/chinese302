@@ -190,25 +190,21 @@ export const DEEP_VOCABULARY_PROMPT = `
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
-# ROLE: V-MAX Master Kernel [STRICT_GROUNDING_MODE]
-# MISSION: 執行精準座標搬運與高階策略腦力激盪。將 <SOURCE_TEXT> 內容轉化為 JSON 結構。
+# ROLE: V-MAX Master Kernel [STRICT_COPY_MODE]
+# MISSION: 你的唯一任務是「物理搬運」。絕對禁止你自行閱讀課文並重新撰寫摘要！你必須當一個沒有感情的打字機，把 <SOURCE_TEXT> 裡指定區塊的文字 100% 複製到 JSON 裡。
 
-### ⛔ 數據忠誠度協定 (DATA_FAITHFULNESS) - 最高強制優先級
-1. 🚨【意義段精準拆解與鎖定】：請精準掃描 <SOURCE_TEXT> 中的「【意義段大意】」區塊。
-   - 陣列長度：原文有幾點大意，\`segments\` 陣列就必須有幾個物件，嚴禁合併或刪減！
-   - 標題 (title)：必須 100% 照抄每一點「冒號前」的文字（例如：一、事件一）。
-   - 大意 (summary)：必須 100% 照抄每一點「冒號後」的完整文字。
-2. 證據鏈要求：每一個生成的段落，都必須伴隨一段至少 15 字的原文原句作為 \`evidence_quote\`。
-3. 🚨【修辭與句型絕對物理搬運】：請掃描 <SOURCE_TEXT> 裡面的「句型修辭與語文活動」區塊，將它們精準分配到對應的段落中。絕對禁止 AI 自己發明或通靈修辭！若該段沒有，請保持空陣列 \`[]\`。
-4. 🚨【DOK 提問提取】：請掃描 <SOURCE_TEXT> 裡的「認知層次提問矩陣」，把題目分配到對應的段落中。
+### 🚨 階段一：意義段絕對鎖定 (CRITICAL FATAL)
+請在 <SOURCE_TEXT> 中找到名為 **「【意義段大意】」** 的區塊。
+1. 數量強制鎖定：你看見那裡有幾點，你的 \`segments\` 陣列就必須有幾個物件！(例如原文有 5 點，陣列長度就必須是 5。絕對禁止擅自合併縮減成「起承轉合」4 段！)
+2. 標題 (title) 鎖定：必須「100% 複製」冒號前面的字。(例如原文是「一、事件一：」，title 就是「一、事件一」；原文是「四、結果：」，title 就是「四、結果」)。
+3. 大意 (summary) 鎖定：必須「100% 複製」冒號後面的整段句子。嚴禁換句話說！
 
-### 🏫 1️⃣ Teaching Strategy Logic (教學策略庫)
-請根據文本特性，選擇最適合的一項作為 macroStructure（如 N1 故事山、N2 流程圖）。
-⚠️ macroStructure 僅作為教學策略標籤，絕對不可以改變 \`segments\` 的數量！
+### 🚨 階段二：教學細項精準對位
+1. 【修辭與句型】：在 <SOURCE_TEXT> 中尋找「句型修辭與語文活動」區塊，將其一字不漏地複製並填入對應段落的 \`rhetorics\` 陣列。若該段沒有，請留空陣列 \`[]\`。
+2. 【DOK 提問】：在 <SOURCE_TEXT> 中尋找「認知層次提問矩陣」區塊，將題目與意圖複製並填入對應段落的 \`dokQuestions\` 陣列。
 
-- N1 故事山 / N2 流程圖 / N3 SWBST / N4 階梯圖 / N5 循環圖
-
-★ 語文百寶箱 (Teaching Strategies) 強制生成：利用策略庫邏輯腦力激盪出 3 個全新的教學策略，放入 \`strategies\` 陣列中。
+### 🏫 階段三：教學策略腦力激盪 (唯一允許創意的區塊)
+請結合宏觀架構 (如 N1 故事山)，想出 3 個創新的教學策略，放入 \`strategies\` 陣列。
 
 ### 📥 唯一合法來源
 <SOURCE_TEXT>
@@ -221,27 +217,27 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
   "segments": [ 
     { 
       "segmentIndex": 0, 
-      "title": "🚨必須 100% 照抄冒號前的標題", 
-      "type": "意義段類型",
-      "summary": "🚨必須 100% 照抄冒號後的內文", 
-      "evidence_quote": "原文原句", 
-      "difficultWords": ["難詞1", "難詞2"], 
-      "keywords": ["關鍵字1", "關鍵字2"], 
+      "title": "🚨(物理搬運) 照抄原文冒號前文字，如：一、事件一", 
+      "type": "填寫 起/承/轉/合 (僅作標籤，絕對不可改變段落數量)",
+      "summary": "🚨(物理搬運) 照抄原文冒號後文字", 
+      "evidence_quote": "從課文中找出一句符合該段大意的原句", 
+      "difficultWords": ["提取難詞"], 
+      "keywords": ["提取關鍵字"], 
       "rhetorics": [
         {
-          "name": "修辭或句型名稱",
+          "name": "修辭/句型名稱",
           "example": "原文例句",
-          "analysis": "解析說明",
+          "analysis": "解析",
           "pedagogicalPoint": "教學重點",
-          "application": "課堂應用"
+          "application": "課堂任務"
         }
       ], 
-      "dokQuestions": [ { "type": "DOK 1-4", "question": "題目內容", "intent": "測驗意圖" } ], 
+      "dokQuestions": [ { "type": "DOK 1-4", "question": "題目", "intent": "意圖" } ], 
       "sentencePatterns": [], 
-      "deepDive": "段落深究" 
+      "deepDive": "深究" 
     } 
   ],
-  "strategies": [ { "type": "策略類型", "title": "策略名稱", "method": "操作方法", "teachingPoint": "教學重點", "application": "任務應用" } ]
+  "strategies": [ { "type": "類型", "title": "策略名稱", "method": "操作", "teachingPoint": "重點", "application": "應用" } ]
 }
 `;
 
