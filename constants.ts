@@ -191,21 +191,26 @@ export const DEEP_VOCABULARY_PROMPT = `
 
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 # ROLE: V-MAX Master Kernel [STRICT_COPY_MODE]
-# MISSION: 你的唯一任務是「物理搬運」。絕對禁止你自行閱讀課文並重新撰寫摘要！你必須當一個沒有感情的打字機，把 <SOURCE_TEXT> 裡指定區塊的文字 100% 複製到 JSON 裡。
+# MISSION: 你的核心任務是「物理搬運」意義段，並在最後「發揮高階創意」生成三個教學策略。
 
 ### 🚨 階段一：意義段絕對鎖定 (CRITICAL FATAL)
 請在 <SOURCE_TEXT> 中找到名為 **「【意義段大意】」** 的區塊。
 1. 數量強制鎖定：你看見那裡有幾點，你的 \`segments\` 陣列就必須有幾個物件！(例如原文有標示一到五，共 5 點，陣列長度就必須是 5。🚨【絕對禁止】擅自合併、縮減或套用「起承轉合」4 段架構！)
-2. 標題 (title) 鎖定：必須「100% 複製」冒號前面的字。(例如原文是「一、事件一：」，title 就是「一、事件一」；原文是「四、結果：」，title 就是「四、結果」)。絕對禁止自己發明標題！
+2. 標題 (title) 鎖定：必須「100% 複製」冒號前面的字。(例如原文是「一、事件一：」，title 就是「一、事件一」)。絕對禁止自己發明標題！
 3. 大意 (summary) 鎖定：必須「100% 複製」冒號後面的整段句子。嚴禁換句話說！
 
-### 🚨 階段二：教學細項精準對位
-1. 【修辭與句型】：在 <SOURCE_TEXT> 中尋找「句型修辭與語文活動」區塊，將其一字不漏地複製並填入對應段落的 \`rhetorics\` 陣列。若該段沒有，請留空陣列 \`[]\`。
-2. 【DOK 提問】：在 <SOURCE_TEXT> 中尋找「認知層次提問矩陣」區塊，將題目與意圖複製並填入對應段落的 \`dokQuestions\` 陣列。
+### 🚨 階段二：教學細項精準對位 (物理搬運)
+1. 【修辭與句型】：在 <SOURCE_TEXT> 中尋找「句型修辭與語文活動」區塊，一字不漏地複製並填入對應段落的 \`rhetorics\` 陣列。若無請留空 \`[]\`。
+2. 【DOK 提問】：在 <SOURCE_TEXT> 中尋找「認知層次提問矩陣」區塊，將題目與意圖填入對應段落的 \`dokQuestions\` 陣列。
 
 ### 🏫 階段三：教學策略腦力激盪 (唯一允許創意的區塊)
-請結合宏觀架構 (如 N1 故事山)，想出 3 個創新的教學策略，放入 \`strategies\` 陣列。
-⚠️ 警告：macroStructure 僅作為教學策略標籤，【絕對不可以】因為選了故事山或結構圖，就把 \`segments\` 縮減改寫！
+請結合宏觀架構 (如 N1 故事山)，腦力激盪出 3 個具備深度與創意的「教學策略」，放入 \`strategies\` 陣列。
+⚠️ 策略生成的強制要求 (請參考你過去最優秀的表現)：
+- type: 英文標籤 (例如: INQUIRY, ROLEPLAY, CREATIVE WRITING)。
+- title: 具備文學美感與吸引力的標題 (例如: 寧靜破裂的瞬間)。
+- method: 方法論名稱 (例如: 心理定格分析法)。
+- teachingPoint (教學引導): 必須點出「學生常見的痛點或盲點」，並說明此策略如何幫助學生理解底層邏輯。
+- application (1分鐘微任務): 必須包含明確的操作步驟，並強制使用以下格式排版：[連結課文段落或情境] + [步驟 1] 具體的學生任務 -> [步驟 2] 預期的思辨產出。
 
 ### 📥 唯一合法來源
 <SOURCE_TEXT>
@@ -238,20 +243,24 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
       "deepDive": "深究" 
     } 
   ],
-  "strategies": [ { "type": "類型", "title": "策略名稱", "method": "操作", "teachingPoint": "重點", "application": "應用" } ]
+  "strategies": [ { "type": "INQUIRY", "title": "寧靜破裂的瞬間", "method": "情境對比觀察法", "teachingPoint": "點出盲點與引導邏輯", "application": "[連結課文...] + [步驟 1]... -> [步驟 2]..." } ]
 }
 `;
 
 export const REGENERATE_STRATEGIES_PROMPT = `
 [INSTRUCTION]
 # ROLE: V-MAX 核心教研專家
-# MISSION: 根據本課文本與當前選擇的宏觀架構「{MACRO_STRUCTURE}」，重新生成 3 個「語文百寶箱」教學策略。
-# REQUIREMENTS:
-- 必須包含三種不同類型：[修辭引導]、[思考支架]、[任務挑戰]。
-- 策略必須與「{MACRO_STRUCTURE}」的邏輯骨架緊密結合。
-- 輸出格式：Valid JSON Array ONLY.
-- [ { "type": "...", "title": "...", "method": "...", "teachingPoint": "...", "application": "..." } ]
-- 嚴禁幻覺，100% 遵守格式。
+# MISSION: 根據本課文本與當前選擇的宏觀架構「{MACRO_STRUCTURE}」，重新生成 3 個極具深度的「語文百寶箱」教學策略。
+
+### 🚨 策略生成的強制要求
+1. 必須包含三種不同類型，並使用英文標籤 (例如: INQUIRY, ROLEPLAY, CREATIVE WRITING)。
+2. title: 具備文學美感與吸引力的標題 (例如: 寧靜破裂的瞬間)。
+3. method: 方法論名稱 (例如: 心理定格分析法)。
+4. teachingPoint (教學引導): 必須點出「學生常見的痛點或盲點」，並說明此策略如何幫助學生理解底層邏輯。
+5. application (1分鐘微任務): 必須包含明確的操作步驟，並強制使用以下括號格式排版：[連結課文段落或情境] + [步驟 1] 具體的學生任務 -> [步驟 2] 預期的思辨產出。
+
+⚠️ Output format: Valid JSON Array ONLY.
+[ { "type": "...", "title": "...", "method": "...", "teachingPoint": "...", "application": "..." } ]
 `;
 
 export const GENERATE_SINGLE_STRATEGY_PROMPT = `
