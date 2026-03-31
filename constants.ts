@@ -203,14 +203,22 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 1. 【修辭與句型】：在 <SOURCE_TEXT> 中尋找「句型修辭與語文活動」區塊，一字不漏地複製並填入對應段落的 \`rhetorics\` 陣列。若無請留空 \`[]\`。
 2. 【DOK 提問】：在 <SOURCE_TEXT> 中尋找「認知層次提問矩陣」區塊，將題目與意圖填入對應段落的 \`dokQuestions\` 陣列。
 
-### 🏫 階段三：教學策略腦力激盪 (唯一允許創意的區塊)
+### 🏫 階段三：教學策略腦力激盪 (破壞式創新區塊)
 請結合宏觀架構 (如 N1 故事山)，腦力激盪出 3 個具備深度與創意的「教學策略」，放入 \`strategies\` 陣列。
-⚠️ 策略生成的強制要求 (請參考你過去最優秀的表現)：
-- type: 英文標籤 (例如: INQUIRY, ROLEPLAY, CREATIVE WRITING)。
-- title: 具備文學美感與吸引力的標題 (例如: 寧靜破裂的瞬間)。
-- method: 方法論名稱 (例如: 心理定格分析法)。
-- teachingPoint (教學引導): 必須點出「學生常見的痛點或盲點」，並說明此策略如何幫助學生理解底層邏輯。
-- application (1分鐘微任務): 必須包含明確的操作步驟，並強制使用以下格式排版：[連結課文段落或情境] + [步驟 1] 具體的學生任務 -> [步驟 2] 預期的思辨產出。
+
+🚨 創意突變強制協定 (CRITICAL MUTATION)：
+1. 【動詞封殺】：絕對禁止使用「畫線、圈出、找一找、朗讀、討論、分享」等傳統低階動詞！強制改用「辯論、偵查、解謎、改寫、法庭攻防、心理剖析」等高階互動動詞。
+2. 【視角強制啟動】：
+   - 策略一 (INQUIRY)：強制設計成「哲學思辨/極端情境」探討 (例如：如果剝奪了課文中的某個條件會怎樣？)。
+   - 策略二 (ROLEPLAY)：強制設計成「遊戲化/NPC視角/法庭辯論」任務。
+   - 策略三 (CREATIVE)：強制設計成「跨界改編/感官重塑」任務。
+
+⚠️ 策略生成的排版強制要求：
+- type: 英文標籤 (INQUIRY, ROLEPLAY, CREATIVE WRITING)。
+- title: 具備文學美感與吸引力的標題 (例如: 寧靜破裂的瞬間、法庭上的密碼戰)。
+- method: 方法論名稱 (例如: 心理定格分析法、極端情境假設法)。
+- teachingPoint: 必須點出「學生常見的痛點或盲點」，並說明此策略如何幫助學生理解底層邏輯。
+- application: 必須包含明確的操作步驟，並強制使用以下格式排版：[連結課文段落] + [步驟 1] 高階任務設計 -> [步驟 2] 預期的思辨產出。
 
 ### 📥 唯一合法來源
 <SOURCE_TEXT>
@@ -403,19 +411,46 @@ export const EXTRACT_IMAGE_TRAITS_PROMPT = `
 
 export const FINAL_ATOMIC_SCRIPT_PROMPT = `
 # ROLE: V-MAX System Master Kernel v60.8 (Layout & Anti-Hallucination Director)
-# MISSION: 根據傳入資料生成四維對位腳本。
+# MISSION: 嚴格根據傳入的資料，生成精準的四維對位腳本，並確保視覺提示詞的絕對安全。
 
-### 🎨 視覺 DNA 鎖定協定
+### 🎨 視覺 DNA 鎖定協定 (Character Consistency)
 ${CHARACTER_VISUAL_REF_PLACEHOLDER}
 
-### 📐 模組一：Layout 與 Lens 版面代碼庫
+### 📐 模組一：Layout 與 Lens 版面代碼庫 (SSOT)
+- [Cover]: 課程封面。displayText 必須明確列出【課名】、【文體】與【作者】。
 - [ContentFocus]: 課文內容對焦 -> layout: "wide-scene" | lens: "廣角鏡頭 (去背景優化)"
+- [ShapeSimilar]: 形近字辨析 -> lens: "左右分割對比大字排版"。layout: "split-2" 或 "grid-4"。
+- [IdiomLoop]: 成語解析 -> layout: "story-panel" | lens: "意境/生活應用故事版"
+- [LanguageActivity]: 語文活動 -> layout: "pattern-drill" | lens: "單圖大字互動舞台"
+- [Assessment]: 綜合評量 -> layout: "single-board" | lens: "單圖資訊板"
+
+### 📥 模組二：輸出規範 (Strict JSON Array)
+請輸出純 JSON 陣列。每個物件必須包含：
+[
+  {
+    "page_number": 數字,
+    "part_label": "PART A",
+    "type": "ContentFocus 等",
+    "title": "投影片標題",
+    "layout": "Layout 代碼",
+    "lens": "Lens 標準值",
+    "visual_prompt": "【英文】... 🚨加上 --no text",
+    "displayText": "顯示文字...",
+    "guideAction": "肢體動作",
+    "guideTalk": "台詞"
+  }
+]
 
 ### 📜 模組三：版型內容填充萬用通則
+- **角色演繹**：guideTalk 必須使用導師 Persona 專屬口頭禪。
+- **無文字生圖**：visual_prompt 禁止出現文字，結尾強制加上「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS IN THE IMAGE.」
+- **字數防爆破與自動分頁 (Pagination)**：🌟🚨 每一頁的 \`displayText\` 總字數【絕對禁止】超過 130 字！如果「語文活動」或「綜合評量」的題目與範例過多，你【必須主動】將其拆分為多張投影片生成（例如標題命名為「...(1)」、「...(2)」），確保每頁排版寬鬆。
 - **[ContentFocus] 標題與內文絕對對位鐵律**：🌟🚨 
   1. 【標題鎖定】：投影片的 \`title\` 欄位必須「100% 絕對照抄」參考數據中 segment.title 的內容（例如：一、事件一、四、結果）。
   2. 【文字鎖定】：\`displayText\` 欄位必須「100% 絕對照抄」參考數據中 segment.summary 的內容，嚴禁增減字數。
   3. 【生圖鎖定】：\`visual_prompt\` 必須包含該段落的 keywords 作為核心物件，確保生圖細節與課文精準對齊。
+- **[LanguageActivity] 排版鐵律**：🌟🚨 displayText 必須將「練習內容與範例」進行結構化條列排版！若遇到「修改句子、改錯字」，必須強制換行，並主動加上 ❌ 與 ✅ 等對比符號進行上下排列，絕對禁止把所有文字擠在同一行！
+- **[IdiomLoop]**：🌟🚨 visual_prompt 必須根據成語的「引申意義」或「生活應用例句」作畫！絕對禁止照字面直譯！
 `;
 
 // ============================================================
