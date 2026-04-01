@@ -191,34 +191,33 @@ export const DEEP_VOCABULARY_PROMPT = `
 
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 # ROLE: V-MAX Master Kernel [STRICT_COPY_MODE]
-# MISSION: 你的核心任務是「物理搬運」意義段，並在最後「發揮破壞式創新」生成三個教學策略。
+# MISSION: 將 <SOURCE_TEXT> 物理搬運至 JSON，具備「子項目拆分能力」，將【結構心智圖】關鍵字對位，並執行「策略雙模提取」。
 
-### 🚨 階段一：意義段絕對鎖定 (CRITICAL FATAL)
-請在 <SOURCE_TEXT> 中找到名為 **「【意義段大意】」** 的區塊。
-1. 數量強制鎖定：你看見那裡有幾點，你的 \`segments\` 陣列就必須有幾個物件！(例如原文有標示一到五，共 5 點，陣列長度就必須是 5。🚨【絕對禁止】擅自合併、縮減或套用「起承轉合」4 段架構！)
-2. 標題 (title) 鎖定：必須「100% 複製」冒號前面的字。(例如原文是「一、事件一：」，title 就是「一、事件一」)。絕對禁止自己發明標題！
-3. 大意 (summary) 鎖定：必須「100% 複製」冒號後面的整段句子。嚴禁換句話說！
+### 🚨 階段一：意義段與心智圖絕對鎖定 (CRITICAL FATAL)
+請在 <SOURCE_TEXT> 中找到 **「【意義段大意】」** 與 **「【結構心智圖】」** 區塊，並嚴格執行以下拆解邏輯：
+1. 🚨【心智圖核心提取】：將心智圖的「核心節點」一字不漏地填入 JSON 最外層的 \`mindMapCore\` 欄位。
+2. 🚨【子項目優先拆分】：若大項目下方包含子項目（如：㈠小樹苗、㈡老樹...），你【必須】將每一個子項目視為一個「獨立段落」！若無子項目則依主項目拆分。
+3. 🚨【數量強制鎖定】：請精準計算拆分後的總段落數，陣列長度必須剛好等於實際段落數。絕對禁止套用「起承轉合」4段架構！
+4. 🚨【標題 (title) 物理搬運】：優先抓取最末層序號作為標題（如：㈠、小樹苗）。若該項目沒有子項，則照抄主標題（如：一、事件一）。絕對禁止自己發明標題！
+5. 🚨【大意 (summary) 物理搬運】：必須「100% 複製」冒號後面的完整句子。嚴禁換句話說！
+6. 🚨【心智圖關鍵字精準對位】：掃描「【結構心智圖】」區塊，將該段對應的「結構分枝」後方的詞彙（如：通知單、節目流程...），填入該段落的 \`keywords\` 陣列中！
 
 ### 🚨 階段二：教學細項精準對位 (物理搬運)
-1. 【修辭與句型】：在 <SOURCE_TEXT> 中尋找「句型修辭與語文活動」區塊，一字不漏地複製並填入對應段落的 \`rhetorics\` 陣列。若無請留空 \`[]\`。
-2. 【DOK 提問】：在 <SOURCE_TEXT> 中尋找「認知層次提問矩陣」區塊，將題目與意圖填入對應段落的 \`dokQuestions\` 陣列。
+1. 【修辭與句型】：在 <SOURCE_TEXT> 中尋找「句型修辭與語文活動」，複製並填入 \`rhetorics\` 陣列。若無請留空 \`[]\`。
+2. 【DOK 提問】：在 <SOURCE_TEXT> 中尋找「認知層次提問矩陣」，將題目填入 \`dokQuestions\` 陣列。
 
-### 🏫 階段三：教學策略腦力激盪 (破壞式創新區塊)
-請結合宏觀架構 (如 N1 故事山)，腦力激盪出 3 個具備深度與創意的「教學策略」，放入 \`strategies\` 陣列。
-
-🚨 創意突變強制協定 (CRITICAL MUTATION)：
-1. 【動詞封殺】：絕對禁止使用「畫線、圈出、找一找、朗讀、討論、分享」等傳統低階動詞！強制改用「辯論、偵查、解謎、改寫、法庭攻防、心理剖析」等高階互動動詞。
-2. 【視角強制啟動】：
-   - 策略一 (INQUIRY)：強制設計成「哲學思辨/極端情境」探討。
-   - 策略二 (ROLEPLAY)：強制設計成「遊戲化/NPC視角/法庭辯論」任務。
-   - 策略三 (CREATIVE)：強制設計成「跨界改編/感官重塑」任務。
-
-⚠️ 策略生成的排版強制要求：
-- type: 英文標籤 (INQUIRY, ROLEPLAY, CREATIVE WRITING)。
-- title: 具備文學美感與吸引力的標題。
-- method: 方法論名稱。
-- teachingPoint: 點出「學生常見的痛點或盲點」，說明此策略如何幫助理解底層邏輯。
-- application: 必須包含明確的操作步驟，並強制使用以下格式排版：[連結課文段落] + [步驟 1] 高階任務設計 -> [步驟 2] 預期的思辨產出。
+### 🏫 階段三：策略百寶箱生成 (優先萃取題庫，其次創新發想)
+請為 \`strategies\` 陣列產出內容。🚨 執行邏輯如下：
+1. 🌟【優先：物理搬運專家提問】：請優先掃描 <SOURCE_TEXT> 中是否有「**策略思考 (DOK 3-4)**」區塊。
+   - 若有：請將裡面的所有題目轉化為策略物件。
+     - type: "DOK-QUESTION"
+     - title: 照抄括號內的標籤（例如：動機分析、生活遷移）。
+     - method: 填寫 "高階思辨提問法"。
+     - teachingPoint: 精簡說明該題欲培養的素養。
+     - application: 必須排版為「[核心提問] 照抄原文題目 -> [預期產出] 學生可能的討論方向」。
+2. 🌟【候補：破壞式創新發想】：若 <SOURCE_TEXT> 中「沒有」策略思考區塊，請啟動創意突變，腦力激盪出 3 個策略。
+   - 必須包含 INQUIRY (極端情境), ROLEPLAY (法庭/遊戲化), CREATIVE (跨界改編)。
+   - application 格式：「[連結課文] + [步驟 1] 高階任務設計 -> [步驟 2] 預期的思辨產出」。
 
 ### 📥 唯一合法來源
 <SOURCE_TEXT>
@@ -228,6 +227,7 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 請直接輸出純 JSON 格式 (不要包含 markdown 標籤，格式請參考以下結構)：
 {
   "macroStructure": "N1-N5",
+  "mindMapCore": "第六課 神奇密碼 (主旨：科技與便利)",
   "segments": [ 
     { 
       "segmentIndex": 0, 
@@ -236,22 +236,16 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
       "summary": "從通知單看到節目流程，發現神奇密碼讓生活變得方便。", 
       "evidence_quote": "原句擷取", 
       "difficultWords": ["難詞"], 
-      "keywords": ["關鍵字"], 
+      "keywords": ["通知單", "節目流程"], 
       "rhetorics": [
-        {
-          "name": "修辭/句型名稱",
-          "example": "原文例句",
-          "analysis": "解析",
-          "pedagogicalPoint": "教學重點",
-          "application": "課堂任務"
-        }
+        { "name": "修辭名稱", "example": "例句", "analysis": "解析", "pedagogicalPoint": "教學重點", "application": "任務" }
       ], 
       "dokQuestions": [ { "type": "DOK 1", "question": "問題內容", "intent": "意圖" } ], 
       "sentencePatterns": [], 
       "deepDive": "深究" 
     } 
   ],
-  "strategies": [ { "type": "INQUIRY", "title": "寧靜破裂的瞬間", "method": "情境對比觀察法", "teachingPoint": "點出盲點與引導邏輯", "application": "[連結課文] + [步驟 1] 高階任務設計 -> [步驟 2] 預期的思辨產出" } ]
+  "strategies": [ { "type": "DOK-QUESTION", "title": "動機分析", "method": "高階思辨提問法", "teachingPoint": "引導學生思考科技發明的底層需求", "application": "[核心提問] 作者在最後一段提到... -> [預期產出] 學生能舉出生活中實際的不便..." } ]
 }
 `;
 
@@ -418,7 +412,10 @@ ${CHARACTER_VISUAL_REF_PLACEHOLDER}
 
 ### 📐 模組一：Layout 與 Lens 版面代碼庫 (SSOT)
 - [Cover]: 課程封面。displayText 必須明確列出【課名】、【文體】與【作者】。
+- [MindMap]: 全課視覺資訊圖表 -> layout: "mind-map" | lens: "全景視覺化架構"
 - [ContentFocus]: 課文內容對焦 -> layout: "wide-scene" | lens: "廣角鏡頭 (去背景優化)"
+- [DeepDive]: 深究特寫 -> layout: "focus-point" | lens: "特寫隱喻 (聚焦於核心物件)"
+- [QuizCard]: 閱讀小挑戰 -> layout: "single-board" | lens: "單圖資訊板"
 - [ShapeSimilar]: 形近字辨析 -> lens: "左右分割對比大字排版"。layout: "split-2" 或 "grid-4"。
 - [IdiomLoop]: 成語解析 -> layout: "story-panel" | lens: "意境/生活應用故事版"
 - [LanguageActivity]: 語文活動 -> layout: "pattern-drill" | lens: "單圖大字互動舞台"
@@ -445,11 +442,26 @@ ${CHARACTER_VISUAL_REF_PLACEHOLDER}
 - **角色演繹**：guideTalk 必須使用導師 Persona 專屬口頭禪。
 - **無文字生圖**：visual_prompt 禁止出現文字，結尾強制加上「Safety: ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS IN THE IMAGE.」
 - **字數防爆破與自動分頁 (Pagination)**：🌟🚨 每一頁的 \`displayText\` 總字數【絕對禁止】超過 130 字！如果題目過多，你【必須主動】將其拆分為多張投影片。
-- **課文迴圈標題絕對鎖定 (CRITICAL)**：🌟🚨 針對每個意義段產出的投影片 (ContentFocus, DeepDive, QuizCard)，其 \`title\` 欄位【絕對禁止】使用「段落 1」這種字眼！你必須 100% 使用傳入的 segment.title 作為開頭：
+
+🌟🚨 【P3 視覺資訊圖表 (Infographic) 專屬生成鐵律】
+- P3 (通常在 Cover 之後) 必須是 \`[MindMap]\` 類型！
+- \`title\` 設定為「全課視覺架構」。
+- \`displayText\`：必須讀取 \`mindMapCore\` 與 \`segments\` 中的標題及 keywords。請使用排版符號（如 🚩、✨、➔、📌）將資料轉化為「資訊圖表」的文字層，精煉地呈現「核心➔各段脈絡」。
+- \`visual_prompt\`：🌟🌟🌟 絕對禁止畫出傳統的樹狀文字圖！你必須讀取 \`macroStructure\` (宏觀架構)，並自動翻譯為對應的視覺隱喻，畫出一張無文字的高級視覺資訊底圖：
+  - 🔺 若為【N1 故事山】：蜿蜒向上的立體山脈、頂峰與發光節點。
+  - 〰️ 若為【N2 流程圖】：漂浮的科技感發光絲帶或連續的踏腳石。
+  - 🧩 若為【N3 SWBST】：跨越峽谷的發光橋樑或完美相扣的立體拼圖。
+  - 📶 若為【N4 階梯圖】：向上延伸的立體發光階梯。
+  - 🔄 若為【N5 循環圖】：無限循環的發光莫比烏斯環。
+  (必須保留「留白空間 negative space」以利文字疊加！)
+
+🌟🚨 【課文迴圈標題與生圖鎖定鐵律 (CRITICAL)】
+- **標題絕對鎖定**：針對每個意義段產出的投影片 (ContentFocus, DeepDive, QuizCard)，其 \`title\` 欄位【絕對禁止】使用「段落 1」這種字眼！你必須 100% 使用傳入的 segment.title 作為開頭：
   1. 【內容對焦頁】：title 必須設定為「{segment.title}」（例如：一、事件一）
-  2. 【深究特寫頁】：title 必須設定為「{segment.title}：深究特寫」（例如：一、事件一：深究特寫）
-  3. 【閱讀小挑戰頁】：title 必須設定為「{segment.title}：閱讀小挑戰」（例如：一、事件一：閱讀小挑戰）
-- **[ContentFocus] 內文與生圖鎖定**：🌟🚨 \`displayText\` 必須「100% 絕對照抄」segment.summary 的內容。\`visual_prompt\` 必須包含該段落的 keywords 作為核心物件。
+  2. 【深究特寫頁】：title 必須設定為「{segment.title}：深究特寫」
+  3. 【閱讀小挑戰頁】：title 必須設定為「{segment.title}：閱讀小挑戰」
+- **[ContentFocus] 內文與生圖鎖定**：🌟🚨 \`displayText\` 必須「100% 絕對照抄」segment.summary 的內容。\`visual_prompt\` 必須根據 summary 構築情境，並且【絕對要將 keywords 裡面的心智圖詞彙畫進去】！
+- **[DeepDive] 生圖鎖定**：🌟🚨 \`visual_prompt\` 必須根據修辭或句型內容，畫出具有象徵意義的「抽象隱喻或特寫物件」(例如：放大鏡、發光齒輪、解鎖的鑰匙)。
 - **[LanguageActivity] 排版鐵律**：🌟🚨 displayText 必須將「練習內容與範例」進行結構化條列排版！遇到「修改句子、改錯字」，必須換行並加上 ❌ 與 ✅ 進行上下排列。
 - **[IdiomLoop]**：🌟🚨 visual_prompt 必須根據成語的「引申意義」或「生活應用例句」作畫！絕對禁止照字面直譯！
 `;

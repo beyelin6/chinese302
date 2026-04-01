@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import { 
   Layout, FileText, Check, Download, ArrowLeft, Loader2, 
   Sparkles, BookOpen, Database, Copy, Printer, Wand2, CheckCircle,
-  Gamepad2, Zap
+  Gamepad2, Zap, Trash2
 } from 'lucide-react';
 import { useWorkflowContext } from '../context/WorkflowContext';
 import InteractiveQuiz from './InteractiveQuiz';
@@ -199,6 +199,30 @@ slides:\n`;
     dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: JSON.stringify(newPayload, null, 2) } });
   };
 
+  // 🌟 新增的刪除投影片功能 🌟
+  const handleDeleteSlide = (indexToDelete: number) => {
+    const isConfirmed = window.confirm("確定要刪除這張投影片嗎？刪除後，後續的頁碼會自動往前遞補喔！");
+    
+    if (isConfirmed) {
+      // 1. 過濾掉被點擊刪除的那一頁
+      const updatedSlides = editableSlides.filter((_, idx) => idx !== indexToDelete);
+      
+      // 2. 重新編排頁碼，確保不會跳號 (1, 2, 3...)
+      const renumberedSlides = updatedSlides.map((slide, idx) => ({
+        ...slide,
+        page_number: idx + 1
+      }));
+
+      // 3. 更新畫面 State
+      setEditableSlides(renumberedSlides);
+      
+      // 4. 同步更新到全域 Context (這樣左邊的 YAML 跟匯出功能才會同步)
+      const currentPayload = JSON.parse(outputScript || '{}');
+      const newPayload = { ...currentPayload, slides: renumberedSlides };
+      dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: JSON.stringify(newPayload, null, 2) } });
+    }
+  };
+
   const handleDownload = () => {
     if (!syncRawCode) return;
 
@@ -304,14 +328,25 @@ slides:\n`;
                     <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 text-xs font-mono text-slate-500 flex justify-between items-center print:bg-white print:border-b-2 print:border-slate-800">
                       <span className="font-bold text-slate-800">投影片 P{slide.page_number || (idx + 1)} // 類型：{slide.type}</span>
                       
-                      {/* 🌟 魔法重寫按鈕 */}
-                      <button 
-                        onClick={() => handleRegenerateClick(idx, slide)}
-                        disabled={regeneratingIdx !== null}
-                        className="text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center gap-1 transition-colors print:hidden shadow-sm border border-indigo-100 active:scale-95"
-                      >
-                        <Wand2 size={12}/> AI 重寫這頁
-                      </button>
+                      {/* 🌟 動作按鈕群組 (重寫 + 刪除) */}
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => handleRegenerateClick(idx, slide)}
+                          disabled={regeneratingIdx !== null}
+                          className="text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center gap-1 transition-colors print:hidden shadow-sm border border-indigo-100 active:scale-95"
+                        >
+                          <Wand2 size={12}/> AI 重寫這頁
+                        </button>
+                        
+                        <button 
+                          onClick={() => handleDeleteSlide(idx)}
+                          disabled={regeneratingIdx !== null}
+                          className="text-[11px] font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-full flex items-center gap-1 transition-colors print:hidden shadow-sm border border-red-100 active:scale-95"
+                          title="刪除此頁"
+                        >
+                          <Trash2 size={12}/> 刪除
+                        </button>
+                      </div>
                     </div>
                     
                     <div className="p-5 space-y-4">
