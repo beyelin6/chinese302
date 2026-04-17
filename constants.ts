@@ -190,34 +190,28 @@ export const DEEP_VOCABULARY_PROMPT = `
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
-# ROLE: V-MAX Master Kernel [STRICT_COPY_MODE]
-# MISSION: 將 <SOURCE_TEXT> 物理搬運至 JSON，具備「子項目拆分能力」，將【結構心智圖】關鍵字對位，並執行「策略雙模提取」。
+# ROLE: V-MAX Master Kernel [STRICT_EXTRACTOR]
+# MISSION: 你是一個「毫無感情的資料提取機」。你的唯一任務是將 <SOURCE_TEXT> 中的資料「物理搬運」至 JSON，絕對禁止自行總結、改寫或發明內容！
 
 ### 🚨 階段一：意義段與心智圖絕對鎖定 (CRITICAL FATAL)
-請在 <SOURCE_TEXT> 中找到 **「【意義段大意】」** 與 **「【結構心智圖】」** 區塊，並嚴格執行以下拆解邏輯：
-1. 🚨【心智圖核心提取】：將心智圖的「核心節點」一字不漏地填入 JSON 最外層的 \`mindMapCore\` 欄位。
-2. 🚨【子項目優先拆分】：若大項目下方包含子項目（如：㈠小樹苗、㈡老樹...），你【必須】將每一個子項目視為一個「獨立段落」！若無子項目則依主項目拆分。
-3. 🚨【數量強制鎖定】：請精準計算拆分後的總段落數，陣列長度必須剛好等於實際段落數。絕對禁止套用「起承轉合」4段架構！
-4. 🚨【標題 (title) 物理搬運】：優先抓取最末層序號作為標題（如：㈠、小樹苗）。若該項目沒有子項，則照抄主標題（如：一、事件一）。絕對禁止自己發明標題！
-5. 🚨【大意 (summary) 物理搬運】：必須「100% 複製」冒號後面的完整句子。嚴禁換句話說！
-6. 🚨【心智圖關鍵字精準對位】：掃描「【結構心智圖】」區塊，將該段對應的「結構分枝」後方的詞彙（如：通知單、節目流程...），填入該段落的 \`keywords\` 陣列中！
+請在 <SOURCE_TEXT> 中找到 **「【意義段大意】」** 與 **「【結構心智圖】」** 區塊，嚴格執行以下拆解邏輯：
+1. 🚨【心智圖核心提取】：將心智圖的「核心節點」一字不漏填入 JSON 的 \`mindMapCore\` 欄位。
+2. 🚨【子項目優先拆分】：掃描原文，若大項目下方包含括號子項目（如：㈠...、㈡...），你【必須】將每一個括號子項目視為一個「獨立段落」！
+3. 🚨【標題與大意 100% 物理搬運 (防幻覺最高指導原則)】：
+   - **情況 A (有冒號)**：如「一、點出主題景點：野柳是...」。標題(title) = 冒號前「一、點出主題景點」。大意(summary) = 冒號後「野柳是...」。
+   - **情況 B (無冒號，純敘述)**：如「㈠透過傳說故事描寫...」。標題(title) = 擷取序號與前幾個字，例如「㈠、傳說故事」。大意(summary) = 完整照抄整句話「透過傳說故事描寫...」。
+   - ⚠️ 絕對禁止 AI 自行「總結」或發明不在該段原文裡的字眼！
+4. 🚨【數量強制鎖定】：精準計算總段落數。例如本課一、二(含㈠㈡)、三、四，共 5 段，\`segments\` 陣列長度必須為 5。
+5. 🚨【心智圖關鍵字精準對位】：將該段對應的「結構分枝」後方的詞彙（如：烏龜野柳岬、高貴女王頭），填入 \`keywords\` 陣列。
 
 ### 🚨 階段二：教學細項精準對位 (物理搬運)
-1. 【修辭與句型】：在 <SOURCE_TEXT> 中尋找「句型修辭與語文活動」，複製並填入 \`rhetorics\` 陣列。若無請留空 \`[]\`。
-2. 【DOK 提問】：在 <SOURCE_TEXT> 中尋找「認知層次提問矩陣」，將題目填入 \`dokQuestions\` 陣列。
+1. 【修辭與句型】：在 <SOURCE_TEXT> 中尋找「句型修辭與語文活動」，「一字不漏」複製並填入 \`rhetorics\` 陣列。若該段無對應修辭，請留空 \`[]\`。嚴禁自己發明修辭！
+2. 【DOK 提問】：在 <SOURCE_TEXT> 中尋找「認知層次提問矩陣 (DOK 1-2)」，將原題目「一字不漏」填入 \`dokQuestions\` 陣列。嚴禁自己發明問題！
 
-### 🏫 階段三：策略百寶箱生成 (優先萃取題庫，其次創新發想)
-請為 \`strategies\` 陣列產出內容。🚨 執行邏輯如下：
-1. 🌟【優先：物理搬運專家提問】：請優先掃描 <SOURCE_TEXT> 中是否有「**策略思考 (DOK 3-4)**」區塊。
-   - 若有：請將裡面的所有題目轉化為策略物件。
-     - type: "DOK-QUESTION"
-     - title: 照抄括號內的標籤（例如：動機分析、生活遷移）。
-     - method: 填寫 "高階思辨提問法"。
-     - teachingPoint: 精簡說明該題欲培養的素養。
-     - application: 必須排版為「[核心提問] 照抄原文題目 -> [預期產出] 學生可能的討論方向」。
-2. 🌟【候補：破壞式創新發想】：若 <SOURCE_TEXT> 中「沒有」策略思考區塊，請啟動創意突變，腦力激盪出 3 個策略。
-   - 必須包含 INQUIRY (極端情境), ROLEPLAY (法庭/遊戲化), CREATIVE (跨界改編)。
-   - application 格式：「[連結課文] + [步驟 1] 高階任務設計 -> [步驟 2] 預期的思辨產出」。
+### 🏫 階段三：策略百寶箱生成 (雙模提取)
+1. 🌟【優先：搬運專家提問】：優先掃描 <SOURCE_TEXT> 中是否有「**策略思考 (DOK 3-4)**」。若有，將裡面的題目轉化為策略物件。
+   - type: "DOK-QUESTION" / title: 括號內標籤 / method: "高階思辨提問法" / application: "[核心提問] 原文題目 -> [預期產出] 討論方向"
+2. 🌟【候補：創新發想】：若無策略思考區塊，才啟動創意突變，產出 INQUIRY, ROLEPLAY, CREATIVE 3 個策略。
 
 ### 📥 唯一合法來源
 <SOURCE_TEXT>
@@ -231,21 +225,21 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
   "segments": [ 
     { 
       "segmentIndex": 0, 
-      "title": "一、事件一", 
+      "title": "一、點出主題景點", 
       "type": "意義段", 
-      "summary": "從通知單看到節目流程，發現神奇密碼讓生活變得方便。", 
+      "summary": "野柳是作者的家鄉，也是著名的觀光景點。", 
       "evidence_quote": "原句擷取", 
       "difficultWords": ["難詞"], 
-      "keywords": ["通知單", "節目流程"], 
+      "keywords": ["著名觀光景點", "溫暖家鄉"], 
       "rhetorics": [
-        { "name": "修辭名稱", "example": "例句", "analysis": "解析", "pedagogicalPoint": "教學重點", "application": "任務" }
+        { "name": "修辭名稱", "example": "原文例句", "analysis": "解析", "pedagogicalPoint": "重點", "application": "任務" }
       ], 
-      "dokQuestions": [ { "type": "DOK 1", "question": "問題內容", "intent": "意圖" } ], 
+      "dokQuestions": [ { "type": "DOK 1", "question": "原汁原味的題目", "intent": "意圖" } ], 
       "sentencePatterns": [], 
       "deepDive": "深究" 
     } 
   ],
-  "strategies": [ { "type": "DOK-QUESTION", "title": "動機分析", "method": "高階思辨提問法", "teachingPoint": "引導學生思考科技發明的底層需求", "application": "[核心提問] 作者在最後一段提到... -> [預期產出] 學生能舉出生活中實際的不便..." } ]
+  "strategies": [ { "type": "DOK-QUESTION", "title": "動機分析", "method": "高階思辨提問法", "teachingPoint": "引導學生思考...", "application": "[核心提問] 作者提到... -> [預期產出] 學生能..." } ]
 }
 `;
 
