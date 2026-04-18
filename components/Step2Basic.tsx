@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, memo } from 'react';
 import { 
   BookOpen, Check, X, ArrowRight, ArrowLeft, 
   PenTool, CheckSquare, Square, Type, Layers, 
-  Hash, Info, Sparkles, MessageSquare, Tag 
+  Hash, Info, Sparkles, MessageSquare, Tag, Search 
 } from 'lucide-react';
 import { AnalysisData, VocabularyItem } from '../types';
 import { useWorkflowContext } from '../context/WorkflowContext';
@@ -16,11 +16,13 @@ import { useWorkflowContext } from '../context/WorkflowContext';
 const VocabCard = memo(({ 
   item, 
   onToggleFocus,
-  onUpdateOption
+  onUpdateOption,
+  onProofread
 }: { 
   item: VocabularyItem; 
   onToggleFocus: (word: string) => void;
   onUpdateOption: (word: string, key: 'wantsWritingTips' | 'wantsShapeSimilar' | 'wantsPolyphonic') => void;
+  onProofread: (item: VocabularyItem) => void;
 }) => {
   return (
     <div 
@@ -89,6 +91,13 @@ const VocabCard = memo(({
               <Hash size={16} /> 教多音
             </button>
           </div>
+
+          <button 
+            onClick={(e) => { e.stopPropagation(); onProofread(item); }}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-[10px] font-black border-2 border-slate-100 text-teal-600 hover:bg-teal-50 transition-all active:scale-95 shadow-sm"
+          >
+            <Search size={14} /> 進入人工校對與比對模式
+          </button>
         </div>
       )}
     </div>
@@ -99,16 +108,20 @@ interface Step2BasicProps {
   analysis: string | null; 
   onConfirmBasic: (confirmedData: AnalysisData) => void;
   isLoading: boolean;
+  onUpdateVocab: (word: string, updatedData: Partial<VocabularyItem>) => void;
   onBack: () => void;
 }
 
-const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoading, onBack }) => {
+const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoading, onUpdateVocab, onBack }) => {
   const { state, dispatch } = useWorkflowContext();
   const [data, setData] = useState<AnalysisData | null>(null);
+  const [proofreadItem, setProofreadItem] = useState<VocabularyItem | null>(null);
 
   // 🌟 [防呆提取]：確保即使資料尚未解析完成，元件也不會崩潰
   const vocabList = data?.coreVocabulary || [];
   const activityList = data?.languageActivities || [];
+  
+  const rawContext = state.analysisData?.fullText || "";
 
   // 下面要怎麼 filter 都不會壞掉了！
   const selectedVocabs = vocabList.filter((v: any) => v.isFocused);
@@ -168,6 +181,20 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
       };
     });
   }, []);
+
+  const handleSaveProofread = (updatedItem: VocabularyItem) => {
+    setData(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        coreVocabulary: prev.coreVocabulary.map(v => 
+          v.word === updatedItem.word ? updatedItem : v
+        )
+      };
+    });
+    onUpdateVocab(updatedItem.word, updatedItem);
+    setProofreadItem(null);
+  };
 
   // 🛡️ 加上防呆保護，避免 undefined 造成 .filter 當機
   const handleDeleteWord = (idx: number) => {

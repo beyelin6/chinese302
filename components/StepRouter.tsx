@@ -56,7 +56,8 @@ export default function StepRouter() {
     handleGeneratePolyphonic, 
     handleGenerateShapeSimilar, 
     handleGenerateShapeSimilarDetails,
-    handleGenerateIdiomDetails
+    handleGenerateIdiomDetails,
+    handleUpdateVocabularyItem
   } = useStep2Vocabulary();
   const { 
     handleStep2DeepVocabConfirm, 
@@ -142,6 +143,7 @@ export default function StepRouter() {
                 analysis={state.basicAnalysisResult} 
                 onConfirmBasic={handleStep2BasicConfirm} 
                 isLoading={state.isLoading}
+                onUpdateVocab={handleUpdateVocabularyItem}
                 onBack={handleBack}
               />
             );

@@ -206,12 +206,33 @@ export const useStep2Vocabulary = () => {
     } finally { dispatch({ type: 'SET_LOADING', payload: false }); }
   };
 
+  /**
+   * 🌟 [新增] 手動校對與修正：更新單一生字的提取資料
+   */
+  const handleUpdateVocabularyItem = (word: string, updatedData: Partial<VocabularyItem>) => {
+    if (!state.analysisData) return;
+    
+    const updatedVocab = state.analysisData.coreVocabulary.map(v => 
+      v.word === word ? { ...v, ...updatedData } : v
+    );
+
+    dispatch({ 
+      type: 'SET_BASIC_RESULT', 
+      payload: { 
+        ...state,
+        basicAnalysisResult: JSON.stringify({ ...state.analysisData, coreVocabulary: updatedVocab }),
+        analysisData: { ...state.analysisData, coreVocabulary: updatedVocab } 
+      } 
+    });
+  };
+
   return {
     handleStep2BasicConfirm,
     handleGenerateShapeSimilar,
     handleGenerateShapeSimilarDetails,
     handleGenerateMnemonic,
     handleGeneratePolyphonic,
-    handleGenerateIdiomDetails
+    handleGenerateIdiomDetails,
+    handleUpdateVocabularyItem
   };
 };

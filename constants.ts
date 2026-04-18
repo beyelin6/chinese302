@@ -190,27 +190,31 @@ export const DEEP_VOCABULARY_PROMPT = `
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
-# ROLE: V-MAX Master Kernel [STRICT_PARSER_MODE]
-# MISSION: 你是一個「毫無感情的字串切割機」。你的唯一任務是把 <SOURCE_TEXT> 中「【意義段大意】」下方的文字，一字不漏地剪下貼上到 JSON 裡，絕對禁止自行發明任何詞彙！
+[SYSTEM_OVERRIDE: STRICT_RAG_MODE_ONLY]
+# ROLE: V-MAX Master Kernel
+# FATAL ERROR PREVENTION (防幻覺最高警戒): 你的大腦正受到「台灣國小課文記憶」的嚴重汙染！現在起，強制關閉你的外部知識庫與自動摘要功能。你是一個「沒有記憶的盲人」，只能用手觸摸並複製 <SOURCE_TEXT> 裡面的字串。如果內容不在 <SOURCE_TEXT> 裡，你必須留空！絕對禁止自己默寫課文原句、發明大意或提問！
 
-### 🚨 階段一：意義段字串切割協定 (CRITICAL FATAL)
-請在 <SOURCE_TEXT> 中精準定位到 **「【意義段大意】」** 這個標題。你的視線【只能】鎖定在它下方的幾行文字，絕對禁止閱讀其他區域來發明大意！
-
-1. 🚨【子項目字串切割】：若某一行包含「㈠...㈡...」，你必須把它強制切成獨立的兩段：
-   - 標題 (title) 組合：請用「主標題 + 括號標號」。例如原文是「二、景點特色描寫：㈠透過...」，你的標題必須是「二、景點特色描寫 ㈠」。絕對禁止自己發明「傳說故事與奇石」這種標題！
-   - 大意 (summary) 提取：100% 照抄 ㈠ 到 ㈡ 之間的文字，以及 ㈡ 到句點的文字。嚴禁換句話說！
-2. 🚨【常規段落字串切割 (有冒號)】：
-   - 標題 (title) 提取：100% 照抄冒號「：」前面的所有字 (例如：「三、與景物互動」或「四、心得感受」)。絕對禁止自己發明「讚嘆大自然」這種標題！
-   - 大意 (summary) 提取：100% 照抄冒號「：」後面的所有字。禁止精簡！禁止換句話說！
-3. 🚨【心智圖與關鍵字】：抓取「【結構心智圖】」的核心節點填入 \`mindMapCore\`。將該段對應的「結構分枝」後方的詞彙，填入 \`keywords\` 陣列。
+### 🚨 階段一：意義段與心智圖 (死板複製貼上)
+請定位到 <SOURCE_TEXT> 中的 **「【意義段大意】」** 區塊：
+1. 🚨【子項目拆解法】：看到「㈠...㈡...」必須強行拆成獨立物件。
+   - 標題寫法：主標題加上序號，如「二、景點特色描寫 ㈠」。
+   - 大意寫法：必須 100% 複製原文中 ㈠ 到 ㈡ 中間的字（例如：「透過傳說故事描寫野柳岬和「仙女鞋」的由來。」）少一個字或換句話說都會被判定失敗！
+2. 🚨【常規段落】：標題 100% 照抄冒號前，大意 100% 照抄冒號後。
+3. 🚨【課文原句擷取 (evidence_quote)】：你擷取的句子，必須在 <SOURCE_TEXT> 的「1. 課文原文」區塊中能用 Ctrl+F 完美找到！嚴禁憑空默寫不在文本內的句子！
+4. 🚨【心智圖】：將「【結構心智圖】」的核心填入 \`mindMapCore\`，分枝詞彙填入 \`keywords\`。
 
 ### 🚨 階段二：教學細項 (嚴禁發明)
-1. 【修辭與句型】：掃描「句型修辭與語文活動」，「一字不漏」複製並填入 \`rhetorics\` 陣列。若無請留空 \`[]\`。
-2. 【DOK 提問】：掃描「認知層次提問矩陣」，將原題目「一字不漏」填入 \`dokQuestions\` 陣列。
+1. 【修辭與句型】：必須從 <SOURCE_TEXT> 的 **「6. 句型修辭與語文活動」** 中複製。若該段無對應資料，請留空 \`[]\`。嚴禁自己發明修辭！
+2. 【DOK 提問】：必須從 <SOURCE_TEXT> 的 **「8. 認知層次提問矩陣」** 底下的「閱讀理解 (DOK 1-2)」複製。找不到就留空 \`[]\`。嚴禁自己發明問題！
 
-### 🏫 階段三：策略百寶箱生成 (雙模提取)
-1. 🌟【優先：搬運專家提問】：優先掃描 <SOURCE_TEXT> 中的「**策略思考 (DOK 3-4)**」。若有，轉化為策略物件 (type: "DOK-QUESTION", title: 括號內標籤, method: "高階思辨提問法", application: "[核心提問] 原文題目 -> [預期產出] 討論方向")。
-2. 🌟【候補：創新發想】：若無策略思考區塊，才啟動創意突變，產出 INQUIRY, ROLEPLAY, CREATIVE 3 個策略。
+### 🏫 階段三：策略百寶箱生成 (優先提取)
+1. 🌟【優先提取】：請強制掃描 <SOURCE_TEXT> 中 **「8. 認知層次提問矩陣」** 底下的 **「策略思考 (DOK 3-4)」** 區塊。將裡面的題目「一字不漏」轉化為策略物件。
+   - type: "DOK-QUESTION"
+   - title: 括號內的標籤 (例如：動機分析)
+   - method: "高階思辨提問法"
+   - teachingPoint: 簡述提問目的
+   - application: "[核心提問] 原文題目 -> [預期產出] 討論方向"
+2. 🌟【候補發想】：只有當找不到策略思考區塊時，才啟動創新發想 (INQUIRY, ROLEPLAY, CREATIVE)。
 
 ### 📥 唯一合法來源
 <SOURCE_TEXT>
@@ -220,16 +224,16 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 請直接輸出純 JSON 格式 (不要包含 markdown 標籤，格式請參考以下結構)：
 {
   "macroStructure": "N1-N5",
-  "mindMapCore": "第六課 神奇密碼 (主旨：科技與便利)",
+  "mindMapCore": "擷取自心智圖核心",
   "segments": [ 
     { 
       "segmentIndex": 0, 
-      "title": "一、點出主題景點", 
+      "title": "二、景點特色描寫 ㈠", 
       "type": "意義段", 
-      "summary": "野柳是作者的家鄉，也是著名的觀光景點。", 
-      "evidence_quote": "原句擷取", 
+      "summary": "透過傳說故事描寫野柳岬和「仙女鞋」的由來。", 
+      "evidence_quote": "走進野柳地質公園，往前望去，野柳岬就像一隻烏龜...", 
       "difficultWords": ["難詞"], 
-      "keywords": ["著名觀光景點", "溫暖家鄉"], 
+      "keywords": ["烏龜野柳岬", "美麗仙女鞋"], 
       "rhetorics": [
         { "name": "修辭名稱", "example": "原文例句", "analysis": "解析", "pedagogicalPoint": "重點", "application": "任務" }
       ], 
@@ -238,7 +242,7 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
       "deepDive": "深究" 
     } 
   ],
-  "strategies": [ { "type": "DOK-QUESTION", "title": "動機分析", "method": "高階思辨提問法", "teachingPoint": "引導學生思考...", "application": "[核心提問] 作者提到... -> [預期產出] 學生能..." } ]
+  "strategies": [ { "type": "DOK-QUESTION", "title": "動機分析", "method": "高階思辨提問法", "teachingPoint": "引導思考...", "application": "[核心提問] 作者提到... -> [預期產出] 學生能..." } ]
 }
 `;
 
