@@ -189,41 +189,34 @@ export const DEEP_VOCABULARY_PROMPT = `
 請嚴格依照以下 JSON 結構輸出：
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
-// 🌟 終極強化版：針對 Markdown 列表與巢狀修辭結構的精準解析
+// 🌟 終極容器化解析版：針對「以意義段為單位」的結構進行精準映射
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
-[SYSTEM INSTRUCTION: STRICT STRUCTURAL PARSING & DATA MAPPING]
-# ROLE: V-MAX 終極資料結構映射器
-# FATAL WARNING: 嚴禁語意理解！嚴禁自行發揮！你的唯一任務是將傳入的 <SOURCE_DATA> (Markdown 格式)，一字不漏地填入目標 JSON 結構中。
+[SYSTEM INSTRUCTION: STRICT BLOCK-LEVEL PARSING & DATA MAPPING]
+# ROLE: V-MAX 終極資料結構解析器
+# FATAL WARNING: 嚴禁語意發揮！你的任務是將 <SOURCE_DATA> 依照「意義段區塊」精準切割，並填入 JSON 格式。
 
-### 🎯 任務核心：逐段精準映射 (Segment Mapping)
-請仔細掃描 <SOURCE_DATA> 中「【各段大意】」或「【意義段大意】」區塊底下的所有「- 意義段」條目。
-每一個「- 意義段」都對應到 JSON 陣列中的【一個獨立物件】。
+### 🎯 任務核心：意義段「容器化」解析 (Containerized Parsing)
+使用者已經將資料整理成以「意義段」為單位的結構。請你將每一個「意義段」(例如：【意義段 1】、- 意義段 1、或 意義段一) 視為一個獨立的【資料容器】。
 
-請【嚴格遵守】以下的對應關係 (Mapping Rules)：
+請【嚴格遵守】以下提取規則，且絕對禁止將 A 容器的資料混入 B 容器裡：
 
-1. **title & summary (大意)**:
-   若資料為："- 意義段 1：一、前言：溫暖的臺灣也有冰河時期動物─山椒魚。"
-   擷取規則：將 "一、前言" 放入 title，"溫暖的臺灣也有冰河時期動物─山椒魚。" 放入 summary。
-   若資料包含 ㈠ 等符號："- 意義段 2：二、景點特色描寫：㈠透過傳說故事..."
-   擷取規則：title 放 "二、景點特色描寫 ㈠"，summary 放 "透過傳說故事..."
+1. **title & summary (標題與大意)**:
+   - 從該意義段的開頭提取標題 (title)，例如 "一、前言" 或 "意義段 1"。
+   - 提取該段落的核心內容作為大意 (summary)，必須 100% 照抄原文。
 
 2. **evidence_quote (課文原句)**:
-   尋找該意義段底下的 "- 課文原句："，一字不漏地照抄冒號後面的字串。
+   - 尋找該「意義段容器」內的「課文原句」，一字不漏地照抄冒號或引號內的文字。
 
 3. **rhetorics (修辭分析)**:
-   若該意義段底下有 "- 修辭與寫作分析：" 的子項目，請將其轉化為 rhetorics 陣列中的物件。
-   - name: 照抄修辭名稱 (例如 "譬喻")
-   - example: 照抄引號內的例句
-   - analysis: 照抄 "【寫作效果】" 後面的文字
-   - pedagogicalPoint: 照抄 "【教學提問】" 後面的文字
+   - 尋找該「意義段容器」內的「修辭」或「寫作分析」區塊。
+   - 將其轉化為陣列：name (修辭名稱), example (原文例句), analysis (寫作效果), pedagogicalPoint (教學提問)。若無則保持空陣列 []。
 
-4. **dokQuestions (提問)**:
-   尋找該意義段底下的 "- 深度探究提問 (DOK 1-2)："。將提問內容照抄。
+4. **dokQuestions (深度提問)**:
+   - 尋找該「意義段容器」內的「深度探究提問」或「DOK」。照抄題目。
 
-### 🎯 任務二：全域資料提取
-1. **mindMapCore**: 去「【結構心智圖】」區塊，找 "- 核心："，複製其內容。
-2. **keywords**: 在「【結構心智圖】」區塊中，蒐集所有箭頭或分枝後的詞彙，放入陣列。
-3. **strategies**: 在「【8. 認知層次提問矩陣】」中找「- 策略思考 (DOK 3-4)：」。將括號內的標籤當作 title，冒號後的問題當作 application 裡的 [核心提問]。若無，則自行生成。
+### 🎯 任務二：全域附屬資料 (Global Data)
+1. **mindMapCore & keywords**: 尋找全域的「結構心智圖」區塊，提取核心與分枝關鍵字放入對應欄位。
+2. **strategies**: 尋找全域的「策略思考 (DOK 3-4)」並轉化為教學策略物件。若沒有提供，才自行生成 3 個。
 
 <SOURCE_DATA>
 {INPUT_TEXT}
@@ -236,21 +229,21 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
   "segments": [ 
     { 
       "segmentIndex": 0, 
-      "title": "意義段的標題(例如：一、前言 或 二、景點 ㈠)", 
+      "title": "意義段的標題", 
       "type": "意義段", 
       "summary": "100%照抄意義段的大意內容", 
-      "evidence_quote": "100%照抄 '- 課文原句：' 後面的文字", 
-      "difficultWords": [], 
-      "keywords": ["從心智圖中蒐集屬於這段的關鍵字"], 
+      "evidence_quote": "100%照抄課文原句", 
+      "difficultWords": ["難詞"], 
+      "keywords": ["從該段落的資料或心智圖中提取對應關鍵字"], 
       "rhetorics": [
-        { "name": "修辭名稱", "example": "原文例句", "analysis": "寫作效果", "pedagogicalPoint": "教學提問", "application": "微任務" }
+        { "name": "修辭名稱", "example": "原文例句", "analysis": "寫作效果", "pedagogicalPoint": "教學重點", "application": "微任務" }
       ], 
-      "dokQuestions": [ { "type": "DOK 1/2", "question": "深度探究提問的題目", "intent": "探究文本" } ], 
+      "dokQuestions": [ { "type": "DOK 1/2", "question": "提問內容", "intent": "探究意圖" } ], 
       "sentencePatterns": [], 
-      "deepDive": "探究文本的引導方向" 
+      "deepDive": "深究引導方向" 
     } 
   ],
-  "strategies": [ { "type": "DOK-QUESTION", "title": "動機分析", "method": "高階思辨提問法", "teachingPoint": "引導思考...", "application": "[核心提問] 作者提到... -> [預期產出] 學生能..." } ]
+  "strategies": [ { "type": "DOK-QUESTION", "title": "策略標題", "method": "提問法", "teachingPoint": "引導思考...", "application": "[核心提問] 題目... -> [預期產出] ..." } ]
 }
 `;
 
