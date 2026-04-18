@@ -56,7 +56,15 @@ export const useStep3Segments = () => {
       `;
       
       const response1 = await sendMessageToGemini(prompt1, [], 0, { temperature: 0.1, responseMimeType: "application/json" });
-      const parsedSegments = sanitizeAndParseJSON(response1);
+      let parsedSegments = sanitizeAndParseJSON(response1);
+
+      // 🌟 [對接攔截器]：將 AI 可能輸出的 exact_raw_text 轉換回 UI 認讀的 summary
+      if (parsedSegments && Array.isArray(parsedSegments.segments)) {
+        parsedSegments.segments = parsedSegments.segments.map((seg: any) => ({
+          ...seg,
+          summary: seg.exact_raw_text || seg.summary
+        }));
+      }
 
       validateGroundedness(parsedSegments, rawSourceText);
 

@@ -258,6 +258,7 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
               item={item}
               onToggleFocus={toggleFocus}
               onUpdateOption={updateOption}
+              onProofread={setProofreadItem}
             />
           ))}
         </div>

@@ -189,33 +189,31 @@ export const DEEP_VOCABULARY_PROMPT = `
 請嚴格依照以下 JSON 結構輸出：
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
-// 🌟 終極容器化解析版：針對「以意義段為單位」的結構進行精準映射
+// 🌟 關聯式對位解析版：針對具備「所在位置 / 對應位置」標籤的結構進行跨區塊合併
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
-[SYSTEM INSTRUCTION: STRICT BLOCK-LEVEL PARSING & DATA MAPPING]
-# ROLE: V-MAX 終極資料結構解析器
-# FATAL WARNING: 嚴禁語意發揮！你的任務是將 <SOURCE_DATA> 依照「意義段區塊」精準切割，並填入 JSON 格式。
+[SYSTEM INSTRUCTION: STRICT RELATIONAL MAPPING & CROSS-REFERENCE]
+# ROLE: V-MAX 關聯式資料映射器 (Relational Data Mapper)
+# FATAL WARNING: 嚴禁語意發揮！你的任務是將 <SOURCE_DATA> 中的三個獨立區塊 (大意、修辭、提問) 透過「位置標籤」完美合併到同一個 JSON 結構中。
 
-### 🎯 任務核心：意義段「容器化」解析 (Containerized Parsing)
-使用者已經將資料整理成以「意義段」為單位的結構。請你將每一個「意義段」(例如：【意義段 1】、- 意義段 1、或 意義段一) 視為一個獨立的【資料容器】。
+### 🎯 步驟一：建立意義段基底 (從【6. 課文解析與結構心智圖】提取)
+請到「【意義段大意】」區塊，提取所有的段落並建立為 JSON 陣列。
+- 🚨 **子項目拆分鐵律**：如果段落底下包含 ㈠、㈡，必須強制拆成獨立的物件！
+  例如 "二、景點特色描寫：㈠... ㈡..." 必須拆成 "二、景點特色描寫 ㈠" 與 "二、景點特色描寫 ㈡"。
+- 將冒號後的內容填入 summary。
 
-請【嚴格遵守】以下提取規則，且絕對禁止將 A 容器的資料混入 B 容器裡：
+### 🎯 步驟二：跨區塊合併修辭與原句 (從【5. 句型修辭與語文活動】提取)
+請到第 5 區塊，逐條讀取資料，並比對「所在位置」。
+- 將 \`**課文原句：[內容]**\` 的內容，填入對應意義段的 \`evidence_quote\` 欄位。
+- 將 \`句型/修辭：[名稱]\` 填入 \`rhetorics\` 陣列的 \`name\`。
+- 將 \`**課文原句：[內容]**\` 同時填入 \`rhetorics\` 的 \`example\`。
+- 將 \`說明：[內容]\` 填入 \`rhetorics\` 的 \`analysis\`。
 
-1. **title & summary (標題與大意)**:
-   - 從該意義段的開頭提取標題 (title)，例如 "一、前言" 或 "意義段 1"。
-   - 提取該段落的核心內容作為大意 (summary)，必須 100% 照抄原文。
+### 🎯 步驟三：跨區塊合併提問 (從【7. 認知層次提問矩陣】提取)
+請到第 7 區塊，逐條讀取資料，並比對「對應位置」。
+- 將 \`[提問內容]\` 填入對應意義段的 \`dokQuestions\` 陣列中。
 
-2. **evidence_quote (課文原句)**:
-   - 尋找該「意義段容器」內的「課文原句」，一字不漏地照抄冒號或引號內的文字。
-
-3. **rhetorics (修辭分析)**:
-   - 尋找該「意義段容器」內的「修辭」或「寫作分析」區塊。
-   - 將其轉化為陣列：name (修辭名稱), example (原文例句), analysis (寫作效果), pedagogicalPoint (教學提問)。若無則保持空陣列 []。
-
-4. **dokQuestions (深度提問)**:
-   - 尋找該「意義段容器」內的「深度探究提問」或「DOK」。照抄題目。
-
-### 🎯 任務二：全域附屬資料 (Global Data)
-1. **mindMapCore & keywords**: 尋找全域的「結構心智圖」區塊，提取核心與分枝關鍵字放入對應欄位。
+### 🎯 步驟四：全域資料提取
+1. **mindMapCore & keywords**: 到「【結構心智圖】」區塊，提取核心與分枝關鍵字放入對應欄位。
 2. **strategies**: 尋找全域的「策略思考 (DOK 3-4)」並轉化為教學策略物件。若沒有提供，才自行生成 3 個。
 
 <SOURCE_DATA>
@@ -229,16 +227,16 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
   "segments": [ 
     { 
       "segmentIndex": 0, 
-      "title": "意義段的標題", 
+      "title": "意義段的標題 (例：二、景點特色描寫 ㈠)", 
       "type": "意義段", 
       "summary": "100%照抄意義段的大意內容", 
-      "evidence_quote": "100%照抄課文原句", 
-      "difficultWords": ["難詞"], 
-      "keywords": ["從該段落的資料或心智圖中提取對應關鍵字"], 
+      "evidence_quote": "從第5區塊的『課文原句』合併過來", 
+      "difficultWords": [], 
+      "keywords": ["從第6區的心智圖分枝合併過來"], 
       "rhetorics": [
-        { "name": "修辭名稱", "example": "原文例句", "analysis": "寫作效果", "pedagogicalPoint": "教學重點", "application": "微任務" }
+        { "name": "修辭名稱", "example": "原文例句", "analysis": "說明", "pedagogicalPoint": "", "application": "" }
       ], 
-      "dokQuestions": [ { "type": "DOK 1/2", "question": "提問內容", "intent": "探究意圖" } ], 
+      "dokQuestions": [ { "type": "DOK 1/2", "question": "從第7區合併過來的提問", "intent": "提問類型" } ], 
       "sentencePatterns": [], 
       "deepDive": "深究引導方向" 
     } 
