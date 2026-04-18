@@ -26,8 +26,7 @@ export const useStep3Segments = () => {
   };
 
   /**
-   * 1. 核心任務：執行從 2.5 到 2.75 的初始生成
-   * 採用兩階段呼叫：階段一(低溫)精準萃取，階段二(高溫)生成策略
+   * 1. 核心任務：執行從 2.5 到 2.75 的初始生成 (保留所有細節指令)
    */
   const handleStep2DeepVocabConfirm = async (confirmedVocabDataString: string) => {
     if (isProcessing.current) return;
@@ -45,9 +44,7 @@ export const useStep3Segments = () => {
 
       const rawSourceText = state.analysisData?.fullText || state.basicAnalysisResult || "";
       
-      // ==========================================
-      // 第一階段：解構意義段落 (使用 0.1 溫度確保 100% 複製)
-      // ==========================================
+      // --- 第一階段：解構意義段落 ---
       dispatch({ type: 'SET_LOADING_STATUS', payload: '正在執行：意義段落深究...' });
       
       const prompt1 = `
@@ -58,18 +55,8 @@ export const useStep3Segments = () => {
         2. 若該段落包含清單中的詞彙，請務必將其列入該段落的 \`difficultWords\` 欄位中。
       `;
       
-      // 這裡強制傳入 { temperature: 0.1 }，覆蓋 gemini.ts 的預設值
       const response1 = await sendMessageToGemini(prompt1, [], 0, { temperature: 0.1, responseMimeType: "application/json" });
-      let parsedSegments = sanitizeAndParseJSON(response1);
-
-      // 🌟🌟🌟 [核心攔截器]：將 exact_raw_text 轉回 summary 🌟🌟🌟
-      if (parsedSegments && Array.isArray(parsedSegments.segments)) {
-        parsedSegments.segments = parsedSegments.segments.map((seg: any) => ({
-          ...seg,
-          // 確保 UI 拿到名為 summary 的資料
-          summary: seg.exact_raw_text || seg.summary || "提取失敗"
-        }));
-      }
+      const parsedSegments = sanitizeAndParseJSON(response1);
 
       validateGroundedness(parsedSegments, rawSourceText);
 
@@ -77,11 +64,11 @@ export const useStep3Segments = () => {
       const macroStructure = parsedSegments.macroStructure || "N1 故事山";
 
       // ==========================================
-      // 第二階段：為全課生成共用的「語文百寶箱策略」 (使用 0.5 溫度保留創意)
+      // 第二階段：為全課生成共用的「語文百寶箱策略」
       // ==========================================
       dispatch({ type: 'SET_LOADING_STATUS', payload: '正在進行第二階段：編寫高質感教學策略...' });
       
-      // 確保將轉接後的 summary 傳給第二階段
+      // 🌟 [修復點]：統一 JSON Schema 鍵值為 teachingPoint 與 application
       const prompt2 = `
         你現在是一位「創意教學設計師」。請根據以下段落與宏觀架構「${macroStructure}」，設計 3 個極具啟發性、細節豐富的教學策略卡片。
         
@@ -111,12 +98,11 @@ export const useStep3Segments = () => {
       const strategiesData = sanitizeAndParseJSON(response2);
       const validStrategies = strategiesData.strategies || [];
 
-      // 🌟 [防呆更新]：組合最終結果
+      // 🌟 [防呆更新]：防呆預設值也必須對應正確的 Key
       const finalResult = {
           macroStructure: macroStructure,
           segments: validSegments,
-          // 如果第二階段生成失敗，嘗試拿第一階段的，若還是沒有則給預設值
-          strategies: validStrategies.length > 0 ? validStrategies : (parsedSegments.strategies && parsedSegments.strategies.length > 0 ? parsedSegments.strategies : [
+          strategies: validStrategies.length > 0 ? validStrategies : [
               { 
                 title: "內容回顧", 
                 type: "Thinking", 
@@ -124,7 +110,7 @@ export const useStep3Segments = () => {
                 teachingPoint: "透過提問確認學生是否掌握本課核心精神。", 
                 application: "請學生用一句話總結主角的特質。" 
               }
-          ])
+          ]
       };
 
       dispatch({ type: 'SET_SEGMENTS_RESULT', payload: JSON.stringify(finalResult) });

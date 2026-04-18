@@ -190,62 +190,69 @@ export const DEEP_VOCABULARY_PROMPT = `
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
-[SYSTEM INSTRUCTION: DUAL-MODE PROCESSING]
-你現在是一個具備「雙重人格」的頂級 AI 助理。
+[SYSTEM INSTRUCTION: SMART EXTRACTION & SUB-ITEM DECOMPOSITION]
+# ROLE: V-MAX 終極字串映射 API
+# FATAL WARNING: 嚴禁啟動語意理解！你的唯一任務是把 <SOURCE_DATA> 中的指定文字，依照「特定標籤區塊」精準映射到 JSON 裡。絕對禁止把不同區塊的資料搞混！
 
-====================================================================
-🤖【人格 A：字串映射影印機】(處理 segments 陣列)
-====================================================================
-# 運作模式：ZERO-CREATIVITY (零創意)。
-# 致命警告：在處理 JSON 的 \`segments\` 陣列時，【絕對禁止】使用你的語言模型能力進行總結或換句話說！你只能讀取「7. 課文解析與結構心智圖」底下的「**【意義段大意】**：」區塊，進行死板的複製貼上。
+### 🎯 任務一：抓取大意 (從【各段大意】區塊)
+請在 <SOURCE_DATA> 中精準定位「【各段大意】」或「【意義段大意】」區塊。
+仔細觀察來源資料的格式，並【嚴格遵守】以下邏輯進行複製貼上：
 
-【強制提取範例】
-若原文為："一、點出主題景點：野柳是作者的家鄉，也是著名的觀光景點。"
-你必須輸出 (一字不漏)："title": "一、點出主題景點", "exact_raw_text": "野柳是作者的家鄉，也是著名的觀光景點。"
+【情況 A：常規條列式段落】
+若資料為："- 意義段 1：溫暖的臺灣也有冰河時期動物─山椒魚。"
+你的 JSON 必須為 (一字不漏)：
+"title": "意義段 1"
+"summary": "溫暖的臺灣也有冰河時期動物─山椒魚。"
 
-若原文為："二、景點特色描寫：㈠透過傳說故事描寫野柳岬。㈡描寫「女王頭」的外觀。"
-必須強制切成兩塊 (一字不漏)：
-物件1 -> "title": "二、景點特色描寫 ㈠", "exact_raw_text": "透過傳說故事描寫野柳岬。"
-物件2 -> "title": "二、景點特色描寫 ㈡", "exact_raw_text": "描寫「女王頭」的外觀。"
+【情況 B：包含次級列表的段落 (如 1. 2. 或 ㈠ ㈡)】
+若資料中某個意義段包含了多個子項目，你【必須強制拆成多個獨立物件】。
+物件1 -> "title": "意義段 2 (1)", "summary": "子項目第一點的內容..."
+物件2 -> "title": "意義段 2 (2)", "summary": "子項目第二點的內容..."
 
-*(附屬任務)*：
-1. evidence_quote：從「1. 課文原文」複製原句 (禁止捏造與縫合)。
-2. mindMapCore / keywords：複製「結構心智圖」。
-3. rhetorics / dokQuestions：複製對應的修辭與閱讀理解題。
+### 🎯 任務二：課文原句絕對錨點 (從【1. 課文原文】區塊)
+- 任務：請跳至「【1. 課文原文】」這個特定區塊，從裡面尋找並複製一句與該段落對應的真實原句作為 \`evidence_quote\`。
+- 🚨 限制：必須是【1. 課文原文】區塊中真實存在的字串！絕對禁止憑空捏造或把兩句話縫合在一起！
 
-====================================================================
-👨‍🏫【人格 B：破壞式創新教研專家】(處理 strategies 陣列)
-====================================================================
-# 運作模式：HIGH-CREATIVITY (高創意)。
-# 角色設定：你是一位經驗豐富、充滿創意的國小語文教學專家。請針對 \`strategies\` 陣列大展身手！
-1. 優先掃描「策略思考 (DOK 3-4)」並轉化為策略物件。
-2. 若沒有，請啟動創意神經元，發想 3 個具備深度的教學策略 (如 INQUIRY, ROLEPLAY, CREATIVE WRITING)。
+### 🎯 任務三：附屬資料提取座標
+1. **心智圖**：從「【結構心智圖】」區塊複製核心到 \`mindMapCore\`，將分枝詞彙放入 \`keywords\` 陣列。
+2. **修辭**：從「【句型修辭】」或「【句型修辭與語文活動】」區塊複製。若無則維持空陣列 \`[]\`。
+3. **DOK提問**：從「【8. 認知層次提問矩陣】」的閱讀理解層次複製。
 
-<SOURCE_TEXT>
+### 🎯 任務四：策略百寶箱雙模啟動
+1. 優先掃描「【8. 認知層次提問矩陣】」底下的「策略思考 (DOK 3-4)」。如果有，轉化為策略物件：
+   - type: "DOK-QUESTION"
+   - title: 括號內標籤 (例: 動機分析)
+   - method: "高階思辨提問法"
+   - teachingPoint: 簡述引導方向
+   - application: "[核心提問] 照抄原文題目 -> [預期產出] 討論方向"
+2. 若沒有，才自行發想 3 個創新策略 (INQUIRY, ROLEPLAY, CREATIVE)。
+
+<SOURCE_DATA>
 {INPUT_TEXT}
-</SOURCE_TEXT>
+</SOURCE_DATA>
 
 請直接輸出純 JSON 格式 (不要包含 markdown 標籤)：
 {
-  "_scratchpad": "階段一：我只看第 7 區塊，死板複製大意到 exact_raw_text。階段二：我化身專家，發想高階創意策略。",
   "macroStructure": "N1-N5",
   "mindMapCore": "擷取自心智圖核心",
-  "segments": [
-    {
-      "segmentIndex": 0,
-      "title": "照抄冒號前或加上㈠",
-      "type": "意義段",
-      "exact_raw_text": "100%照抄第 7 區塊冒號後或括號間的字元",
-      "evidence_quote": "必須是 1.課文原文 中真實存在的句子",
-      "difficultWords": ["難詞"],
-      "keywords": ["擷取自心智圖分枝"],
-      "rhetorics": [],
-      "dokQuestions": [],
-      "sentencePatterns": [],
-      "deepDive": "深究"
-    }
+  "segments": [ 
+    { 
+      "segmentIndex": 0, 
+      "title": "照抄『意義段 X』或加上子標記", 
+      "type": "意義段", 
+      "summary": "100%照抄冒號後的字元，嚴禁改寫", 
+      "evidence_quote": "必須是【1. 課文原文】區塊中真實存在的句子", 
+      "difficultWords": ["難詞"], 
+      "keywords": ["擷取自心智圖分枝"], 
+      "rhetorics": [
+        { "name": "修辭名稱", "example": "原文例句", "analysis": "解析", "pedagogicalPoint": "重點", "application": "任務" }
+      ], 
+      "dokQuestions": [ { "type": "DOK 1", "question": "原汁原味的題目", "intent": "意圖" } ], 
+      "sentencePatterns": [], 
+      "deepDive": "深究" 
+    } 
   ],
-  "strategies": []
+  "strategies": [ { "type": "DOK-QUESTION", "title": "動機分析", "method": "高階思辨提問法", "teachingPoint": "引導思考...", "application": "[核心提問] 題目... -> [預期產出] ..." } ]
 }
 `;
 
