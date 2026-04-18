@@ -62,8 +62,8 @@ export const useStep1Analysis = () => {
         }
       }
 
-      // 🌟 [對齊 1] 強化雷達：擴大正則表達式的命中範圍，包含「意義段大意」與「結構大意」
-      const isStructured = /基本資訊|各段大意|意義段大意|字形字音|結構大意|內容大意/.test(finalInputText);
+      // 🌟 [對齊 1] 強化雷達：擴大正則表達式的命中範圍，包含階層符號與意義段標語
+      const isStructured = /基本資訊|各段大意|意義段大意|字形字音|結構大意|內容大意|[一二三四五六七八九十]、|㈠|㈡|㈢|㈣|㈤/.test(finalInputText);
       
       // 選用對應的 Prompt (FAST 模式會優先抓取辨析資料)
       const promptSuffix = isStructured 
