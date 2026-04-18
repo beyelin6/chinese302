@@ -189,43 +189,41 @@ export const DEEP_VOCABULARY_PROMPT = `
 請嚴格依照以下 JSON 結構輸出：
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
+// 🌟 終極強化版：針對 Markdown 列表與巢狀修辭結構的精準解析
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
-[SYSTEM INSTRUCTION: SMART EXTRACTION & SUB-ITEM DECOMPOSITION]
-# ROLE: V-MAX 終極字串映射 API
-# FATAL WARNING: 嚴禁啟動語意理解！你的唯一任務是把 <SOURCE_DATA> 中的指定文字，依照「特定標籤區塊」精準映射到 JSON 裡。絕對禁止把不同區塊的資料搞混！
+[SYSTEM INSTRUCTION: STRICT STRUCTURAL PARSING & DATA MAPPING]
+# ROLE: V-MAX 終極資料結構映射器
+# FATAL WARNING: 嚴禁語意理解！嚴禁自行發揮！你的唯一任務是將傳入的 <SOURCE_DATA> (Markdown 格式)，一字不漏地填入目標 JSON 結構中。
 
-### 🎯 任務一：抓取大意 (從【各段大意】區塊)
-請在 <SOURCE_DATA> 中精準定位「【各段大意】」或「【意義段大意】」區塊。
-仔細觀察來源資料的格式，並【嚴格遵守】以下邏輯進行複製貼上：
+### 🎯 任務核心：逐段精準映射 (Segment Mapping)
+請仔細掃描 <SOURCE_DATA> 中「【各段大意】」或「【意義段大意】」區塊底下的所有「- 意義段」條目。
+每一個「- 意義段」都對應到 JSON 陣列中的【一個獨立物件】。
 
-【情況 A：常規條列式段落】
-若資料為："- 意義段 1：溫暖的臺灣也有冰河時期動物─山椒魚。"
-你的 JSON 必須為 (一字不漏)：
-"title": "意義段 1"
-"summary": "溫暖的臺灣也有冰河時期動物─山椒魚。"
+請【嚴格遵守】以下的對應關係 (Mapping Rules)：
 
-【情況 B：包含次級列表的段落 (如 1. 2. 或 ㈠ ㈡)】
-若資料中某個意義段包含了多個子項目，你【必須強制拆成多個獨立物件】。
-物件1 -> "title": "意義段 2 (1)", "summary": "子項目第一點的內容..."
-物件2 -> "title": "意義段 2 (2)", "summary": "子項目第二點的內容..."
+1. **title & summary (大意)**:
+   若資料為："- 意義段 1：一、前言：溫暖的臺灣也有冰河時期動物─山椒魚。"
+   擷取規則：將 "一、前言" 放入 title，"溫暖的臺灣也有冰河時期動物─山椒魚。" 放入 summary。
+   若資料包含 ㈠ 等符號："- 意義段 2：二、景點特色描寫：㈠透過傳說故事..."
+   擷取規則：title 放 "二、景點特色描寫 ㈠"，summary 放 "透過傳說故事..."
 
-### 🎯 任務二：課文原句絕對錨點 (從【1. 課文原文】區塊)
-- 任務：請跳至「【1. 課文原文】」這個特定區塊，從裡面尋找並複製一句與該段落對應的真實原句作為 \`evidence_quote\`。
-- 🚨 限制：必須是【1. 課文原文】區塊中真實存在的字串！絕對禁止憑空捏造或把兩句話縫合在一起！
+2. **evidence_quote (課文原句)**:
+   尋找該意義段底下的 "- 課文原句："，一字不漏地照抄冒號後面的字串。
 
-### 🎯 任務三：附屬資料提取座標
-1. **心智圖**：從「【結構心智圖】」區塊複製核心到 \`mindMapCore\`，將分枝詞彙放入 \`keywords\` 陣列。
-2. **修辭**：從「【句型修辭】」或「【句型修辭與語文活動】」區塊複製。若無則維持空陣列 \`[]\`。
-3. **DOK提問**：從「【8. 認知層次提問矩陣】」的閱讀理解層次複製。
+3. **rhetorics (修辭分析)**:
+   若該意義段底下有 "- 修辭與寫作分析：" 的子項目，請將其轉化為 rhetorics 陣列中的物件。
+   - name: 照抄修辭名稱 (例如 "譬喻")
+   - example: 照抄引號內的例句
+   - analysis: 照抄 "【寫作效果】" 後面的文字
+   - pedagogicalPoint: 照抄 "【教學提問】" 後面的文字
 
-### 🎯 任務四：策略百寶箱雙模啟動
-1. 優先掃描「【8. 認知層次提問矩陣】」底下的「策略思考 (DOK 3-4)」。如果有，轉化為策略物件：
-   - type: "DOK-QUESTION"
-   - title: 括號內標籤 (例: 動機分析)
-   - method: "高階思辨提問法"
-   - teachingPoint: 簡述引導方向
-   - application: "[核心提問] 照抄原文題目 -> [預期產出] 討論方向"
-2. 若沒有，才自行發想 3 個創新策略 (INQUIRY, ROLEPLAY, CREATIVE)。
+4. **dokQuestions (提問)**:
+   尋找該意義段底下的 "- 深度探究提問 (DOK 1-2)："。將提問內容照抄。
+
+### 🎯 任務二：全域資料提取
+1. **mindMapCore**: 去「【結構心智圖】」區塊，找 "- 核心："，複製其內容。
+2. **keywords**: 在「【結構心智圖】」區塊中，蒐集所有箭頭或分枝後的詞彙，放入陣列。
+3. **strategies**: 在「【8. 認知層次提問矩陣】」中找「- 策略思考 (DOK 3-4)：」。將括號內的標籤當作 title，冒號後的問題當作 application 裡的 [核心提問]。若無，則自行生成。
 
 <SOURCE_DATA>
 {INPUT_TEXT}
@@ -238,21 +236,21 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
   "segments": [ 
     { 
       "segmentIndex": 0, 
-      "title": "照抄『意義段 X』或加上子標記", 
+      "title": "意義段的標題(例如：一、前言 或 二、景點 ㈠)", 
       "type": "意義段", 
-      "summary": "100%照抄冒號後的字元，嚴禁改寫", 
-      "evidence_quote": "必須是【1. 課文原文】區塊中真實存在的句子", 
-      "difficultWords": ["難詞"], 
-      "keywords": ["擷取自心智圖分枝"], 
+      "summary": "100%照抄意義段的大意內容", 
+      "evidence_quote": "100%照抄 '- 課文原句：' 後面的文字", 
+      "difficultWords": [], 
+      "keywords": ["從心智圖中蒐集屬於這段的關鍵字"], 
       "rhetorics": [
-        { "name": "修辭名稱", "example": "原文例句", "analysis": "解析", "pedagogicalPoint": "重點", "application": "任務" }
+        { "name": "修辭名稱", "example": "原文例句", "analysis": "寫作效果", "pedagogicalPoint": "教學提問", "application": "微任務" }
       ], 
-      "dokQuestions": [ { "type": "DOK 1", "question": "原汁原味的題目", "intent": "意圖" } ], 
+      "dokQuestions": [ { "type": "DOK 1/2", "question": "深度探究提問的題目", "intent": "探究文本" } ], 
       "sentencePatterns": [], 
-      "deepDive": "深究" 
+      "deepDive": "探究文本的引導方向" 
     } 
   ],
-  "strategies": [ { "type": "DOK-QUESTION", "title": "動機分析", "method": "高階思辨提問法", "teachingPoint": "引導思考...", "application": "[核心提問] 題目... -> [預期產出] ..." } ]
+  "strategies": [ { "type": "DOK-QUESTION", "title": "動機分析", "method": "高階思辨提問法", "teachingPoint": "引導思考...", "application": "[核心提問] 作者提到... -> [預期產出] 學生能..." } ]
 }
 `;
 
