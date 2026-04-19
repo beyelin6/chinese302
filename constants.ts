@@ -189,20 +189,23 @@ export const DEEP_VOCABULARY_PROMPT = `
 請嚴格依照以下 JSON 結構輸出：
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
-// 🌟 [架構師修正版]：補齊 sentencePatterns 與 dokQuestions 的提取骨架
+// 🌟 [架構師終極對位版]：強制 AI 自動尋找並補齊句型原句
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 [SYSTEM INSTRUCTION: INTELLIGENT DATA CONVERSION]
 # ROLE: V-MAX 格式轉譯大師 (NotebookLM Optimizer)
-# MISSION: 讀取 <SOURCE_DATA>，並將其中關於「意義段」的內容轉換為標準 JSON。
+# MISSION: 讀取 <SOURCE_DATA>，並將其中關於「意義段」與「綜合語文活動」的內容轉換為標準 JSON。
 # CRITICAL RULE: 請對標記符號進行模糊匹配。無論是「意義段 1」、「**意義段 1」還是「### 意義段 1」，只要包含「意義段」三字，就視為段落起點。
 
 ### 🔍 提取對應邏輯 (Mapping Intelligence)
-- "title": 擷取該段落的標題名稱 (例如：一、點出主題景點)。
+- "title": 擷取該段落的標題名稱。
 - "summary": 擷取「大意」或「摘要」後方的文字。
 - "evidence_quote": 擷取「課文原句」或「原文」後方的文字。
-- "rhetorics": 擷取「修辭與寫作分析」內容。轉化為 { "name": "修辭名稱", "analysis": "效果", "example": "原句" }。
-- "sentencePatterns": 擷取「句型分析」內容。若標示為無，則給空陣列。轉化為 { "name": "句型名稱", "analysis": "結構解釋", "example": "原句" }。
-- "dokQuestions": 擷取「認知層次提問矩陣」或提問內容。轉化為 { "type": "類型(如:閱讀理解/策略思考)", "question": "完整問句", "intent": "思考維度或意圖" }。
+- "deepDive": 針對該段落的深度探究描述 (若無則留空)。
+- "rhetorics": 擷取「修辭與寫作分析」內容。請轉化為 { "name": "修辭名稱", "example": "原文例句", "analysis": "作用分析", "pedagogicalPoint": "", "application": "" }。
+- "sentencePatterns": 🌟 擷取「句型分析」內容。轉化為 { "name": "句型名稱與說明", "example": "🚨請務必從該段的『課文原句』中，自動找出套用此句型的句子填入！" }。
+- "readingQuestions": 擷取「認知層次提問矩陣」中的【閱讀理解 (DOK 1-2)】。轉化為 { "type": "提問類型", "question": "完整問句", "answer": "簡答(若文中無答案請根據常理推測)" }。
+- "dokQuestions": 擷取「認知層次提問矩陣」中的【策略思考 (DOK 3-4)】。轉化為 { "type": "思考維度或意圖", "question": "完整問句", "intent": "教學意圖" }。
+- "languageActivities": 擷取「綜合語文活動」區塊。轉化為 { "title": "活動名稱", "content": "活動說明", "example": "課本範例" }。
 
 <SOURCE_DATA>
 {INPUT_TEXT}
@@ -210,17 +213,26 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 
 請嚴格依照以下 JSON 格式輸出 (只輸出純 JSON 物件，不加任何 Markdown 標記)：
 {
-  "macroStructure": "擷取文中的宏觀架構名稱 (如: N1 故事山)",
-  "mindMapCore": "擷取心智圖核心節點文字",
+  "macroStructure": "N1 故事山",
+  "mindMapCore": "",
   "segments": [
     {
       "segmentIndex": 0,
       "title": "字串",
       "summary": "字串",
       "evidence_quote": "字串",
-      "rhetorics": [ { "name": "...", "analysis": "...", "example": "..." } ],
-      "sentencePatterns": [ { "name": "...", "analysis": "...", "example": "..." } ],
+      "deepDive": "字串",
+      "rhetorics": [ { "name": "...", "example": "...", "analysis": "...", "pedagogicalPoint": "", "application": "" } ],
+      "sentencePatterns": [ { "name": "...", "example": "..." } ],
+      "readingQuestions": [ { "type": "...", "question": "...", "answer": "..." } ],
       "dokQuestions": [ { "type": "...", "question": "...", "intent": "..." } ]
+    }
+  ],
+  "languageActivities": [
+    {
+      "title": "字串",
+      "content": "字串",
+      "example": "字串"
     }
   ]
 }
