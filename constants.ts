@@ -189,69 +189,53 @@ export const DEEP_VOCABULARY_PROMPT = `
 請嚴格依照以下 JSON 結構輸出：
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
+// 🌟 模組化直讀版：專門針對「完全打包好」的 Markdown 結構，提供 100% 絕對提取
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
-[SYSTEM INSTRUCTION: STRICT RELATIONAL MAPPING & FALLBACK PROTOCOL]
-# ROLE: V-MAX 關聯式資料映射器 (Relational Data Mapper)
-# FATAL WARNING: 嚴禁語意發揮與亂塞資料！你的任務是透過「位置標籤」完美合併區塊。若找不到對應資料，必須依照「安全回退機制」處理。
+[SYSTEM INSTRUCTION: STRICT CONTAINERIZED DATA EXTRACTION]
+# ROLE: V-MAX 模組化資料提取官
+# FATAL WARNING: 你的唯一任務是把 <SOURCE_DATA> 中已經整理好的「意義段區塊」資料，一字不漏地轉譯為 JSON 格式。嚴禁自行發明、換句話說或跨段落借用資料！
 
-### 🎯 步驟一：建立意義段基底 (從【6. 課文解析與結構心智圖】提取)
-請到「【意義段大意】」區塊，提取所有的段落並建立為 JSON 陣列。
-- 🚨 **子項目拆分鐵律**：如果資料中包含 ㈠、㈡ 等符號，必須強制拆成獨立的物件！
-- **標題命名規範**：標題 (title) 必須包含父層與子層編號（例如：\`二、景點特色描寫 ㈠\`）。
-- **Summary 保留標註**：summary 欄位必須「100% 複製」冒號後的完整內容，且【必須保留該行的所有編號與符號】（如：\`㈠ 透過傳說故事...\`）。嚴禁擅自刪除 ㈠ 符號！
-- **嚴禁摘要**：絕對禁止改寫內容。如果原始資料是「野柳是作者的家鄉」，你的 summary 絕對不能變成「野柳位置」。量化標準：summary 的字數與原始對應行字數誤差必須小於 2 個字。
+### 🎯 任務說明與提取對應表
+使用者已經將資料整理成完美的「模組化容器」。請你掃描文本中的每一個 \`**意義段 X：[段落標題]**\` 區塊，並依照以下規則提取該區塊內的資料：
 
-### 🎯 步驟二：跨區塊合併修辭與原句 (從【5. 句型修辭與語文活動】提取)
-請逐一檢查你剛剛建立的每一個意義段：
-去第 5 區塊比對「所在位置」是否與該意義段的標題相符（例如「一、點出主題景點」或「二、景點特色描寫 - ㈠」）。
+1. **標題 (title)**：提取 \`**意義段 X：\` 後面的文字。例如：\`二、景點特色描寫 ㈠\`。
+2. **大意 (summary)**：100% 照抄 \`**大意**：\` 後面的內容。
+3. **課文原句 (evidence_quote)**：100% 照抄 \`**課文原句**：\` 後面的內容。
+4. **修辭 (rhetorics)**：查看 \`**修辭與寫作分析**：\`。
+   - 如果寫「無」，請輸出空陣列 \`[]\`。
+   - 如果有內容（例如：【譬喻】將野柳岬比喻成...），請提取【】內的文字作為 \`name\`，後面的說明作為 \`analysis\`。\`example\` 填入課文原句。
+5. **提問 (dokQuestions)**：100% 照抄 \`**深度探究提問**：\` 後面的內容。如果寫「無」，輸出空陣列 \`[]\`。
 
-🟢 **情況 A：有找到完全相符的「所在位置」**
-- 將 \`**課文原句：[內容]**\` 填入該段落的 \`evidence_quote\`。
-- 將 \`句型/修辭：[名稱]\` 填入 \`rhetorics\` 陣列的 \`name\`。
-- 將 \`**課文原句：[內容]**\` 同時填入 \`rhetorics\` 的 \`example\`。
-- 將 \`說明：[內容]\` 填入 \`rhetorics\` 的 \`analysis\`。
-
-🔴 **情況 B：找不到相符的「所在位置」 (🚨 安全回退機制)**
-- 如果第 5 區沒有這個段落的資料（例如第一段），【絕對禁止】拿其他段落的資料來填！
-- 處理方式：
-  1. \`rhetorics\` 陣列必須保持空白 \`[]\`。
-  2. \`evidence_quote\` 請你回到「【1. 課文原文】」區塊，找出一句最能呼應這個段落大意的真實句子填入。
-
-### 🎯 步驟三：跨區塊合併提問 (從【7. 認知層次提問矩陣】提取)
-請到第 7 區塊，逐條讀取資料，並比對「對應位置」。
-- 有找到相符的，將 \`[提問內容]\` 填入對應意義段的 \`dokQuestions\` 陣列中。
-- 沒找到相符的，保持空白 \`[]\`。
-
-### 🎯 步驟四：全域資料提取
-1. **mindMapCore & keywords**: 到「【結構心智圖】」區塊，提取核心與分枝關鍵字放入對應欄位。
-2. **strategies**: 尋找全域的「策略思考 (DOK 3-4)」並轉化為教學策略物件。若沒有提供，才自行生成 3 個。
+### 🎯 全域資料提取
+1. 尋找文本中的「結構心智圖」資訊，提取核心與關鍵字。
+2. 提取「策略思考 (DOK 3-4)」或高階提問作為 \`strategies\`。若無，請自行發想 3 個。
 
 <SOURCE_DATA>
 {INPUT_TEXT}
 </SOURCE_DATA>
 
-請直接輸出純 JSON 格式 (不要包含 markdown 標籤)：
+請直接輸出純 JSON 格式，必須符合以下結構：
 {
   "macroStructure": "N1-N5",
-  "mindMapCore": "擷取自心智圖核心",
+  "mindMapCore": "心智圖核心",
   "segments": [ 
     { 
       "segmentIndex": 0, 
-      "title": "意義段的標題 (例：二、景點特色描寫 ㈠)", 
+      "title": "照抄標題 (包含 ㈠ ㈡ 等)", 
       "type": "意義段", 
-      "summary": "100%照抄意義段的大意內容", 
-      "evidence_quote": "優先從第5區拿，若無則從第1區原文拿", 
+      "summary": "100% 照抄", 
+      "evidence_quote": "100% 照抄", 
       "difficultWords": [], 
-      "keywords": ["從第6區的心智圖分枝合併過來"], 
+      "keywords": ["對應關鍵字"], 
       "rhetorics": [
         { "name": "修辭名稱", "example": "原文例句", "analysis": "說明", "pedagogicalPoint": "", "application": "" }
       ], 
-      "dokQuestions": [ { "type": "DOK 1/2", "question": "從第7區合併過來的提問", "intent": "提問類型" } ], 
+      "dokQuestions": [ { "type": "類型", "question": "題目", "intent": "意圖" } ], 
       "sentencePatterns": [], 
-      "deepDive": "深究引導方向" 
+      "deepDive": "" 
     } 
   ],
-  "strategies": [ { "type": "DOK-QUESTION", "title": "策略標題", "method": "提問法", "teachingPoint": "引導思考...", "application": "[核心提問] 題目... -> [預期產出] ..." } ]
+  "strategies": [ { "type": "DOK-QUESTION", "title": "策略標題", "method": "提問法", "teachingPoint": "引導...", "application": "[核心提問]... -> [預期產出]..." } ]
 }
 `;
 

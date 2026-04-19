@@ -4,7 +4,6 @@ import { useRef } from 'react';
 import { useWorkflowContext } from '../../context/WorkflowContext';
 import { AppStep, MediaData, AnalysisData } from '../../types';
 import { sendMessageToGemini } from '../../services/gemini';
-// 🌟 引用 Canvas 中最新的 Prompt 常數
 import { 
   SYSTEM_PROMPT, 
   STEP_1_BASIC_PROMPT_SUFFIX, 
@@ -23,7 +22,7 @@ export const useStep1Analysis = () => {
 
   /**
    * 🌟 核心任務：初步文本萃取與結構分析
-   * 同時處理「文字」與「多模態檔案 (PDF/圖片)」，並執行精準數據對齊
+   * 同時處理「文字」與「多模態檔案 (PDF/圖片/MD)」
    */
   const handleStep1Analyze = async (inputText: string, mediaFiles: MediaData[] = []) => {
     // 1. 立即檢查鎖定狀態
@@ -32,7 +31,7 @@ export const useStep1Analysis = () => {
       return;
     }
 
-    // 2. 多模態檢查：只要有文字或檔案其中之一即可
+    // 2. 多模態檢查
     const hasText = inputText && inputText.trim() !== '';
     const hasFiles = mediaFiles && mediaFiles.length > 0;
 
@@ -48,7 +47,7 @@ export const useStep1Analysis = () => {
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      // 🌟 [PDF 預處理] 攔截 PDF 並在本地萃取文字，減輕 AI 負擔
+      // 🌟 [檔案預處理] 攔截 PDF 與純文字檔，在本地萃取文字
       let finalInputText = inputText;
       const filteredMediaFiles: MediaData[] = []; // 只保留圖片給 AI 視覺分析
 
@@ -57,15 +56,27 @@ export const useStep1Analysis = () => {
           dispatch({ type: 'SET_LOADING_STATUS', payload: '正在從 PDF 提取文字核心...' });
           const pdfText = await extractTextFromPDFBase64(file.data);
           finalInputText += `\n\n[PDF]:\n${pdfText}`;
-        } else {
+        } 
+        // 🌟 [新增] 支援直接讀取 .md 或 .txt 檔案的文字內容
+        else if (file.mimeType.includes('text') || file.mimeType === 'text/markdown' || file.fileName?.endsWith('.md')) {
+          dispatch({ type: 'SET_LOADING_STATUS', payload: '正在讀取 Markdown 檔案...' });
+          try {
+            // 將 Base64 解碼為 UTF-8 繁體中文
+            const textContent = decodeURIComponent(escape(window.atob(file.data)));
+            finalInputText += `\n\n[Markdown 檔案內容]:\n${textContent}`;
+          } catch (e) {
+            console.error("文字檔解碼失敗", e);
+          }
+        } 
+        else {
+          // 其他圖片格式留給 Gemini Vision
           filteredMediaFiles.push(file);
         }
       }
 
-      // 🌟 [對齊 1] 強化雷達：擴大正則表達式的命中範圍，包含階層符號與意義段標語
+      // 🌟 [對齊 1] 強化雷達：擴大正則表達式的命中範圍
       const isStructured = /基本資訊|各段大意|意義段大意|字形字音|結構大意|內容大意|[一二三四五六七八九十]、|㈠|㈡|㈢|㈣|㈤/.test(finalInputText);
       
-      // 選用對應的 Prompt (FAST 模式會優先抓取辨析資料)
       const promptSuffix = isStructured 
         ? STEP_1_FAST_PROMPT_SUFFIX 
         : STEP_1_BASIC_PROMPT_SUFFIX;
@@ -76,10 +87,8 @@ export const useStep1Analysis = () => {
         dispatch({ type: 'SET_LOADING_STATUS', payload: '正在掃描文本並提取核心特徵...' });
       }
 
-      // 4. 組合完整 Prompt
       const fullPrompt = `${SYSTEM_PROMPT}\n${promptSuffix}\n${finalInputText}`;
 
-      // 5. 呼叫 Gemini API
       let responseText = "";
       let basicAnalysisObj: any = null;
 
@@ -89,7 +98,6 @@ export const useStep1Analysis = () => {
       } catch (parseError) {
         console.warn("Standard analysis failed, attempting Fast Scan fallback...");
         
-        // 🌟 [新增] 極速掃描回退：如果標準分析失敗，嘗試只抓取清單
         try {
           const fastPrompt = `
             ${SYSTEM_PROMPT}
@@ -101,7 +109,6 @@ export const useStep1Analysis = () => {
           console.warn("極速掃描回退成功");
         } catch (fastError) {
           console.error("Fast Scan also failed, attempting emergency recovery...");
-          // 🌟 [新增] 緊急救援邏輯：嘗試手動搜尋 basicInfo 區塊
           const basicInfoMatch = responseText.match(/"basicInfo"\s*:\s*(\{[^}]+\})/);
           const unitNameMatch = responseText.match(/"unitName"\s*:\s*"([^"]+)"/);
           
@@ -115,7 +122,6 @@ export const useStep1Analysis = () => {
                 textbookDifficultWords: [],
                 idioms: []
               };
-              console.warn("系統啟動緊急救援：僅恢復部分基本資訊");
             } catch (recoveryError) {
               throw new Error("AI 回傳格式嚴重損毀，無法執行救援。");
             }
@@ -125,8 +131,6 @@ export const useStep1Analysis = () => {
         }
       }
       
-      // 7. 將 AI 回傳結果對應至 AnalysisData 結構化物件
-      // 🌟 [對齊 2] 完整映射：確保 languageActivities 進入狀態
       const initialAnalysisData: AnalysisData = {
         fullText: finalInputText || basicAnalysisObj.fullText || "",
         mode: basicAnalysisObj.mode || "Mode A",
@@ -142,9 +146,8 @@ export const useStep1Analysis = () => {
           mainIdea: basicAnalysisObj.basicInfo?.mainIdea || "分析中"
         },
 
-        languageActivities: basicAnalysisObj.languageActivities || [], // 確保不遺漏
+        languageActivities: basicAnalysisObj.languageActivities || [],
 
-        // 🌟 核心修正：正確映射生字與其辨析資料 (相容字串陣列與物件陣列)
         coreVocabulary: (basicAnalysisObj.coreVocabulary || []).map((v: any) => {
           const isString = typeof v === 'string';
           const word = isString ? v : (v.word || v);
@@ -164,7 +167,6 @@ export const useStep1Analysis = () => {
           };
         }),
 
-        // 難詞與成語勾選狀態初始化
         textbookDifficultWords: (basicAnalysisObj.textbookDifficultWords || []).map((w: any) => ({
           word: typeof w === 'string' ? w : w.word, isSelected: true
         })),
@@ -177,7 +179,6 @@ export const useStep1Analysis = () => {
         strategies: []
       };
 
-      // 8. 儲存結果並將步驟推向 Step 2 (Basic)
       dispatch({ 
         type: 'SET_BASIC_RESULT', 
         payload: { 
@@ -195,17 +196,12 @@ export const useStep1Analysis = () => {
         payload: '分析過程發生錯誤：' + (error.message || '請確認網路連接或 API 設定。') 
       });
     } finally {
-      // 9. 解鎖：無論成功失敗都釋放執行鎖
       isProcessing.current = false;
       dispatch({ type: 'SET_LOADING', payload: false });
       dispatch({ type: 'SET_LOADING_STATUS', payload: null });
     }
   };
 
-  /**
-   * 🌟 [新增] AI 語文活動擴充引擎
-   * 根據課文內容與年級，生成 3 個額外的語文活動建議
-   */
   const handleGenerateAdditionalActivities = async (fullText: string, grade: string) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_LOADING_STATUS', payload: 'AI 正在為您構思額外的語文活動建議...' });

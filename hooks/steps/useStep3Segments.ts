@@ -18,7 +18,7 @@ export const useStep3Segments = () => {
   const isProcessing = useRef(false);
 
   /**
-   * 🌟 驗證協定：無條件放行 (保留您的安全設置)
+   * 🌟 驗證協定：無條件放行
    */
   const validateGroundedness = (parsedData: any, rawText: string) => {
     console.log("【V-MAX 安全通關】已略過嚴格比對，放行 AI 產出的段落大意");
@@ -26,7 +26,7 @@ export const useStep3Segments = () => {
   };
 
   /**
-   * 1. 核心任務：執行從 2.5 到 2.75 的初始生成 (保留所有細節指令)
+   * 1. 核心任務：執行從 2.5 到 2.75 的初始生成
    */
   const handleStep2DeepVocabConfirm = async (confirmedVocabDataString: string) => {
     if (isProcessing.current) return;
@@ -42,18 +42,23 @@ export const useStep3Segments = () => {
         ?.filter((w: any) => w.isSelected)
         .map((w: any) => w.word) || [];
 
+      // 🚨 [架構師重大防呆] 確保 rawSourceText 不是空的！
       const rawSourceText = state.analysisData?.fullText || state.basicAnalysisResult || "";
+      if (!rawSourceText || rawSourceText.length < 50) {
+          console.warn("⚠️ 警告：原始文本丟失！AI 目前處於「盲猜」狀態。請確保 Step 1 是用『文字貼上』而非僅上傳 md 檔。");
+      }
       
-      // --- 第一階段：解構意義段落 ---
       dispatch({ type: 'SET_LOADING_STATUS', payload: '正在執行：意義段落深究...' });
       
-      const prompt1 = `
-        ${STEP_2_DEEP_SEGMENTS_PROMPT_V2.replace('{INPUT_TEXT}', rawSourceText)}
-        
-        # 🚨 老師指定的「教科書難詞」處理協定：
-        1. 以下清單為本課重點教學難詞：【${selectedDifficultWords.join('、') || "無"}】。
-        2. 若該段落包含清單中的詞彙，請務必將其列入該段落的 \`difficultWords\` 欄位中。
+      // 🌟 [優化] 將追加的指令放在前面，避免破壞 constants 中 Prompt 末尾的 JSON Schema
+      const extraInstructions = `
+[動態任務附加]
+# 🚨 教科書難詞處理協定：
+1. 重點教學難詞：【${selectedDifficultWords.join('、') || "無"}】。
+2. 若該段落包含清單中的詞彙，請務必將其列入該段落的 \`difficultWords\` 欄位中。
       `;
+
+      const prompt1 = extraInstructions + "\n" + STEP_2_DEEP_SEGMENTS_PROMPT_V2.replace('{INPUT_TEXT}', rawSourceText);
       
       const response1 = await sendMessageToGemini(prompt1, [], 0, { temperature: 0.1, responseMimeType: "application/json" });
       let parsedSegments = sanitizeAndParseJSON(response1);
@@ -76,7 +81,6 @@ export const useStep3Segments = () => {
       // ==========================================
       dispatch({ type: 'SET_LOADING_STATUS', payload: '正在進行第二階段：編寫高質感教學策略...' });
       
-      // 🌟 [修復點]：統一 JSON Schema 鍵值為 teachingPoint 與 application
       const prompt2 = `
         你現在是一位「創意教學設計師」。請根據以下段落與宏觀架構「${macroStructure}」，設計 3 個極具啟發性、細節豐富的教學策略卡片。
         
@@ -84,7 +88,7 @@ export const useStep3Segments = () => {
         【宏觀架構】：${macroStructure}
 
         🚨 撰寫最高準則：
-        1. 內容具體化：禁止寫「引導學生思考」這種廢話。必須寫出具體的引導情境（例：引導學生對比「鈍掉的斧頭」與「鋒利的草葉」）。
+        1. 內容具體化：禁止寫「引導學生思考」這種廢話。必須寫出具體的引導情境。
         2. 任務可執行：微任務必須是學生 1 分鐘內能完成的明確動作。
         3. 欄位補全：必須包含 title, type, method, teachingPoint, application 五個欄位。
 
@@ -92,10 +96,10 @@ export const useStep3Segments = () => {
         {
           "strategies": [
             {
-              "title": "具備吸引力的標題 (例：銳利邊緣的秘密)",
+              "title": "具備吸引力的標題",
               "type": "Thinking | Inquiry | Creative Writing | Roleplay",
-              "method": "教學方法論 (例：比較觀察法、第一人稱敘事法)",
-              "teachingPoint": "深入的教學引導內容 (至少 50 字，解釋本策略要解決的痛點 or 目標)",
+              "method": "教學方法論",
+              "teachingPoint": "深入的教學引導內容",
               "application": "[連結課文具體段落] + [步驟 1] -> [步驟 2] (具體的學生互動任務)"
             }
           ]
@@ -106,19 +110,18 @@ export const useStep3Segments = () => {
       const strategiesData = sanitizeAndParseJSON(response2);
       const validStrategies = strategiesData.strategies || [];
 
-      // 🌟 [防呆更新]：防呆預設值也必須對應正確的 Key
       const finalResult = {
-          macroStructure: macroStructure,
-          segments: validSegments,
-          strategies: validStrategies.length > 0 ? validStrategies : [
-              { 
-                title: "內容回顧", 
-                type: "Thinking", 
-                method: "問答法",
-                teachingPoint: "透過提問確認學生是否掌握本課核心精神。", 
-                application: "請學生用一句話總結主角的特質。" 
-              }
-          ]
+        macroStructure: macroStructure,
+        segments: validSegments,
+        strategies: validStrategies.length > 0 ? validStrategies : [
+          { 
+            title: "內容回顧", 
+            type: "Thinking", 
+            method: "問答法",
+            teachingPoint: "透過提問確認學生是否掌握本課核心精神。", 
+            application: "請學生用一句話總結主角的特質。" 
+          }
+        ]
       };
 
       dispatch({ type: 'SET_SEGMENTS_RESULT', payload: JSON.stringify(finalResult) });
@@ -134,7 +137,6 @@ export const useStep3Segments = () => {
   };
 
   const handleStep2DeepSegmentsConfirm = (finalData: AnalysisData) => {
-    // 🌟 直接傳遞物件，減少序列化開銷
     dispatch({ type: 'SET_DEEP_SEGMENTS_RESULT', payload: finalData });
     dispatch({ type: 'SET_STEP', payload: AppStep.STEP_4_VISUALS });
   };
