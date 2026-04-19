@@ -189,9 +189,7 @@ export const DEEP_VOCABULARY_PROMPT = `
 請嚴格依照以下 JSON 結構輸出：
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
-// 檔案路徑: src/constants.ts
-
-// 🌟 [2026 核心強化]：將指令從「嚴格提取」升級為「智能格式轉譯」
+// 🌟 [架構師修正版]：補齊 sentencePatterns 與 dokQuestions 的提取骨架
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 [SYSTEM INSTRUCTION: INTELLIGENT DATA CONVERSION]
 # ROLE: V-MAX 格式轉譯大師 (NotebookLM Optimizer)
@@ -202,14 +200,15 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 - "title": 擷取該段落的標題名稱 (例如：一、點出主題景點)。
 - "summary": 擷取「大意」或「摘要」後方的文字。
 - "evidence_quote": 擷取「課文原句」或「原文」後方的文字。
-- "rhetorics": 擷取「修辭與寫作分析」內容。請將其轉化為 [{ name, analysis, example }] 結構。
-- "dokQuestions": 擷取「認知層次提問矩陣」或「提問」內容。
+- "rhetorics": 擷取「修辭與寫作分析」內容。轉化為 { "name": "修辭名稱", "analysis": "效果", "example": "原句" }。
+- "sentencePatterns": 擷取「句型分析」內容。若標示為無，則給空陣列。轉化為 { "name": "句型名稱", "analysis": "結構解釋", "example": "原句" }。
+- "dokQuestions": 擷取「認知層次提問矩陣」或提問內容。轉化為 { "type": "類型(如:閱讀理解/策略思考)", "question": "完整問句", "intent": "思考維度或意圖" }。
 
 <SOURCE_DATA>
 {INPUT_TEXT}
 </SOURCE_DATA>
 
-請嚴格依照以下 JSON 格式輸出 (只輸出 JSON 物件，不加任何 Markdown 標記)：
+請嚴格依照以下 JSON 格式輸出 (只輸出純 JSON 物件，不加任何 Markdown 標記)：
 {
   "macroStructure": "擷取文中的宏觀架構名稱 (如: N1 故事山)",
   "mindMapCore": "擷取心智圖核心節點文字",
@@ -220,6 +219,7 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
       "summary": "字串",
       "evidence_quote": "字串",
       "rhetorics": [ { "name": "...", "analysis": "...", "example": "..." } ],
+      "sentencePatterns": [ { "name": "...", "analysis": "...", "example": "..." } ],
       "dokQuestions": [ { "type": "...", "question": "...", "intent": "..." } ]
     }
   ]
