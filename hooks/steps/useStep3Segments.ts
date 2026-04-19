@@ -36,8 +36,8 @@ export const useStep3Segments = () => {
         ?.filter((w: any) => w.isSelected)
         .map((w: any) => w.word) || [];
 
-// 🌟 [架構師終極提取] 優先從狀態拿，拿不到就去 localStorage 救回來！
-      let rawSourceText = state.analysisData?.fullText;
+      // 🌟 [架構師終極提取]：完美融合 rawInputText 與 localStorage 救援
+      let rawSourceText = state.rawInputText || state.analysisData?.fullText || state.analysisData?.rawFullAnalysis;
 
       if (!rawSourceText || rawSourceText.length < 50) {
           console.warn("⚠️ Context 狀態流失！啟動 localStorage 救援...");
@@ -61,7 +61,7 @@ export const useStep3Segments = () => {
 2. 若該段落包含清單中的詞彙，請務必將其列入該段落的 \`difficultWords\` 欄位中。
       `;
 
-      // 注意：這裡我將 replace 的第二個參數改回字串，避免 function 替換問題
+      // 注意：替換 prompt 變數
       const prompt1 = extraInstructions + "\n" + STEP_2_DEEP_SEGMENTS_PROMPT_V2.replace('{INPUT_TEXT}', rawSourceText);
       
       const response1 = await sendMessageToGemini(prompt1, [], 0, { temperature: 0.1, responseMimeType: "application/json" });

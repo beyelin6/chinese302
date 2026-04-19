@@ -189,59 +189,40 @@ export const DEEP_VOCABULARY_PROMPT = `
 請嚴格依照以下 JSON 結構輸出：
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
-// 🌟 終極直讀防呆版：極致簡化指令，去除干擾字眼
-export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
-[SYSTEM INSTRUCTION: STRICT DATA EXTRACTION]
-# ROLE: V-MAX 模組化資料提取官
-# MISSION: 仔細閱讀 <SOURCE_DATA>，並將其中以「**意義段」開頭的區塊，完美轉換為 JSON 格式。
-# CRITICAL RULE: 絕對禁止自己發明內容！所有資料必須 100% 從 <SOURCE_DATA> 內複製！如果沒有資料，請填入空字串或空陣列。
+// 檔案路徑: src/constants.ts
 
-### 📝 提取對應指南 (Mapping Guide)
-當你看到 \`**意義段 X：[標題]\` 時，請建立一個 JSON 物件：
-- "title": 擷取冒號後面的文字 (例如：一、點出主題景點)。
-- "summary": 擷取 \`**大意**：\` 後面的文字。
-- "evidence_quote": 擷取 \`**課文原句**：\` 後面的文字。
-- "rhetorics": 擷取 \`**修辭與寫作分析**：\`。如果有內容（如【譬喻】...），請整理成 name 和 analysis，並將課文原句放入 example。若為「無」，請輸出 []。
-- "dokQuestions": 擷取 \`**深度探究提問**：\` 後面的文字。若為「無」，請輸出 []。
+// 🌟 [2026 核心強化]：將指令從「嚴格提取」升級為「智能格式轉譯」
+export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
+[SYSTEM INSTRUCTION: INTELLIGENT DATA CONVERSION]
+# ROLE: V-MAX 格式轉譯大師 (NotebookLM Optimizer)
+# MISSION: 讀取 <SOURCE_DATA>，並將其中關於「意義段」的內容轉換為標準 JSON。
+# CRITICAL RULE: 請對標記符號進行模糊匹配。無論是「意義段 1」、「**意義段 1」還是「### 意義段 1」，只要包含「意義段」三字，就視為段落起點。
+
+### 🔍 提取對應邏輯 (Mapping Intelligence)
+- "title": 擷取該段落的標題名稱 (例如：一、點出主題景點)。
+- "summary": 擷取「大意」或「摘要」後方的文字。
+- "evidence_quote": 擷取「課文原句」或「原文」後方的文字。
+- "rhetorics": 擷取「修辭與寫作分析」內容。請將其轉化為 [{ name, analysis, example }] 結構。
+- "dokQuestions": 擷取「認知層次提問矩陣」或「提問」內容。
 
 <SOURCE_DATA>
 {INPUT_TEXT}
 </SOURCE_DATA>
 
-請嚴格依照以下 JSON 格式輸出 (只輸出 JSON，不加 markdown 標記)：
+請嚴格依照以下 JSON 格式輸出 (只輸出 JSON 物件，不加任何 Markdown 標記)：
 {
-  "macroStructure": "N1 故事山",
-  "mindMapCore": "擷取自結構心智圖",
+  "macroStructure": "擷取文中的宏觀架構名稱 (如: N1 故事山)",
+  "mindMapCore": "擷取心智圖核心節點文字",
   "segments": [
     {
       "segmentIndex": 0,
       "title": "字串",
-      "type": "意義段",
       "summary": "字串",
       "evidence_quote": "字串",
-      "difficultWords": [],
-      "keywords": [],
-      "rhetorics": [
-        {
-          "name": "字串",
-          "example": "字串",
-          "analysis": "字串",
-          "pedagogicalPoint": "",
-          "application": ""
-        }
-      ],
-      "dokQuestions": [
-        {
-          "type": "閱讀理解",
-          "question": "字串",
-          "intent": "探究"
-        }
-      ],
-      "sentencePatterns": [],
-      "deepDive": ""
+      "rhetorics": [ { "name": "...", "analysis": "...", "example": "..." } ],
+      "dokQuestions": [ { "type": "...", "question": "...", "intent": "..." } ]
     }
-  ],
-  "strategies": []
+  ]
 }
 `;
 
