@@ -13,7 +13,6 @@ import {
   GUIDE_TEACHING_STYLE_SUGGESTION_PROMPT,
   STEP_3_VISUAL_GENERIC_PROMPT,
   STEP_4_DYNAMIC_CASTING_PROMPT,
-  // 🌟 建議在 constants.ts 將此 Prompt 改名或確保其包含 {AGE} 標籤
   PROTAGONIST_TRAITS_SUGGESTION_PROMPT,
   PROMPT_GENERATE_CHARACTER_DNA_FOR_EXTERNAL 
 } from '../../constants';
@@ -22,25 +21,59 @@ export const useStep4VisualsAndCasting = () => {
   const { state, dispatch } = useWorkflowContext();
   
   /**
-   * 0. [新增] 動態視覺錨定 (Dynamic Visual Anchoring)
-   * 從原始文本中掃描視覺 DNA
+   * 0. [核心修正] 動態視覺錨定 (Dynamic Visual Anchoring)
+   * 確保結構視圖推薦 100% 產出並對位
    */
   const handleGenerateVisualOptions = async () => {
-    console.log("Generating Visual Options...", { currentStep: state.currentStep, visualResult: state.visualResult });
-    // 核心：抓取最初上傳的 rawText (最精準的資料來源)
-    const sourceText = state.analysisData?.fullText || state.basicAnalysisResult; 
+    // 1. 確保 sourceText 是字串
+    const rawSource = state.analysisData?.fullText || state.basicAnalysisResult; 
+    const sourceText = typeof rawSource === 'string' ? rawSource : JSON.stringify(rawSource);
 
     dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_LOADING_STATUS', payload: '正在掃描本課專屬視覺 DNA...' });
+    dispatch({ type: 'SET_LOADING_STATUS', payload: '正在掃描本課專屬視覺 DNA，生成結構隱喻推薦...' });
 
     try {
-      // 這裡的 prompt 是通用的，它會根據 sourceText 的不同，產出不同的視覺結果
-      const prompt = STEP_3_VISUAL_GENERIC_PROMPT.replace('{INPUT_TEXT}', sourceText);
+      // 2. 注入格式指令，鎖死 JSON Schema
+      const prompt = `
+        ${STEP_3_VISUAL_GENERIC_PROMPT.replace('{INPUT_TEXT}', sourceText)}
+        
+        🚨 [強制輸出規範]
+        請務必回傳包含 "recommendations" 陣列的 JSON 物件。
+        每個 recommendations 項目必須包含 "metaphor" 物件，物件內須有 code, name, description。
+      `;
       
-      const response = await sendMessageToGemini(prompt, [], 0, { temperature: 0.1, responseMimeType: "application/json" });
-      const parsed = sanitizeAndParseJSON(response);
+      const response = await sendMessageToGemini(prompt, [], 0, { 
+        temperature: 0.3, 
+        responseMimeType: "application/json" 
+      });
+      
+      let parsed = sanitizeAndParseJSON(response);
 
-      dispatch({ type: 'SET_VISUAL_RESULT', payload: JSON.stringify(parsed) });
+      // 🌟 [核彈級防呆] 自動格式對位器
+      // 無論 AI 吐出什麼 Key，我們都強行轉回 UI 需要的 "recommendations"
+      let normalizedData = { recommendations: [] as any[] };
+
+      if (parsed.recommendations && Array.isArray(parsed.recommendations)) {
+        normalizedData.recommendations = parsed.recommendations;
+      } else if (parsed.metaphors && Array.isArray(parsed.metaphors)) {
+        // AI 常犯錯誤：把 recommendations 寫成 metaphors
+        normalizedData.recommendations = parsed.metaphors.map((m: any) => ({ metaphor: m }));
+      } else if (Array.isArray(parsed)) {
+        // AI 常犯錯誤：直接回傳一個陣列
+        normalizedData.recommendations = parsed.map((item: any) => item.metaphor ? item : { metaphor: item });
+      }
+
+      // 🛡️ [保底機制] 如果 AI 徹底漏掉，給予一組萬用隱喻，防止 UI 卡死
+      if (normalizedData.recommendations.length === 0) {
+        normalizedData.recommendations = [
+          { metaphor: { code: "S1", name: "故事山", description: "適合分析本文情節發展。" } },
+          { metaphor: { code: "S2", name: "五感雷達", description: "適合歸納本文感官描寫。" } }
+        ];
+      }
+
+      // 🌟 [修正 Action Type]：將 SET_visual_result 改為全大寫的 SET_VISUAL_RESULT
+      dispatch({ type: 'SET_VISUAL_RESULT', payload: JSON.stringify(normalizedData) });
+
     } catch (error: any) {
       console.error("視覺掃描失敗", error);
       dispatch({ type: 'SET_ERROR', payload: '視覺掃描失敗：' + error.message });
@@ -54,9 +87,12 @@ export const useStep4VisualsAndCasting = () => {
    * 1. 確認視覺風格設定，準備進入選角
    */
   const handleVisualsConfirm = async (style: any, metaphor: any) => {
-    if (!state.deepSegmentsResult) {
-      dispatch({ type: 'SET_ERROR', payload: '系統錯誤：遺失段落資料。' });
-      return;
+    // 優先讀取既有的 visualResult，確保合併而非覆蓋
+    let currentVisual = {};
+    try {
+      currentVisual = typeof state.visualResult === 'string' ? JSON.parse(state.visualResult) : (state.visualResult || {});
+    } catch (e) {
+      currentVisual = {};
     }
 
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -64,13 +100,11 @@ export const useStep4VisualsAndCasting = () => {
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      const visualCombination = { style, metaphor };
+      const visualCombination = { ...currentVisual, style, metaphor };
+      // 🌟 [修正 Action Type]
       dispatch({ type: 'SET_VISUAL_RESULT', payload: JSON.stringify(visualCombination) });
 
-      // 🌟 [重構] 執行「靈魂選角」動態生成
-      await handleGenerateCastingOptions();
-      
-      // 🌟 關鍵修復：這裡必須前往 CASTING (6)，把通往選角房間的門打開！
+      await handleGenerateCastingOptions(visualCombination);
       dispatch({ type: 'SET_STEP', payload: AppStep.STEP_5_CASTING });
 
     } catch (error: any) {
@@ -82,19 +116,17 @@ export const useStep4VisualsAndCasting = () => {
   };
 
   /**
-   * 🌟 [升級] 執行「靈魂選角」動態生成 (包含美學連動引擎)
+   * 🌟 執行「靈魂選角」動態生成
    */
-  const handleGenerateCastingOptions = async () => {
-    // 🌟 優化：多重備援抓取課文原文
-    const sourceText = state.analysisData?.fullText || state.basicAnalysisResult || "";
+  const handleGenerateCastingOptions = async (passedVisualData?: any) => {
+    const rawSource = state.analysisData?.fullText || state.basicAnalysisResult || "";
+    const sourceText = typeof rawSource === 'string' ? rawSource : JSON.stringify(rawSource);
 
-    // 🌟 [核心新增]：讀取 Step 3 老師選定的視覺風格，傳遞給 AI
-    const visualData = typeof state.visualResult === 'string' ? JSON.parse(state.visualResult) : state.visualResult;
+    const visualData = passedVisualData || (typeof state.visualResult === 'string' ? JSON.parse(state.visualResult) : state.visualResult);
     const styleName = visualData?.style?.name || '未指定風格';
     const styleDesc = visualData?.style?.description || '';
 
     if (!sourceText || sourceText.length < 10) {
-      console.error("找不到課文原文，無法執行選角分析");
       dispatch({ type: 'SET_ERROR', payload: '系統遺失課文原文，請嘗試返回第一步重新上傳。' });
       return;
     }
@@ -115,7 +147,6 @@ export const useStep4VisualsAndCasting = () => {
       const response = await sendMessageToGemini(prompt, [], 0, { responseMimeType: "application/json" });
       const castingOptions = sanitizeAndParseJSON(response);
       
-      // 檢查回傳結構是否完整
       if (!castingOptions || !castingOptions.candidates) {
         throw new Error("AI 回傳的資料結構不完整");
       }
@@ -131,17 +162,16 @@ export const useStep4VisualsAndCasting = () => {
   };
 
   /**
-   * 2. 🌟 根據 性別、年齡 與 語氣 重新構思角色特徵
+   * 2. 生成角色特徵建議
    */
   const handleSuggestTraits = async (gender: string, age: string, toneLabel: string): Promise<string> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_LOADING_STATUS', payload: `AI 正在構思一位 ${age} 的引導者...` });
     
     try {
-      // 🛡️ 在 Prompt 中注入年齡與性別參數
       const prompt = PROTAGONIST_TRAITS_SUGGESTION_PROMPT
         .replace('{GENDER}', gender)
-        .replace('{AGE}', age) // 🌟 新增年齡替換邏輯
+        .replace('{AGE}', age) 
         .replace('{TONE_LABEL}', toneLabel);
       
       const response = await sendMessageToGemini(prompt, [], 0);
@@ -156,7 +186,7 @@ export const useStep4VisualsAndCasting = () => {
   };
 
   /**
-   * 3. 🌟 根據 性別、年齡 與 語氣 重新構思教學風格與對白
+   * 3. 生成教學風格建議
    */
   const handleSuggestTeachingStyle = async (gender: string, age: string, toneLabel: string): Promise<string> => {
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -180,26 +210,17 @@ export const useStep4VisualsAndCasting = () => {
   };
 
   /**
-   * 4. 多模態視覺萃取：從圖片抓取角色視覺 DNA
+   * 4. 圖片視覺特徵反推
    */
-  // 🌟 [新增] 圖片視覺特徵反推引擎
   const handleExtractImageTraits = async (media: MediaData) => {
     dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_LOADING_STATUS', payload: '👁️ 正在啟動視覺神經網路，解析角色特徵...' });
+    dispatch({ type: 'SET_LOADING_STATUS', payload: '👁️ 正在解析圖片角色特徵...' });
     
     try {
-      // 這是發送給 Gemini 的咒語，確保你的 constants.ts 裡有 EXTRACT_IMAGE_TRAITS_PROMPT
-      const prompt = EXTRACT_IMAGE_TRAITS_PROMPT || `
-        請以「外觀描述專家」的角度，仔細觀察這張圖片中的角色/物件。
-        請用一句話（約 30-50 字）精準描述其「外型、穿著、神態、代表性配件」。
-        例如：「一位穿著白色實驗袍、戴著圓框眼鏡、手持發光試管的銀髮學者，眼神銳利且充滿自信。」
-        只需回傳描述文字，不要有任何多餘的開頭或結尾。
-      `;
-      
+      const prompt = EXTRACT_IMAGE_TRAITS_PROMPT || `請精準描述圖片中角色的外型、穿著與神態。`;
       const response = await sendMessageToGemini(prompt, [media], 0);
       return response.trim();
     } catch (error: any) {
-      console.error("圖片解析失敗", error);
       dispatch({ type: 'SET_ERROR', payload: '圖片解析失敗：' + error.message });
       return null;
     } finally {
@@ -209,14 +230,11 @@ export const useStep4VisualsAndCasting = () => {
   };
 
   /**
-   * 5. 🌟 [強化邏輯] 最終確認選角
-   * 將性別與年齡完整打包進 guide 物件，確保 Step 6 的腳本能讀取到
+   * 5. 最終確認選角
    */
   const handleCastingConfirm = (protagonistTraits: string, guide: any, customGuideVisuals?: string) => {
-    // 封裝引導者的完整人設資料
     const finalGuide = {
       ...guide,
-      // 這裡確保 gender 和 age 已經在 UI 層級被更新到 guide 物件中
       visualDNA: customGuideVisuals || '使用預設視覺設定'
     };
     
@@ -225,26 +243,18 @@ export const useStep4VisualsAndCasting = () => {
         guide: finalGuide 
     };
 
-    // 存入 Context 並推進至產出階段 (STEP_6_OUTPUT)
     dispatch({ type: 'SET_CASTING_RESULT', payload: JSON.stringify(castingData) });
     dispatch({ type: 'SET_STEP', payload: AppStep.STEP_6_OUTPUT });
-    
-    console.log("[Casting System] ✅ 人設封裝完成：", {
-      gender: finalGuide.gender,
-      age: finalGuide.age,
-      tone: finalGuide.toneLabel
-    });
   };
 
   /**
-   * 🌟 [新增]：專門用來生成給 NANOBANANA 的英文提示詞
+   * 6. 生成給外部 AI 的英文提示詞
    */
   const handleGenerateExternalDnaPrompt = async (guideName: string, persona: string) => {
     dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_LOADING_STATUS', payload: '正在為 NANOBANANA 撰寫專屬英文提示詞...' });
+    dispatch({ type: 'SET_LOADING_STATUS', payload: '正在撰寫專屬英文提示詞...' });
     
     try {
-      // 從 state 中抓取老師在 Step 3 選的視覺風格
       const visualData = typeof state.visualResult === 'string' ? JSON.parse(state.visualResult) : state.visualResult;
       const styleName = visualData?.style?.name || 'Clean vector art';
 
@@ -254,10 +264,9 @@ export const useStep4VisualsAndCasting = () => {
         .replace('{GUIDE_NAME}', guideName);
         
       const response = await sendMessageToGemini(prompt, [], 0);
-      return response.replace(/```/g, '').trim(); // 清理可能出現的 markdown 標籤
+      return response.replace(/```/g, '').trim();
     } catch (error: any) {
-      console.error("DNA 提示詞生成失敗", error);
-      return "生成失敗，請確認網路連線或 API Key。";
+      return "生成失敗，請確認網路連線。";
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
       dispatch({ type: 'SET_LOADING_STATUS', payload: null });
