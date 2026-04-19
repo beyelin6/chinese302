@@ -57,15 +57,21 @@ export const useStep1Analysis = () => {
           const pdfText = await extractTextFromPDFBase64(file.data);
           finalInputText += `\n\n[PDF]:\n${pdfText}`;
         } 
-        // 🌟 [新增] 支援直接讀取 .md 或 .txt 檔案的文字內容
+        // 🌟 [新增] 支援直接讀取 .md 或 .txt 檔案的文字內容 (TextDecoder 安全版)
         else if (file.mimeType.includes('text') || file.mimeType === 'text/markdown' || file.fileName?.endsWith('.md')) {
           dispatch({ type: 'SET_LOADING_STATUS', payload: '正在讀取 Markdown 檔案...' });
           try {
-            // 將 Base64 解碼為 UTF-8 繁體中文
-            const textContent = decodeURIComponent(escape(window.atob(file.data)));
+            // 使用最安全的 TextDecoder 處理 UTF-8 中文
+            const binaryString = window.atob(file.data);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            const textContent = new TextDecoder('utf-8').decode(bytes);
             finalInputText += `\n\n[Markdown 檔案內容]:\n${textContent}`;
+            console.log("✅ 檔案文字萃取成功，長度：", textContent.length); // 可以在 F12 檢查是否有抓到
           } catch (e) {
-            console.error("文字檔解碼失敗", e);
+            console.error("❌ 文字檔解碼失敗", e);
           }
         } 
         else {
@@ -178,7 +184,16 @@ export const useStep1Analysis = () => {
         segments: [],
         strategies: []
       };
+// 🌟 [架構師終極備份] 防止 React 狀態在切換頁面時流失，硬存進瀏覽器本機記憶體！
+      try {
+        const safeText = finalInputText || basicAnalysisObj.fullText || "";
+        localStorage.setItem('VMAX_SAFE_FULLTEXT', safeText);
+        console.log("💾 已將文本備份至 localStorage，長度：", safeText.length);
+      } catch(e) {
+        console.warn("localStorage 備份失敗", e);
+      }
 
+      // 8. 儲存結果並將步驟推向 Step 2 (Basic)
       dispatch({ 
         type: 'SET_BASIC_RESULT', 
         payload: { 

@@ -189,53 +189,59 @@ export const DEEP_VOCABULARY_PROMPT = `
 請嚴格依照以下 JSON 結構輸出：
 ` + STEP_2_DEEP_VOCAB_PROMPT_SUFFIX;
 
-// 🌟 模組化直讀版：專門針對「完全打包好」的 Markdown 結構，提供 100% 絕對提取
+// 🌟 終極直讀防呆版：極致簡化指令，去除干擾字眼
 export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
-[SYSTEM INSTRUCTION: STRICT CONTAINERIZED DATA EXTRACTION]
+[SYSTEM INSTRUCTION: STRICT DATA EXTRACTION]
 # ROLE: V-MAX 模組化資料提取官
-# FATAL WARNING: 你的唯一任務是把 <SOURCE_DATA> 中已經整理好的「意義段區塊」資料，一字不漏地轉譯為 JSON 格式。嚴禁自行發明、換句話說或跨段落借用資料！
+# MISSION: 仔細閱讀 <SOURCE_DATA>，並將其中以「**意義段」開頭的區塊，完美轉換為 JSON 格式。
+# CRITICAL RULE: 絕對禁止自己發明內容！所有資料必須 100% 從 <SOURCE_DATA> 內複製！如果沒有資料，請填入空字串或空陣列。
 
-### 🎯 任務說明與提取對應表
-使用者已經將資料整理成完美的「模組化容器」。請你掃描文本中的每一個 \`**意義段 X：[段落標題]**\` 區塊，並依照以下規則提取該區塊內的資料：
-
-1. **標題 (title)**：提取 \`**意義段 X：\` 後面的文字。例如：\`二、景點特色描寫 ㈠\`。
-2. **大意 (summary)**：100% 照抄 \`**大意**：\` 後面的內容。
-3. **課文原句 (evidence_quote)**：100% 照抄 \`**課文原句**：\` 後面的內容。
-4. **修辭 (rhetorics)**：查看 \`**修辭與寫作分析**：\`。
-   - 如果寫「無」，請輸出空陣列 \`[]\`。
-   - 如果有內容（例如：【譬喻】將野柳岬比喻成...），請提取【】內的文字作為 \`name\`，後面的說明作為 \`analysis\`。\`example\` 填入課文原句。
-5. **提問 (dokQuestions)**：100% 照抄 \`**深度探究提問**：\` 後面的內容。如果寫「無」，輸出空陣列 \`[]\`。
-
-### 🎯 全域資料提取
-1. 尋找文本中的「結構心智圖」資訊，提取核心與關鍵字。
-2. 提取「策略思考 (DOK 3-4)」或高階提問作為 \`strategies\`。若無，請自行發想 3 個。
+### 📝 提取對應指南 (Mapping Guide)
+當你看到 \`**意義段 X：[標題]\` 時，請建立一個 JSON 物件：
+- "title": 擷取冒號後面的文字 (例如：一、點出主題景點)。
+- "summary": 擷取 \`**大意**：\` 後面的文字。
+- "evidence_quote": 擷取 \`**課文原句**：\` 後面的文字。
+- "rhetorics": 擷取 \`**修辭與寫作分析**：\`。如果有內容（如【譬喻】...），請整理成 name 和 analysis，並將課文原句放入 example。若為「無」，請輸出 []。
+- "dokQuestions": 擷取 \`**深度探究提問**：\` 後面的文字。若為「無」，請輸出 []。
 
 <SOURCE_DATA>
 {INPUT_TEXT}
 </SOURCE_DATA>
 
-請直接輸出純 JSON 格式，必須符合以下結構：
+請嚴格依照以下 JSON 格式輸出 (只輸出 JSON，不加 markdown 標記)：
 {
-  "macroStructure": "N1-N5",
-  "mindMapCore": "心智圖核心",
-  "segments": [ 
-    { 
-      "segmentIndex": 0, 
-      "title": "照抄標題 (包含 ㈠ ㈡ 等)", 
-      "type": "意義段", 
-      "summary": "100% 照抄", 
-      "evidence_quote": "100% 照抄", 
-      "difficultWords": [], 
-      "keywords": ["對應關鍵字"], 
+  "macroStructure": "N1 故事山",
+  "mindMapCore": "擷取自結構心智圖",
+  "segments": [
+    {
+      "segmentIndex": 0,
+      "title": "字串",
+      "type": "意義段",
+      "summary": "字串",
+      "evidence_quote": "字串",
+      "difficultWords": [],
+      "keywords": [],
       "rhetorics": [
-        { "name": "修辭名稱", "example": "原文例句", "analysis": "說明", "pedagogicalPoint": "", "application": "" }
-      ], 
-      "dokQuestions": [ { "type": "類型", "question": "題目", "intent": "意圖" } ], 
-      "sentencePatterns": [], 
-      "deepDive": "" 
-    } 
+        {
+          "name": "字串",
+          "example": "字串",
+          "analysis": "字串",
+          "pedagogicalPoint": "",
+          "application": ""
+        }
+      ],
+      "dokQuestions": [
+        {
+          "type": "閱讀理解",
+          "question": "字串",
+          "intent": "探究"
+        }
+      ],
+      "sentencePatterns": [],
+      "deepDive": ""
+    }
   ],
-  "strategies": [ { "type": "DOK-QUESTION", "title": "策略標題", "method": "提問法", "teachingPoint": "引導...", "application": "[核心提問]... -> [預期產出]..." } ]
+  "strategies": []
 }
 `;
 

@@ -17,17 +17,11 @@ export const useStep3Segments = () => {
   const { state, dispatch } = useWorkflowContext();
   const isProcessing = useRef(false);
 
-  /**
-   * 🌟 驗證協定：無條件放行
-   */
   const validateGroundedness = (parsedData: any, rawText: string) => {
     console.log("【V-MAX 安全通關】已略過嚴格比對，放行 AI 產出的段落大意");
     return true; 
   };
 
-  /**
-   * 1. 核心任務：執行從 2.5 到 2.75 的初始生成
-   */
   const handleStep2DeepVocabConfirm = async (confirmedVocabDataString: string) => {
     if (isProcessing.current) return;
     isProcessing.current = true;
@@ -42,15 +36,24 @@ export const useStep3Segments = () => {
         ?.filter((w: any) => w.isSelected)
         .map((w: any) => w.word) || [];
 
-      // 🚨 [架構師重大防呆] 確保 rawSourceText 不是空的！
-      const rawSourceText = state.analysisData?.fullText || state.basicAnalysisResult || "";
+// 🌟 [架構師終極提取] 優先從狀態拿，拿不到就去 localStorage 救回來！
+      let rawSourceText = state.analysisData?.fullText;
+
       if (!rawSourceText || rawSourceText.length < 50) {
-          console.warn("⚠️ 警告：原始文本丟失！AI 目前處於「盲猜」狀態。請確保 Step 1 是用『文字貼上』而非僅上傳 md 檔。");
+          console.warn("⚠️ Context 狀態流失！啟動 localStorage 救援...");
+          rawSourceText = localStorage.getItem('VMAX_SAFE_FULLTEXT') || "";
+      }
+
+      // 最終防線檢查
+      if (!rawSourceText || rawSourceText.length < 50) {
+         alert("🚨 系統徹底丟失了文本資料！請退回 Step 1 重新操作。");
+         throw new Error("文本資料流失，已阻斷 API 呼叫以防止幻覺。");
       }
       
+      console.log(`[Data Pipeline Check] 準備發送給 AI 的原始文本長度：${rawSourceText.length} 字`);
+
       dispatch({ type: 'SET_LOADING_STATUS', payload: '正在執行：意義段落深究...' });
       
-      // 🌟 [優化] 將追加的指令放在前面，避免破壞 constants 中 Prompt 末尾的 JSON Schema
       const extraInstructions = `
 [動態任務附加]
 # 🚨 教科書難詞處理協定：
@@ -58,12 +61,12 @@ export const useStep3Segments = () => {
 2. 若該段落包含清單中的詞彙，請務必將其列入該段落的 \`difficultWords\` 欄位中。
       `;
 
+      // 注意：這裡我將 replace 的第二個參數改回字串，避免 function 替換問題
       const prompt1 = extraInstructions + "\n" + STEP_2_DEEP_SEGMENTS_PROMPT_V2.replace('{INPUT_TEXT}', rawSourceText);
       
       const response1 = await sendMessageToGemini(prompt1, [], 0, { temperature: 0.1, responseMimeType: "application/json" });
       let parsedSegments = sanitizeAndParseJSON(response1);
 
-      // 🌟 [對接攔截器]：將 AI 可能輸出的 exact_raw_text 轉換回 UI 認讀的 summary
       if (parsedSegments && Array.isArray(parsedSegments.segments)) {
         parsedSegments.segments = parsedSegments.segments.map((seg: any) => ({
           ...seg,
@@ -76,9 +79,6 @@ export const useStep3Segments = () => {
       let validSegments = parsedSegments.segments || (Array.isArray(parsedSegments) ? parsedSegments : []);
       const macroStructure = parsedSegments.macroStructure || "N1 故事山";
 
-      // ==========================================
-      // 第二階段：為全課生成共用的「語文百寶箱策略」
-      // ==========================================
       dispatch({ type: 'SET_LOADING_STATUS', payload: '正在進行第二階段：編寫高質感教學策略...' });
       
       const prompt2 = `
