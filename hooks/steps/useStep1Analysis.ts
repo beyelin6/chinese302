@@ -58,7 +58,7 @@ export const useStep1Analysis = () => {
           finalInputText += `\n\n[PDF]:\n${pdfText}`;
         } 
         // 🌟 [新增] 支援直接讀取 .md 或 .txt 檔案的文字內容 (TextDecoder 安全版)
-        else if (file.mimeType.includes('text') || file.mimeType === 'text/markdown' || file.fileName?.endsWith('.md')) {
+        else if (file.mimeType.includes('text') || file.mimeType === 'text/markdown' || file.name?.endsWith('.md')) {
           dispatch({ type: 'SET_LOADING_STATUS', payload: '正在讀取 Markdown 檔案...' });
           try {
             // 使用最安全的 TextDecoder 處理 UTF-8 中文
@@ -153,7 +153,7 @@ export const useStep1Analysis = () => {
         },
 
         languageActivities: basicAnalysisObj.languageActivities || [],
-
+        
         coreVocabulary: (basicAnalysisObj.coreVocabulary || []).map((v: any) => {
           const isString = typeof v === 'string';
           const word = isString ? v : (v.word || v);
@@ -170,6 +170,23 @@ export const useStep1Analysis = () => {
             shapeSimilar: shapeSimilar, 
             polyphonic: polyphonic,
             isFocused: hasDeepData 
+          };
+        }),
+
+        recognitionVocabulary: (basicAnalysisObj.recognitionVocabulary || []).map((v: any) => {
+          const isString = typeof v === 'string';
+          const word = isString ? v : (v.word || v);
+          return {
+            word: word,
+            radical: isString ? "部" : (v.radical || "部"),
+            type: isString ? "認讀字" : (v.type || "認讀字"),
+            writingTips: "認讀字，重點在於認字而非寫法。",
+            shapeSimilar: isString ? [] : (v.shapeSimilar || []),
+            polyphonic: isString ? [] : (v.polyphonic || []),
+            isFocused: false, // 認讀字預設不勾選
+            wantsWritingTips: false,
+            wantsShapeSimilar: true,
+            wantsPolyphonic: false
           };
         }),
 
@@ -197,6 +214,7 @@ export const useStep1Analysis = () => {
       dispatch({ 
         type: 'SET_BASIC_RESULT', 
         payload: { 
+          rawInputText: finalInputText,
           basicAnalysisResult: JSON.stringify(basicAnalysisObj), 
           analysisData: initialAnalysisData 
         } 

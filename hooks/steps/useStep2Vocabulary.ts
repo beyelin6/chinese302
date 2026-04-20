@@ -34,7 +34,12 @@ export const useStep2Vocabulary = () => {
         } 
       });
 
-      const focusedVocabs = (confirmedBasicData.coreVocabulary || []).filter((v: VocabularyItem) => v.isFocused);
+      const allVocabs = [
+        ...(confirmedBasicData.coreVocabulary || []),
+        ...(confirmedBasicData.recognitionVocabulary || [])
+      ];
+
+      const focusedVocabs = allVocabs.filter((v: VocabularyItem) => v.isFocused);
       const selectedIdioms = (confirmedBasicData.idioms || [])
         .filter((i: any) => i.isSelected)
         .map((i: any) => i.word);
@@ -212,16 +217,28 @@ export const useStep2Vocabulary = () => {
   const handleUpdateVocabularyItem = (word: string, updatedData: Partial<VocabularyItem>) => {
     if (!state.analysisData) return;
     
-    const updatedVocab = state.analysisData.coreVocabulary.map(v => 
-      v.word === word ? { ...v, ...updatedData } : v
-    );
+    let updatedCore = state.analysisData.coreVocabulary;
+    let updatedRecognition = state.analysisData.recognitionVocabulary || [];
+
+    const inCore = updatedCore.some(v => v.word === word);
+    if (inCore) {
+      updatedCore = updatedCore.map(v => v.word === word ? { ...v, ...updatedData } : v);
+    } else {
+      updatedRecognition = updatedRecognition.map(v => v.word === word ? { ...v, ...updatedData } : v);
+    }
+
+    const updatedDataObj = { 
+      ...state.analysisData, 
+      coreVocabulary: updatedCore,
+      recognitionVocabulary: updatedRecognition
+    };
 
     dispatch({ 
       type: 'SET_BASIC_RESULT', 
       payload: { 
         ...state,
-        basicAnalysisResult: JSON.stringify({ ...state.analysisData, coreVocabulary: updatedVocab }),
-        analysisData: { ...state.analysisData, coreVocabulary: updatedVocab } 
+        basicAnalysisResult: JSON.stringify(updatedDataObj),
+        analysisData: updatedDataObj 
       } 
     });
   };

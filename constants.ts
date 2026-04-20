@@ -91,11 +91,12 @@ export const PROMPT_GENERATE_ADDITIONAL_ACTIVITIES = `
 
 export const STEP_1_FAST_SCAN_PROMPT = `
 [V-MAX FAST SCAN: V8.8]
-請快速掃描文本，僅提取基本資訊與生字清單。
+請快速掃描文本，提取基本資訊、生字清單與認讀字清單。
 只輸出純 JSON：
 {
   "basicInfo": { "grade": "...", "unitName": "...", "genre": "...", "subject": "...", "writingTechnique": "...", "mainIdea": "..." },
-  "coreVocabulary": ["字1", "字2", "字3"],
+  "coreVocabulary": ["生字1", "生字2"],
+  "recognitionVocabulary": ["認讀字1", "認讀字2"],
   "textbookDifficultWords": ["..."],
   "idioms": ["..."]
 }
@@ -113,14 +114,16 @@ export const STEP_1_FAST_PROMPT_SUFFIX = `
   },
   "languageActivities": [ { "title": "活動標題", "content": "練習內容" } ],
   "coreVocabulary": [ { "word": "字", "radical": "部首", "writingTips": "照抄原文" } ],
+  "recognitionVocabulary": [ { "word": "字", "radical": "部首" } ],
   "textbookDifficultWords": ["詞語"],
   "idioms": ["成語"]
 }
 
 【資料尋找終極指南】：
 1. 基本資訊：掃描文章最前面的列表。若無，請看大標題與作者標示。
-2. coreVocabulary：尋找第一個有「部首」欄位的表格。
-3. 語文活動：尋找帶有「綜合語文活動」或「語文活動」字眼的段落，將其提取出來。
+2. coreVocabulary：尋找第一個有「部首」欄位的表格（通常標示為「生字」）。
+3. recognitionVocabulary：尋找標示為「認讀字」或「會認的字」的清單。
+4. 語文活動：尋找帶有「綜合語文活動」或「語文活動」字眼的段落，將其提取出來。
 4. 難詞與成語：尋找被括號包住的詞彙，分別歸類。
 
 請只輸出純 JSON 格式，不要有任何 Markdown 外框 (\`\`\`json)。
@@ -136,7 +139,8 @@ export const STEP_1_BASIC_PROMPT_SUFFIX = `
 {
   "basicInfo": { "grade": "...", "unitName": "...", "author": "...", "genre": "...", "subject": "...", "writingTechnique": "...", "mainIdea": "..." },
   "languageActivities": [ { "title": "...", "content": "..." } ],
-  "coreVocabulary": [ { "word": "漢字", "radical": "部首", "type": "分類", "writingTips": "寫法提醒", "shapeSimilar": [], "polyphonic": [] } ],
+  "coreVocabulary": [ { "word": "漢字", "radical": "部首", "type": "生字", "writingTips": "寫法提醒", "shapeSimilar": [], "polyphonic": [] } ],
+  "recognitionVocabulary": [ { "word": "漢字", "radical": "部首", "type": "認讀字", "shapeSimilar": [], "polyphonic": [] } ],
   "textbookDifficultWords": ["詞語"],
   "idioms": ["成語"]
 }
@@ -453,6 +457,7 @@ ${CHARACTER_VISUAL_REF_PLACEHOLDER}
   1. 【ContentFocus 內文】：必須「100% 絕對照抄」segment.summary 的內容，且必須保留編號（如：\`㈡ 透過傳說故事...\`）。
   2. 【標題定義】：title 欄位【絕對禁止】使用「段落 1」這種字眼！你必須 100% 使用傳入的 segment.title 表達（例如：\`二、景點特色描寫 ㈠\`）。
   3. 【解析度防誤導】：生圖指令 (visual_prompt) 必須與該段落文字內容（如：仙女鞋、女王頭）高度對位。每一頁的主體物件必須清晰、不模糊。
+- **[ContentFocus] 視覺精準化協定 (Precision Visuals)**: 🌟🚨 你必須深度掃描該段落的 \`summary\` 文字，提取出所有「具象名詞」(如：仙女鞋、女王頭、豆腐岩、野柳岬)。將這些名詞作為 \`visual_prompt\` 的核心主體，並結合當前視覺風格進行具象化渲染。嚴禁生成泛泛而談的背景圖。
 - **[DeepDive] 生圖鎖定**：🌟🚨 \`visual_prompt\` 必須根據修辭或句型內容，畫出具有象徵意義的「抽象隱喻或特寫物件」(例如：放大鏡、發光齒輪、解鎖的鑰匙)。
 - **[LanguageActivity] 排版鐵律**：🌟🚨 displayText 必須將「練習內容與範例」進行結構化條列排版！遇到「修改句子、改錯字」，必須換行並加上 ❌ 與 ✅ 進行上下排列。
 - **[IdiomLoop]**：🌟🚨 visual_prompt 必須根據成語的「引申意義」或「生活應用例句」作畫！絕對禁止照字面直譯！

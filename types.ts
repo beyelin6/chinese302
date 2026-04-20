@@ -139,6 +139,7 @@ export interface AnalysisData {
   subject?: string;
   
   coreVocabulary: VocabularyItem[]; 
+  recognitionVocabulary?: VocabularyItem[]; 
   textbookDifficultWords: any[]; // Changed to any[] to support SelectableItem structure if needed, or keep string[] and handle conversion
   idioms: any[]; 
   
@@ -234,6 +235,7 @@ export interface WorkflowState {
   isLoading: boolean;
   loadingStatus: string | null; 
   error: string | null;
+  rawInputText: string | null;
   basicAnalysisResult: any | null;
   analysisData: any | null;
   deepVocabResult: any | null;
@@ -258,7 +260,7 @@ export type WorkflowAction =
   | { type: 'SET_LOADING', payload: boolean }
   | { type: 'SET_LOADING_STATUS', payload: string | null }
   | { type: 'SET_ERROR', payload: string | null }
-  | { type: 'SET_BASIC_RESULT', payload: { basicAnalysisResult: any, analysisData: any } }
+  | { type: 'SET_BASIC_RESULT', payload: { basicAnalysisResult: any, analysisData: any, rawInputText?: string } }
   | { type: 'SET_VOCAB_RESULT', payload: any }
   | { type: 'SET_SEGMENTS_RESULT', payload: any }
   | { type: 'SET_DEEP_SEGMENTS_RESULT', payload: any }

@@ -8,6 +8,7 @@ export const initialState: WorkflowState = {
   isLoading: false,
   loadingStatus: null,
   error: null,
+  rawInputText: null,
   basicAnalysisResult: null,
   analysisData: null,
   deepVocabResult: null,
@@ -46,7 +47,12 @@ export function workflowReducer(state: WorkflowState, action: WorkflowAction): W
     case 'SET_ERROR': 
       return { ...state, error: action.payload };
     case 'SET_BASIC_RESULT':
-      return { ...state, basicAnalysisResult: action.payload.basicAnalysisResult, analysisData: action.payload.analysisData };
+      return { 
+        ...state, 
+        rawInputText: action.payload.rawInputText || state.rawInputText,
+        basicAnalysisResult: action.payload.basicAnalysisResult, 
+        analysisData: action.payload.analysisData 
+      };
     case 'SET_VOCAB_RESULT':
       return { ...state, deepVocabResult: action.payload };
     case 'SET_SEGMENTS_RESULT':

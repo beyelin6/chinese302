@@ -144,6 +144,17 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
         }));
       }
 
+      if (parsed.recognitionVocabulary) {
+        parsed.recognitionVocabulary = parsed.recognitionVocabulary.map((v: any) => ({
+          ...v,
+          isFocused: v.isFocused ?? false,
+          wantsWritingTips: false,
+          wantsShapeSimilar: true,
+          wantsPolyphonic: false,
+          writingTips: v.writingTips || "認讀字，重點在於認讀。"
+        }));
+      }
+
       // [難詞與成語物件化] 支援 Selectable 結構
       const mapSelected = (list: any[]) => (list || []).map((i: any) => 
         typeof i === 'string' ? { word: i, isSelected: true } : { ...i, isSelected: i.isSelected ?? true }
@@ -161,9 +172,19 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
   const toggleFocus = useCallback((word: string) => {
     setData(prev => {
       if (!prev) return null;
+      // 同時檢查 core 與 recognition
+      const inCore = prev.coreVocabulary.some(v => v.word === word);
+      if (inCore) {
+        return {
+          ...prev,
+          coreVocabulary: prev.coreVocabulary.map(v => 
+            v.word === word ? { ...v, isFocused: !v.isFocused } : v
+          )
+        };
+      }
       return {
         ...prev,
-        coreVocabulary: prev.coreVocabulary.map(v => 
+        recognitionVocabulary: (prev.recognitionVocabulary || []).map(v => 
           v.word === word ? { ...v, isFocused: !v.isFocused } : v
         )
       };
@@ -173,9 +194,18 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
   const updateOption = useCallback((word: string, key: 'wantsWritingTips' | 'wantsShapeSimilar' | 'wantsPolyphonic') => {
     setData(prev => {
       if (!prev) return null;
+      const inCore = prev.coreVocabulary.some(v => v.word === word);
+      if (inCore) {
+        return {
+          ...prev,
+          coreVocabulary: prev.coreVocabulary.map(v => 
+            v.word === word ? { ...v, [key]: !v[key] } : v
+          )
+        };
+      }
       return {
         ...prev,
-        coreVocabulary: prev.coreVocabulary.map(v => 
+        recognitionVocabulary: (prev.recognitionVocabulary || []).map(v => 
           v.word === word ? { ...v, [key]: !v[key] } : v
         )
       };
@@ -185,9 +215,18 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
   const handleSaveProofread = (updatedItem: VocabularyItem) => {
     setData(prev => {
       if (!prev) return null;
+      const inCore = prev.coreVocabulary.some(v => v.word === updatedItem.word);
+      if (inCore) {
+        return {
+          ...prev,
+          coreVocabulary: prev.coreVocabulary.map(v => 
+            v.word === updatedItem.word ? updatedItem : v
+          )
+        };
+      }
       return {
         ...prev,
-        coreVocabulary: prev.coreVocabulary.map(v => 
+        recognitionVocabulary: (prev.recognitionVocabulary || []).map(v => 
           v.word === updatedItem.word ? updatedItem : v
         )
       };
@@ -262,6 +301,27 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
             />
           ))}
         </div>
+
+        {/* 🌟🌟🌟 新增：認讀字區塊 🌟🌟🌟 */}
+        {data.recognitionVocabulary && data.recognitionVocabulary.length > 0 && (
+          <div className="mt-10 animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex items-center gap-2 text-indigo-600 font-black mb-4 px-2">
+              <BookOpen size={20} />
+              <h3>認讀字 ({data.recognitionVocabulary.length})</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-90">
+              {data.recognitionVocabulary.map((item) => (
+                <VocabCard 
+                  key={item.word} 
+                  item={item} 
+                  onToggleFocus={toggleFocus}
+                  onUpdateOption={updateOption}
+                  onProofread={setProofreadItem}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* 難詞與成語管理區 */}
