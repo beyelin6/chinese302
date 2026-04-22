@@ -84,7 +84,8 @@ export const PROMPT_GENERATE_ADDITIONAL_ACTIVITIES = `
 [
   {
     "title": "活動名稱 (例如：小小觀察家 - 詞彙擴展)",
-    "content": "具體的練習內容或引導文字"
+    "content": "具體的練習內容或引導文字",
+    "example": "題目範例"
   }
 ]
 `;
@@ -112,7 +113,7 @@ export const STEP_1_FAST_PROMPT_SUFFIX = `
     "grade": "提取年級", "unitName": "提取課名", "author": "提取作者", "genre": "提取文體",
     "subject": "提取核心主題", "writingTechnique": "提取寫法", "mainIdea": "提取主旨"
   },
-  "languageActivities": [ { "title": "活動標題", "content": "練習內容" } ],
+  "languageActivities": [ { "title": "活動標題", "content": "練習內容", "example": "課本範例" } ],
   "coreVocabulary": [ { "word": "字", "radical": "部首", "writingTips": "照抄原文" } ],
   "recognitionVocabulary": [ { "word": "字", "radical": "部首" } ],
   "textbookDifficultWords": ["詞語"],
@@ -123,8 +124,9 @@ export const STEP_1_FAST_PROMPT_SUFFIX = `
 1. 基本資訊：掃描文章最前面的列表。若無，請看大標題與作者標示。
 2. coreVocabulary：尋找第一個有「部首」欄位的表格（通常標示為「生字」）。
 3. recognitionVocabulary：尋找標示為「認讀字」或「會認的字」的清單。
-4. 語文活動：尋找帶有「綜合語文活動」或「語文活動」字眼的段落，將其提取出來。
-4. 難詞與成語：尋找被括號包住的詞彙，分別歸類。
+4. 語文活動：尋找帶有「綜合語文活動」或「語文活動」字眼的段落。
+   - 🌟 **偵測模式**：若內容中包含 \`｜\` 或 \`課本範例\`，請將該符號或關鍵字之後的文字提取至 "example" 欄位，前方描述放入 "content"。
+5. 難詞與成語：尋找被括號包住的詞彙，分別歸類。
 
 請只輸出純 JSON 格式，不要有任何 Markdown 外框 (\`\`\`json)。
 `;
@@ -136,9 +138,13 @@ export const STEP_1_BASIC_PROMPT_SUFFIX = `
 例如：如果資料寫「『微』中間有短橫」，你就必須原封不動照抄。
 絕對禁止：AI 擅自發揮、修改、或套用自己的國語辭典知識。若無提及請填寫 "無"。
 
+🚨🚨🚨 【語文活動精準提取規則】
+當識別到語文活動（例如「我會認字」、「認識詞語」）時：
+- 若內容中包含 \`｜\` 或 \`課本範例\`，請將該符號或關鍵字之後的文字準確提取至 "example" 欄位，前方描述放入 "content"。
+
 {
   "basicInfo": { "grade": "...", "unitName": "...", "author": "...", "genre": "...", "subject": "...", "writingTechnique": "...", "mainIdea": "..." },
-  "languageActivities": [ { "title": "...", "content": "..." } ],
+  "languageActivities": [ { "title": "...", "content": "...", "example": "..." } ],
   "coreVocabulary": [ { "word": "漢字", "radical": "部首", "type": "生字", "writingTips": "寫法提醒", "shapeSimilar": [], "polyphonic": [] } ],
   "recognitionVocabulary": [ { "word": "漢字", "radical": "部首", "type": "認讀字", "shapeSimilar": [], "polyphonic": [] } ],
   "textbookDifficultWords": ["詞語"],
@@ -209,7 +215,9 @@ export const STEP_2_DEEP_SEGMENTS_PROMPT_V2 = `
 - "sentencePatterns": 🌟 擷取「句型分析」內容。轉化為 { "name": "句型名稱與說明", "example": "🚨請務必從該段的『課文原句』中，自動找出套用此句型的句子填入！" }。
 - "readingQuestions": 擷取「認知層次提問矩陣」中的【閱讀理解 (DOK 1-2)】。轉化為 { "type": "提問類型", "question": "完整問句", "answer": "簡答(若文中無答案請根據常理推測)" }。
 - "dokQuestions": 擷取「認知層次提問矩陣」中的【策略思考 (DOK 3-4)】。轉化為 { "type": "思考維度或意圖", "question": "完整問句", "intent": "教學意圖" }。
-- "languageActivities": 擷取「綜合語文活動」區塊。轉化為 { "title": "活動名稱", "content": "活動說明", "example": "課本範例" }。
+- "languageActivities": 擷取「綜合語文活動」區塊。這類內容常以 \`[活動名稱]\` 開頭。
+  - 🌟 **精準對位邏輯**：如果看到 \`｜\` 或 \`**課本範例：\`，請將其後方所有文字放入 "example" 欄位；前方的主體描述放入 "content" 欄位。
+  - 轉化為 { "title": "活動名稱", "content": "活動說明", "example": "課本範例" }。
 
 <SOURCE_DATA>
 {INPUT_TEXT}
@@ -459,7 +467,7 @@ ${CHARACTER_VISUAL_REF_PLACEHOLDER}
   3. 【解析度防誤導】：生圖指令 (visual_prompt) 必須與該段落文字內容（如：仙女鞋、女王頭）高度對位。每一頁的主體物件必須清晰、不模糊。
 - **[ContentFocus] 視覺精準化協定 (Precision Visuals)**: 🌟🚨 你必須深度掃描該段落的 \`summary\` 文字，提取出所有「具象名詞」(如：仙女鞋、女王頭、豆腐岩、野柳岬)。將這些名詞作為 \`visual_prompt\` 的核心主體，並結合當前視覺風格進行具象化渲染。嚴禁生成泛泛而談的背景圖。
 - **[DeepDive] 生圖鎖定**：🌟🚨 \`visual_prompt\` 必須根據修辭或句型內容，畫出具有象徵意義的「抽象隱喻或特寫物件」(例如：放大鏡、發光齒輪、解鎖的鑰匙)。
-- **[LanguageActivity] 排版鐵律**：🌟🚨 displayText 必須將「練習內容與範例」進行結構化條列排版！遇到「修改句子、改錯字」，必須換行並加上 ❌ 與 ✅ 進行上下排列。
+- **[LanguageActivity] 排版鐵律**：🌟🚨 \`displayText\` 必須將「練習內容」與「課本範例 (example 欄位)」進行結構化條列排版！如果資料中有 \`example\`，請務必以「💡 課本範例：...」的形式呈現。遇到「修改句子、改錯字」，必須換行並加上 ❌ 與 ✅ 進行上下排列。
 - **[IdiomLoop]**：🌟🚨 visual_prompt 必須根據成語的「引申意義」或「生活應用例句」作畫！絕對禁止照字面直譯！
 `;
 

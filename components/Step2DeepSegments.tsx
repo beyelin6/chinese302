@@ -29,6 +29,7 @@ const LanguageActivityCard = ({ activity, idx, onGenerateExtraActivity, grade, o
   const [isEditing, setIsEditing] = useState(false);
   const [tempTitle, setTempTitle] = useState(activity.title);
   const [tempContent, setTempContent] = useState(activity.content);
+  const [tempExample, setTempExample] = useState(activity.example || "");
 
   const onExpand = async () => {
     setIsExpanding(true);
@@ -41,7 +42,7 @@ const LanguageActivityCard = ({ activity, idx, onGenerateExtraActivity, grade, o
   };
 
   const handleSave = () => {
-    onUpdate(idx, { ...activity, title: tempTitle, content: tempContent });
+    onUpdate(idx, { ...activity, title: tempTitle, content: tempContent, example: tempExample });
     setIsEditing(false);
   };
 
@@ -71,17 +72,43 @@ const LanguageActivityCard = ({ activity, idx, onGenerateExtraActivity, grade, o
         )}
       </div>
 
-      {isEditing ? (
-        <textarea 
-          className="w-full bg-white border border-indigo-200 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none"
-          value={tempContent}
-          onChange={(e) => setTempContent(e.target.value)}
-        />
-      ) : (
-        <div className="bg-white/80 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed border border-indigo-50 group-hover:shadow-inner transition-all">
-          {activity.content}
-        </div>
-      )}
+      <div className="space-y-4">
+        {isEditing ? (
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-wider ml-1">活動描述</label>
+            <textarea 
+              className="w-full bg-white border border-indigo-200 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none"
+              value={tempContent}
+              onChange={(e) => setTempContent(e.target.value)}
+            />
+          </div>
+        ) : (
+          <div className="bg-white/80 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed border border-indigo-50 group-hover:shadow-inner transition-all">
+            {activity.content}
+          </div>
+        )}
+
+        {(isEditing || activity.example) && (
+          <div className={`p-4 rounded-2xl border transition-all ${isEditing ? 'bg-amber-50/50 border-amber-200' : 'bg-amber-50 border-amber-100'}`}>
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles size={14} className="text-amber-500" />
+              <span className="text-xs font-black text-amber-700">課本範例</span>
+            </div>
+            {isEditing ? (
+              <textarea 
+                className="w-full bg-white border border-amber-200 rounded-xl p-3 text-sm text-slate-600 leading-relaxed min-h-[80px] focus:ring-2 focus:ring-amber-500 outline-none"
+                placeholder="在此輸入課本範例..."
+                value={tempExample}
+                onChange={(e) => setTempExample(e.target.value)}
+              />
+            ) : (
+              <p className="text-sm text-amber-800 leading-relaxed italic">
+                「{activity.example}」
+              </p>
+            )}
+          </div>
+        )}
+      </div>
 
       {isEditing && (
         <div className="mt-3 flex justify-end">
@@ -354,7 +381,7 @@ const Step2DeepSegments: React.FC<Step2DeepSegmentsProps> = ({
   const handleAddLanguageActivity = () => {
     if (!data) return;
     const newActivities = [...(data.languageActivities || [])];
-    newActivities.push({ title: "新活動", content: "活動內容描述..." });
+    newActivities.push({ title: "新活動", content: "活動內容描述...", example: "" });
     setData({ ...data, languageActivities: newActivities });
   };
 

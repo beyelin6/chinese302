@@ -165,7 +165,7 @@ ${ipInstruction}
         
         ...idioms.map((i: any) => ({ part: 'PART C', type: 'IdiomLoop', title: `成語解析：${i.word}`, idiom: i })),
         { part: 'PART C', type: 'Assessment', title: '全課綜合評量' },
-        ...languageActivities.map((act: any) => ({ part: 'PART D', type: 'LanguageActivity', title: `語文活動：${act.title}`, content: act.content })),
+        ...languageActivities.map((act: any) => ({ part: 'PART D', type: 'LanguageActivity', title: `語文活動：${act.title}`, content: act.content, example: act.example })),
         ...strategies.map((st: any) => ({ part: 'PART D', type: 'Strategy', title: `教學策略：${st.title}`, strategy: { title: st.title, method: st.method, application: st.application } })),
         { part: 'PART E', type: 'Ending', title: '結尾道別' }
       ];

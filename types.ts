@@ -147,6 +147,7 @@ export interface AnalysisData {
   languageActivities?: {
     title: string;
     content: string;
+    example?: string;
     extensions?: any[];
   }[];
 
