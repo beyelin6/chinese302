@@ -377,11 +377,13 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 2. **[Isolated on a pure white background]** (在純白背景中孤立).
 3. **[Clean edges, no shadows]** (邊緣整潔，無陰影).
 
-### 📥 輸出規範 (Strict JSON)
+### 📥 輸出規範 (Strict JSON ONLY - 務必包含以下 Key)
 { 
   "mode": "Drama Mode" | "Guide Mode", 
-  "protagonist": { "name": "...", "description": "...", "visualDNA": "Gender: [男/女] | Age: [明確年齡] | Full-body shot, isolated on pure white background, no shadows ...", "isNone": false, "verification": "..." }, 
-  "candidates": [ { "id": "C1", "name": "...", "persona": "...", "description": "...", "visualDNA": "Gender: [男/女] | Age: [明確年齡] | Full-body shot, isolated on pure white background, no shadows ..." } ] 
+  "protagonist": { "name": "主角姓名", "description": "...", "visualDNA": "...", "isNone": false }, 
+  "candidates": [ 
+    { "id": "C1", "name": "引導者姓名", "persona": "G1-G6", "description": "推薦理由與特徵", "visualDNA": "..." }
+  ] 
 }
 `;
 

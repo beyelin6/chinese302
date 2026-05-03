@@ -280,10 +280,10 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
   const guideFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!castingResult && !isLoading) {
+    if (!castingResult && !isLoading && !state.error) {
       onGenerateCasting();
     }
-  }, [castingResult, isLoading, onGenerateCasting]);
+  }, [castingResult, isLoading, state.error, onGenerateCasting]);
 
   useEffect(() => {
     try {

@@ -145,10 +145,29 @@ export const useStep4VisualsAndCasting = () => {
       `;
 
       const response = await sendMessageToGemini(prompt, [], 0, { responseMimeType: "application/json" });
-      const castingOptions = sanitizeAndParseJSON(response);
+      const parsed = sanitizeAndParseJSON(response);
       
-      if (!castingOptions || !castingOptions.candidates) {
-        throw new Error("AI 回傳的資料結構不完整");
+      // 🌟 [核彈級防呆] 選角資料對位器
+      let castingOptions = {
+        mode: parsed?.mode || "Field Trip Mode",
+        protagonist: parsed?.protagonist || { name: "None", description: "", visualDNA: "", isNone: true },
+        candidates: [] as any[]
+      };
+      
+      if (parsed?.candidates && Array.isArray(parsed.candidates)) {
+        castingOptions.candidates = parsed.candidates;
+      } else if (parsed?.options && Array.isArray(parsed.options)) {
+        castingOptions.candidates = parsed.options;
+      } else if (parsed?.guides && Array.isArray(parsed.guides)) {
+        castingOptions.candidates = parsed.guides;
+      }
+      
+      // 🛡️ [保底機制] 如果 AI 漏掉候選人，給予一組萬用角色
+      if (castingOptions.candidates.length === 0) {
+        castingOptions.candidates = [
+          { id: "C1", name: "學博導師", persona: "G3", description: "知識淵博，擅長從百科全書般的視角帶領探索。", visualDNA: "Gender: Male | Age: 45 | Full-body shot, isolated on pure white background, no shadows" },
+          { id: "C2", name: "溫情守護者", persona: "G1", description: "親切近人，用說故事的方式陪伴學習。", visualDNA: "Gender: Female | Age: 30 | Full-body shot, isolated on pure white background, no shadows" }
+        ];
       }
 
       dispatch({ type: 'SET_CASTING_RESULT', payload: JSON.stringify(castingOptions) });
