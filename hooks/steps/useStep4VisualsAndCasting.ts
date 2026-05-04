@@ -145,35 +145,51 @@ export const useStep4VisualsAndCasting = () => {
       `;
 
       const response = await sendMessageToGemini(prompt, [], 0, { 
-        temperature: 0.7, 
+        temperature: 0.5, // 稍微降低溫度以增加穩定性
         responseMimeType: "application/json" 
       });
       
       const parsed = sanitizeAndParseJSON(response);
       
-      // 🌟 [DNA 結構對位] 搜尋候選人，並確保 DNA 欄位包含四大特徵
-      const rawCandidates = parsed?.candidates || parsed?.options || parsed?.choices || [];
+      // 🌟 [DNA 結構對位] 智慧搜尋候選人清單
+      const rawCandidates = parsed?.candidates || parsed?.options || parsed?.choices || parsed?.guides || [];
       const normalizedCandidates = Array.isArray(rawCandidates) ? rawCandidates.map((c: any, index: number) => ({
         id: c.id || `C${index + 1}`,
-        name: c.name || "未命名英雄",
-        persona: c.persona || "G3",
-        description: c.description || "具備領航精神的導師。",
+        name: c.name || (c.persona === 'G1' ? "溫柔老師" : c.persona === 'G2' ? "偵探導師" : "引導者"),
+        persona: c.persona || `G${(index % 6) + 1}`,
+        description: c.description || "具備領航精神的專業導師。",
         visualDNA: c.visualDNA || "Full-body shot, isolated on pure white background, no shadows"
       })) : [];
 
+      // 🎭 [模式自動校正] 根據主角是否存在自動轉換
+      let detectedMode = parsed?.mode || "Field Trip Mode";
+      let protagonist = parsed?.protagonist || { name: "None", description: "無明確主角", visualDNA: "", isNone: true };
+      
+      if (protagonist.isNone === false && !protagonist.name) {
+         // 有時候 AI 忘了寫名字但覺得有主角
+         protagonist.name = "故事主角";
+      }
+
+      if (protagonist.isNone) {
+        detectedMode = "Field Trip Mode";
+      } else if (detectedMode === "Field Trip Mode" && !protagonist.isNone) {
+        detectedMode = "Drama Mode";
+      }
+
       let castingOptions = {
-        mode: parsed?.mode || (parsed?.protagonist?.isNone === false ? "Drama Mode" : "Field Trip Mode"),
-        protagonist: parsed?.protagonist || { name: "None", description: "", visualDNA: "", isNone: true },
+        mode: detectedMode,
+        protagonist: protagonist,
         candidates: normalizedCandidates
       };
       
-      // 🛡️ [模式驗證鎖] 依據 Kernel 規範，如果為 Drama Mode 但主角為 None，強制轉回 Field Trip
-      if (castingOptions.mode === "Drama Mode" && castingOptions.protagonist.isNone) {
-        castingOptions.mode = "Field Trip Mode";
-      }
-
+      // 🛡️ [核彈級保底] 如果候選人數量不足，給予預設角色避免卡死
       if (castingOptions.candidates.length === 0) {
-        throw new Error("AI 產出的選角清單不符合 v59.0 DNA 規範，請點擊「重新生成」按鈕再試一次。");
+        console.warn("AI didn't produce candidates, using emergency fallbacks.");
+        castingOptions.candidates = [
+          { id: "C1", name: "智慧博士", persona: "G3", description: "以科學視角解析課文。", visualDNA: "Gender: Male | Age: 50 | Hair: Grey | Full-body shot, isolated on pure white background, no shadows" },
+          { id: "C2", name: "靈感精靈", persona: "G4", description: "激發創意想像力。", visualDNA: "Gender: Female | Age: 20 | Hair: Blue | Full-body shot, isolated on pure white background, no shadows" },
+          { id: "C3", name: "熱血教練", persona: "G6", description: "帶領高強度學習挑戰。", visualDNA: "Gender: Male | Age: 30 | Hair: Black | Full-body shot, isolated on pure white background, no shadows" }
+        ];
       }
 
       dispatch({ type: 'SET_CASTING_RESULT', payload: JSON.stringify(castingOptions) });

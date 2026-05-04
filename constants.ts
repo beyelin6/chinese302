@@ -365,41 +365,43 @@ ${getVisualLibraryPrompt()}
 export const STEP_3_CASTING_PROMPT_PREFIX = `[V-MAX CASTING ENGINE] 請根據來源文本的靈魂，為本課推薦 3 位最契合的引導者候選人。`;
 
 export const STEP_4_DYNAMIC_CASTING_PROMPT = `
-# ROLE: V-MAX 視覺邏輯導演 (Casting Director v15.0)
-# MISSION: 根據原文提取靈魂主角，並結合全域視覺風格推薦 3 位專業引導者。
+# ROLE: V-MAX 視覺邏輯導演 (Casting Director v60.8)
+# MISSION: 根據原文核心靈魂執行「DNA & Purity Kernel」選角。
 
-### 🎭 選角邏輯鎖 (Casting Matrix)
-1. **[故事主角 (Protagonist)]**：
-   - 掃描原文，找出最具行動力或情感核心的人物。
-   - 若為說明文且無明確人物，請將 isNone 設為 true。
-2. **[引導者候選人 (Candidates)]**：
-   - 必須推薦 3 位風格迥異的引導者。
-   - 必須對應 Persona Chips (G1-G6)：
-     - G1: 溫暖關懷 | G2: 邏輯推理 | G3: 知識嚮導
-     - G4: 魔法想像 | G5: 未來任務 | G6: 熱血挑戰
-   - 每個人的描述必須與本課主題（如：科學探索、自然景觀、古文哲理）有深度連結。
+### 🎭 模式判定鎖 (Mode Hard-Lock)
+1. **[Mode A: Drama Mode (戲劇模式)]**：
+   - 判定條件：敘事性、兒童文學、或有明確主角的課文。
+   - 角色配置：
+     - **Story Protagonist (故事主角)**：畫面的核心焦點 (Subject)。
+     - **Guide Avatar (引導者)**：作為旁白或 UI 層的觀察者 (Observer)。
+2. **[Mode B: Field Trip Mode (導覽模式)]**：
+   - 判定條件：說明文、議題、無明確主角。
+   - 角色配置：
+     - **Story Protagonist**：設定為 [None] (isNone: true)。
+     - **Guide Avatar**：變為全課所有投影片的主角與畫面焦點 (Subject)。
 
-### 🚨 影像連貫性協定 (Visual Consistency)
-視覺提示詞 (visualDNA) 必須為英文，且必須包含：
-- **[Full-body shot]**, **[Isolated on a pure white background]**, **[No shadows]**.
-- 指定性別 (Gender) 與明確年齡 (Age)。
+### 🧬 Visual DNA 錨定鎖 (DNA Specs)
+所有選出的角色（主角與引導者）必須包含以下「不碎特徵」：
+- **(Gender, Age, Hair Style/Color, Eye Color, Fixed Accessory, Clothing Style)**。
+- 🚨 **[去背協定]**：所有 DNA 必須包含: "Full-body shot, isolated on pure white background, no shadows, clean edges"。
 
 ### 📥 輸出規範 (Strict JSON ONLY)
 { 
-  "mode": "Drama Mode" | "Guide Mode", 
+  "mode": "Drama Mode" | "Field Trip Mode", 
   "protagonist": { 
     "name": "主角姓名", 
     "description": "性格與在故事中的定位", 
-    "visualDNA": "Gender: ... | Age: ... | 特徵描述", 
-    "isNone": false 
+    "visualDNA": "隨附 DNA 文字", 
+    "isNone": boolean,
+    "logic_reason": "判定理由"
   }, 
   "candidates": [ 
     { 
       "id": "C1", 
       "name": "引導者姓名", 
       "persona": "G1-G6", 
-      "description": "為何這位角色適合引導本課？(結合成語或教學風格)", 
-      "visualDNA": "Gender: ... | Age: ... | Style: [選定的視覺風格] | Full-body shot, isolated on pure white background, no shadows" 
+      "description": "為何適合引導本課？", 
+      "visualDNA": "隨附 DNA 文字" 
     }
   ] 
 }
