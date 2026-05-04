@@ -405,8 +405,10 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
     { 
       "id": "C1", 
       "name": "引導者姓名", 
+      "role": "教學風格與角色定位（例如：專業嚴謹的科學家、活潑大方的探險家）",
+      "gender": "性別",
+      "age": "年齡段 (例如：30s, Young Adult, Child)",
       "persona": "G1-G6", 
-      "description": "具備什麼特點？為何適合引導本課？", 
       "visualDNA": "隨附完整 DNA 文字" 
     }
   ] 

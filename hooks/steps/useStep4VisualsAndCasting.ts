@@ -151,13 +151,14 @@ export const useStep4VisualsAndCasting = () => {
       
       const parsed = sanitizeAndParseJSON(response);
       
-      // 🌟 [DNA 結構對位] 智慧搜尋候選人清單
-      const rawCandidates = parsed?.candidates || parsed?.options || parsed?.choices || parsed?.guides || [];
+      // 🌟 [結構重組] 確保所有引導者擁有完整欄位
       let normalizedCandidates = Array.isArray(rawCandidates) ? rawCandidates.map((c: any, index: number) => ({
         id: c.id || `C${index + 1}`,
         name: c.name || (c.persona === 'G1' ? "溫柔老師" : c.persona === 'G2' ? "偵探導師" : "引導者"),
+        role: c.role || c.description || "具備領航精神的專業導師。",
         persona: c.persona || `G${(index % 6) + 1}`,
-        description: c.description || "具備領航精神的專業導師。",
+        gender: c.gender || "未指定",
+        age: c.age || "未指定",
         visualDNA: c.visualDNA || "Full-body shot, isolated on pure white background, no shadows"
       })) : [];
 
@@ -186,11 +187,11 @@ export const useStep4VisualsAndCasting = () => {
         detectedMode = "Drama Mode";
       }
 
-      // 🛡️ [補齊機制] 確保至少有 3 位候選人
+      // 🛡️ [補齊機制] 確保至少有 3 位候選人，且符合最新結構
       const fallbacks = [
-        { id: "C1", name: "智慧博士", persona: "G3", description: "以科學視角解析課文。", visualDNA: "Gender: Male | Age: 50 | Hair: Grey | Full-body shot, isolated on pure white background, no shadows" },
-        { id: "C2", name: "Bee老師", persona: "G4", description: "創意觀察家。專業溫暖，熱情活力有創意。", visualDNA: "Gender: Female | Age: 30s | Hair: Black | Professional and creative style | Full-body shot, isolated on pure white background, no shadows" },
-        { id: "C3", name: "熱血教練", persona: "G6", description: "帶領高強度學習挑戰。", visualDNA: "Gender: Male | Age: 30 | Hair: Black | Full-body shot, isolated on pure white background, no shadows" }
+        { id: "C1", name: "智慧博士", role: "以科學視角解析課文。", persona: "G3", gender: "Male", age: "50s", visualDNA: "Gender: Male | Age: 50 | Hair: Grey | Full-body shot, isolated on pure white background, no shadows" },
+        { id: "C2", name: "Bee老師", role: "創意觀察家。專業溫暖，熱情活力有創意。", persona: "G4", gender: "Female", age: "30s", visualDNA: "Gender: Female | Age: 30s | Hair: Black | Professional and creative style | Full-body shot, isolated on pure white background, no shadows" },
+        { id: "C3", name: "熱血教練", role: "帶領高強度學習挑戰。", persona: "G6", gender: "Male", age: "30s", visualDNA: "Gender: Male | Age: 30 | Hair: Black | Full-body shot, isolated on pure white background, no shadows" }
       ];
 
       while (normalizedCandidates.length < 3) {

@@ -39,10 +39,10 @@ const compressImage = (imageFile: File, maxWidth = 800, quality = 0.7): Promise<
   });
 };
 
-const GuideEditModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: boolean; onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }) => {
+const GuideEditModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: boolean; onClose: () => void; initialData: GuideCandidate; onSave: (updatedData: GuideCandidate) => void; }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
-    role: initialData?.description || '',
+    role: initialData?.role || '',
     gender: initialData?.gender || '未指定',
     age: initialData?.age || '30s',
     persona: initialData?.persona || '專業溫暖',
@@ -57,7 +57,7 @@ const GuideEditModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: bool
     if (isOpen && initialData) {
       setFormData({
         name: initialData.name || '',
-        role: initialData.description || '',
+        role: initialData.role || '',
         gender: initialData.gender || '未指定',
         age: initialData.age || '30s',
         persona: initialData.persona || '專業溫暖',
@@ -200,7 +200,7 @@ const GuideEditModal = ({ isOpen, onClose, initialData, onSave }: { isOpen: bool
               onSave({
                 ...initialData,
                 name: formData.name,
-                description: formData.role,
+                role: formData.role,
                 gender: formData.gender,
                 age: formData.age,
                 persona: formData.persona,
@@ -262,7 +262,7 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
   // 🌟 從零捏臉功能
   const [customGuideData, setCustomGuideData] = useState({
     name: '專屬導師',
-    description: '專為本課設計的引導者',
+    role: '專為本課設計的引導者',
     gender: '未指定',
     age: '25',
     persona: '專業且親切'
@@ -375,7 +375,7 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
         id: 'CUSTOM_GUIDE',
         name: customGuideData.name,
         persona: customGuideData.persona, 
-        description: customGuideData.description,
+        role: customGuideData.role,
         gender: customGuideData.gender,
         age: customGuideData.age,
         visualDNA: customGuideVisuals || '使用預設視覺設定'
@@ -711,7 +711,7 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
 
       <GuideEditModal 
         isOpen={!!editingCandidate || isCreatingCustom}
-        initialData={editingCandidate || { id: 'NEW_CUSTOM', name: '', description: '', gender: '未指定', age: '30s', persona: '專業溫暖', visualDNA: '' }}
+        initialData={editingCandidate || { id: 'NEW_CUSTOM', name: '', role: '', gender: '未指定', age: '30s', persona: '專業溫暖', visualDNA: '' } as GuideCandidate}
         onClose={() => {
           setEditingCandidate(null);
           setIsCreatingCustom(false);

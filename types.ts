@@ -197,15 +197,16 @@ export interface VisualData {
 export interface GuideCandidate {
   id: string;
   name: string;
-  persona: string;     // 🌟 新增：對應 G1-G6
-  description: string; // 🌟 新增：教學風格描述
+  role: string;        // 🌟 原 description 更名為 role
+  persona: string;     // 🌟 對應 G1-G6
+  gender: string;      // 🌟 新增/強化：性別
+  age: string;         // 🌟 新增/強化：年齡
   visualDNA: string;
   // Optional fields for backward compatibility or UI state
+  description?: string; // 暫時保留以防萬一
   title?: string;
   teachingStyle?: string;
   whyFit?: string;
-  gender?: string; 
-  age?: string;    
   type?: 'Real' | 'Virtual';
   style?: string;
   tone?: string;
