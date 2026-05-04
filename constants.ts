@@ -365,24 +365,42 @@ ${getVisualLibraryPrompt()}
 export const STEP_3_CASTING_PROMPT_PREFIX = `[V-MAX CASTING ENGINE] 請根據來源文本的靈魂，為本課推薦 3 位最契合的引導者候選人。`;
 
 export const STEP_4_DYNAMIC_CASTING_PROMPT = `
-# ROLE: V-MAX 視覺邏輯導演 (Casting Director v13.0)
-# MISSION: 根據原文提取主角，並結合全域視覺風格量身打造專業的引導者。
+# ROLE: V-MAX 視覺邏輯導演 (Casting Director v15.0)
+# MISSION: 根據原文提取靈魂主角，並結合全域視覺風格推薦 3 位專業引導者。
 
-### 🚨 終極禁令：禁止虛構主角、禁止預設角色。
-請依據真實性與行動力驗證來尋找故事主角。並為本課推演出 3 位不同風格的「引導者」。
+### 🎭 選角邏輯鎖 (Casting Matrix)
+1. **[故事主角 (Protagonist)]**：
+   - 掃描原文，找出最具行動力或情感核心的人物。
+   - 若為說明文且無明確人物，請將 isNone 設為 true。
+2. **[引導者候選人 (Candidates)]**：
+   - 必須推薦 3 位風格迥異的引導者。
+   - 必須對應 Persona Chips (G1-G6)：
+     - G1: 溫暖關懷 | G2: 邏輯推理 | G3: 知識嚮導
+     - G4: 魔法想像 | G5: 未來任務 | G6: 熱血挑戰
+   - 每個人的描述必須與本課主題（如：科學探索、自然景觀、古文哲理）有深度連結。
 
-### 🚨 去背與連貫性協定 (CRITICAL)
-為了方便後續去背應用，AI 在生成引導者候選人的 visualDNA 描述時【必須強制包含】以下三個元素：
-1. **[Full-body shot]** (全身像), **[Standing position]** (站姿), **[Frontal view]** (正面).
-2. **[Isolated on a pure white background]** (在純白背景中孤立).
-3. **[Clean edges, no shadows]** (邊緣整潔，無陰影).
+### 🚨 影像連貫性協定 (Visual Consistency)
+視覺提示詞 (visualDNA) 必須為英文，且必須包含：
+- **[Full-body shot]**, **[Isolated on a pure white background]**, **[No shadows]**.
+- 指定性別 (Gender) 與明確年齡 (Age)。
 
-### 📥 輸出規範 (Strict JSON ONLY - 務必包含以下 Key)
+### 📥 輸出規範 (Strict JSON ONLY)
 { 
   "mode": "Drama Mode" | "Guide Mode", 
-  "protagonist": { "name": "主角姓名", "description": "...", "visualDNA": "...", "isNone": false }, 
+  "protagonist": { 
+    "name": "主角姓名", 
+    "description": "性格與在故事中的定位", 
+    "visualDNA": "Gender: ... | Age: ... | 特徵描述", 
+    "isNone": false 
+  }, 
   "candidates": [ 
-    { "id": "C1", "name": "引導者姓名", "persona": "G1-G6", "description": "推薦理由與特徵", "visualDNA": "..." }
+    { 
+      "id": "C1", 
+      "name": "引導者姓名", 
+      "persona": "G1-G6", 
+      "description": "為何這位角色適合引導本課？(結合成語或教學風格)", 
+      "visualDNA": "Gender: ... | Age: ... | Style: [選定的視覺風格] | Full-body shot, isolated on pure white background, no shadows" 
+    }
   ] 
 }
 `;

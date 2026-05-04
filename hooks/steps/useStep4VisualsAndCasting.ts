@@ -137,43 +137,59 @@ export const useStep4VisualsAndCasting = () => {
     try {
       const prompt = `
         ${SYSTEM_PROMPT}
-        [任務目標]：執行 v12.0 萬用選角矩陣。
+        [任務目標]：執行 v15.0 萬用選角矩陣。
         【老師已選定的全域視覺風格】：${styleName} (${styleDesc})
-        【課文原文參考】：${sourceText.substring(0, 1500)}
+        【課文原文參考】：${sourceText.substring(0, 2000)}
         
         ${STEP_4_DYNAMIC_CASTING_PROMPT}
       `;
 
-      const response = await sendMessageToGemini(prompt, [], 0, { responseMimeType: "application/json" });
+      const response = await sendMessageToGemini(prompt, [], 0, { 
+        temperature: 0.7, // 提高溫度增加創意性
+        responseMimeType: "application/json" 
+      });
+      
       const parsed = sanitizeAndParseJSON(response);
       
-      // 🌟 [核彈級防呆] 選角資料對位器
+      // 🌟 [結構彈性對位] 搜尋可能的候選人欄位 (AI 有時會自作聰明改 Key 名)
+      const rawCandidates = parsed?.candidates || parsed?.options || parsed?.choices || parsed?.guides || [];
+      const normalizedCandidates = Array.isArray(rawCandidates) ? rawCandidates.map((c: any, index: number) => ({
+        id: c.id || `C${index + 1}`,
+        name: c.name || "未命名英雄",
+        persona: c.persona || "G3",
+        description: c.description || "具備領航精神的導師。",
+        visualDNA: c.visualDNA || ""
+      })) : [];
+
       let castingOptions = {
-        mode: parsed?.mode || "Field Trip Mode",
+        mode: parsed?.mode || (parsed?.protagonist?.isNone === false ? "Drama Mode" : "Field Trip Mode"),
         protagonist: parsed?.protagonist || { name: "None", description: "", visualDNA: "", isNone: true },
-        candidates: [] as any[]
+        candidates: normalizedCandidates
       };
       
-      if (parsed?.candidates && Array.isArray(parsed.candidates)) {
-        castingOptions.candidates = parsed.candidates;
-      } else if (parsed?.options && Array.isArray(parsed.options)) {
-        castingOptions.candidates = parsed.options;
-      } else if (parsed?.guides && Array.isArray(parsed.guides)) {
-        castingOptions.candidates = parsed.guides;
-      }
-      
-      // 🛡️ [保底機制] 如果 AI 漏掉候選人，給予一組萬用角色
+      // 🛡️ [動態補全] 如果候選人數量不足，則報錯而不是給予假人，讓使用者能重試
       if (castingOptions.candidates.length === 0) {
-        castingOptions.candidates = [
-          { id: "C1", name: "學博導師", persona: "G3", description: "知識淵博，擅長從百科全書般的視角帶領探索。", visualDNA: "Gender: Male | Age: 45 | Full-body shot, isolated on pure white background, no shadows" },
-          { id: "C2", name: "溫情守護者", persona: "G1", description: "親切近人，用說故事的方式陪伴學習。", visualDNA: "Gender: Female | Age: 30 | Full-body shot, isolated on pure white background, no shadows" }
-        ];
+        console.warn("AI didn't produce candidates, trying to parse from root items if any");
+        // 如果 parsed 本身就是陣列
+        if (Array.isArray(parsed)) {
+          castingOptions.candidates = parsed.map((c, idx) => ({
+            id: c.id || `C${idx + 1}`,
+            name: c.name || "引導者",
+            persona: c.persona || "G3",
+            description: c.description || "",
+            visualDNA: c.visualDNA || ""
+          }));
+        }
+      }
+
+      if (castingOptions.candidates.length === 0) {
+        throw new Error("AI 產出的選角清單為空，請點擊「重新生成」按鈕再試一次。");
       }
 
       dispatch({ type: 'SET_CASTING_RESULT', payload: JSON.stringify(castingOptions) });
     } catch (error: any) {
       console.error("Casting Analysis Error:", error);
-      dispatch({ type: 'SET_ERROR', payload: '選角分析失敗：' + error.message });
+      dispatch({ type: 'SET_ERROR', payload: error.message || '選角分析失敗' });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
       dispatch({ type: 'SET_LOADING_STATUS', payload: null });
