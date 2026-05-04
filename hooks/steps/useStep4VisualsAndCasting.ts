@@ -137,28 +137,28 @@ export const useStep4VisualsAndCasting = () => {
     try {
       const prompt = `
         ${SYSTEM_PROMPT}
-        [任務目標]：執行 v15.0 萬用選角矩陣。
+        [任務目標]：執行 V-MAX v59.0 萬用選角矩陣 (DNA & Purity Kernel)。
         【老師已選定的全域視覺風格】：${styleName} (${styleDesc})
-        【課文原文參考】：${sourceText.substring(0, 2000)}
+        【課文原文參考】：${sourceText.substring(0, 2500)}
         
         ${STEP_4_DYNAMIC_CASTING_PROMPT}
       `;
 
       const response = await sendMessageToGemini(prompt, [], 0, { 
-        temperature: 0.7, // 提高溫度增加創意性
+        temperature: 0.7, 
         responseMimeType: "application/json" 
       });
       
       const parsed = sanitizeAndParseJSON(response);
       
-      // 🌟 [結構彈性對位] 搜尋可能的候選人欄位 (AI 有時會自作聰明改 Key 名)
-      const rawCandidates = parsed?.candidates || parsed?.options || parsed?.choices || parsed?.guides || [];
+      // 🌟 [DNA 結構對位] 搜尋候選人，並確保 DNA 欄位包含四大特徵
+      const rawCandidates = parsed?.candidates || parsed?.options || parsed?.choices || [];
       const normalizedCandidates = Array.isArray(rawCandidates) ? rawCandidates.map((c: any, index: number) => ({
         id: c.id || `C${index + 1}`,
         name: c.name || "未命名英雄",
         persona: c.persona || "G3",
         description: c.description || "具備領航精神的導師。",
-        visualDNA: c.visualDNA || ""
+        visualDNA: c.visualDNA || "Full-body shot, isolated on pure white background, no shadows"
       })) : [];
 
       let castingOptions = {
@@ -167,23 +167,13 @@ export const useStep4VisualsAndCasting = () => {
         candidates: normalizedCandidates
       };
       
-      // 🛡️ [動態補全] 如果候選人數量不足，則報錯而不是給予假人，讓使用者能重試
-      if (castingOptions.candidates.length === 0) {
-        console.warn("AI didn't produce candidates, trying to parse from root items if any");
-        // 如果 parsed 本身就是陣列
-        if (Array.isArray(parsed)) {
-          castingOptions.candidates = parsed.map((c, idx) => ({
-            id: c.id || `C${idx + 1}`,
-            name: c.name || "引導者",
-            persona: c.persona || "G3",
-            description: c.description || "",
-            visualDNA: c.visualDNA || ""
-          }));
-        }
+      // 🛡️ [模式驗證鎖] 依據 Kernel 規範，如果為 Drama Mode 但主角為 None，強制轉回 Field Trip
+      if (castingOptions.mode === "Drama Mode" && castingOptions.protagonist.isNone) {
+        castingOptions.mode = "Field Trip Mode";
       }
 
       if (castingOptions.candidates.length === 0) {
-        throw new Error("AI 產出的選角清單為空，請點擊「重新生成」按鈕再試一次。");
+        throw new Error("AI 產出的選角清單不符合 v59.0 DNA 規範，請點擊「重新生成」按鈕再試一次。");
       }
 
       dispatch({ type: 'SET_CASTING_RESULT', payload: JSON.stringify(castingOptions) });
