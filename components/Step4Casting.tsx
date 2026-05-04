@@ -256,8 +256,6 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
   const [selectedGuide, setSelectedGuide] = useState<string | null>(null);
   const [editingCandidate, setEditingCandidate] = useState<GuideCandidate | null>(null);
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
-  const [customProtagonist, setCustomProtagonist] = useState<string>('');
-
   const [generatedDnaPrompt, setGeneratedDnaPrompt] = useState<string>('');
   const [isPromptCopied, setIsPromptCopied] = useState(false);
   
@@ -300,19 +298,33 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
       const formattedData: CastingData = {
         mode: parsed.mode || "Field Trip Mode",
         candidates: parsed.candidates || [],
-        protagonist: parsed.protagonist || { name: "None", description: "", visualDNA: "", isNone: true },
+        protagonists: parsed.protagonists || (parsed.protagonist ? [parsed.protagonist] : []),
         contextTone: parsed.contextTone || "本課語境分析中...",
         fusionTable: parsed.fusionTable
       };
 
+      // 🌟 [修正] 確保至少有一個主角結構
+      if (formattedData.protagonists.length === 0) {
+        formattedData.protagonists = [{ name: "None", description: "無明確主角", visualDNA: "", isNone: true }];
+      }
+
       setData(formattedData);
-      setCustomProtagonist(formattedData.protagonist?.visualDNA || '');
+      
+      // 🌟 [修正] 初始化主角 DNA 狀態
+      const dnaMap: Record<string, string> = {};
+      formattedData.protagonists.forEach((p, idx) => {
+        dnaMap[p.id || p.name || `P${idx}`] = p.visualDNA || '';
+      });
+      setProtagonistDNAs(dnaMap);
+      
       setParseError(null);
     } catch (err: any) {
       console.error("Casting JSON Parse Error:", err);
       setParseError("AI 回傳的選角資料格式異常，請嘗試重新生成。");
     }
   }, [castingResult]);
+
+  const [protagonistDNAs, setProtagonistDNAs] = useState<Record<string, string>>({});
 
   const handleEditClick = (guide: GuideCandidate, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -352,6 +364,12 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
     // 如果老師有產出 Dna Prompt，代表他打算開外部模式
     const hasPrompt = !!generatedDnaPrompt;
 
+    // 將各別主角的 DNA 更新回清單
+    const updatedProtagonists = data.protagonists.map(p => ({
+      ...p,
+      visualDNA: protagonistDNAs[p.id || p.name || ''] || p.visualDNA
+    }));
+
     if (selectedGuide === 'CUSTOM_GUIDE') {
       const customGuide: GuideCandidate = {
         id: 'CUSTOM_GUIDE',
@@ -364,33 +382,38 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
       };
       
       const finalGuide = hasPrompt ? { ...customGuide, useRefMode: true } : customGuide;
-      onConfirmCasting(customProtagonist, finalGuide as any, customGuideVisuals);
+      onConfirmCasting(JSON.stringify(updatedProtagonists), finalGuide as any, customGuideVisuals);
     } else {
       const guide = data.candidates.find(g => g.id === selectedGuide);
       if (guide) {
         // 在回傳時根據是否生成過 prompt，自動掛上 useRefMode
         const finalGuide = hasPrompt ? { ...guide, useRefMode: true } : guide;
-        onConfirmCasting(customProtagonist, finalGuide as any);
+        onConfirmCasting(JSON.stringify(updatedProtagonists), finalGuide as any);
       }
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [extractingProtagId, setExtractingProtagId] = useState<string | null>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, protagId: string) => {
     const file = e.target.files?.[0];
     if (!file || !handleExtractImageTraits) return;
 
     setIsExtracting(true);
+    setExtractingProtagId(protagId);
     try {
       const compressedBase64 = await compressImage(file);
       const media: MediaData = { mimeType: 'image/jpeg', data: compressedBase64, name: file.name };
       const traits = await handleExtractImageTraits(media);
       if (traits) {
-        setCustomProtagonist(traits.replace(/```yaml|```|`/g, '').trim());
+        const cleanTraits = traits.replace(/```yaml|```|`/g, '').trim();
+        setProtagonistDNAs(prev => ({ ...prev, [protagId]: cleanTraits }));
       }
     } catch (error) {
       alert('圖片解析失敗，請確保圖片格式正確或稍後再試。');
     } finally {
       setIsExtracting(false);
+      setExtractingProtagId(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -426,17 +449,31 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
 
   if (parseError) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-500">
-        <AlertCircle size={48} className="text-red-400 mb-4" />
-        <p className="text-red-500 font-bold">{parseError}</p>
-        <button onClick={onBack} className="mt-4 px-4 py-2 bg-slate-100 rounded-lg text-sm">返回上一步</button>
+      <div className="flex flex-col items-center justify-center h-full text-slate-500 p-8 text-center">
+        <div className="bg-red-50 p-6 rounded-3xl mb-4 border border-red-100">
+          <AlertCircle size={48} className="text-red-400 mb-2 mx-auto" />
+          <p className="text-red-600 font-bold text-lg mb-1">選角分析異常</p>
+          <p className="text-red-500 text-sm">{parseError}</p>
+        </div>
+        <div className="flex gap-4">
+          <button onClick={onBack} className="px-6 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">
+            返回上一步
+          </button>
+          <button 
+            onClick={() => onGenerateCasting()} 
+            className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-700 shadow-md transition-all flex items-center gap-2"
+          >
+            <Sparkles size={16} />
+            立即重新生成
+          </button>
+        </div>
       </div>
     );
   }
 
   if (!data) return null;
 
-  const isModeA = data.mode === "Drama Mode" && data.protagonist && !data.protagonist.isNone;
+  const isModeA = data.mode === "Drama Mode" && data.protagonists.some(p => !p.isNone);
 
   return (
     <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-8 duration-700 pb-24 relative">
@@ -445,6 +482,14 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
           <span className="bg-teal-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">4</span>
           靈魂與策略 (Soul Casting)
         </h2>
+        <button
+          onClick={() => onGenerateCasting()}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold text-xs hover:bg-indigo-100 transition-all border border-indigo-100 disabled:opacity-50"
+        >
+          <Sparkles size={14} className={isLoading ? "animate-spin" : ""} />
+          {isLoading ? "正在生成..." : "重新選角"}
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6">
@@ -463,49 +508,47 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
         {isModeA && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
             <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-              <User className="text-blue-500" /> 故事主角 DNA 鎖定
+              <User className="text-blue-500" /> 故事主角 DNA 鎖定 (支援多角色)
             </h3>
-            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex flex-col md:flex-row gap-4">
-              <div className="w-full md:w-1/3">
-                <div className="text-sm font-bold text-slate-800">{data.protagonist.name}</div>
-                <div className="text-xs text-slate-500 mb-2">{data.protagonist.description}</div>
-                
-                {handleExtractImageTraits && (
-                   <div className="mt-4">
-                     <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
-                     <button 
-                       onClick={() => fileInputRef.current?.click()}
-                       disabled={isExtracting || isLoading}
-                       className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white border border-blue-200 text-blue-600 rounded-lg text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
-                     >
-                       {isExtracting ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
-                       {isExtracting ? "正在解析圖片..." : "上傳圖片萃取 DNA"}
-                     </button>
-                   </div>
-                )}
-              </div>
-              <div className="flex-1">
-                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Visual DNA Traits (可手動修改)</label>
-                 <textarea
-                   value={customProtagonist}
-                   onChange={(e) => setCustomProtagonist(e.target.value)}
-                   className="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm font-mono text-slate-700 shadow-inner outline-none focus:ring-2 focus:ring-blue-500"
-                   rows={4}
-                 />
-                 {data.protagonist?.verification && (
-                   <div className="mt-3 flex gap-2 items-start p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-                     <div className="bg-indigo-100 p-1 rounded-md text-indigo-600 mt-0.5">
-                       <Sparkles size={12} />
-                     </div>
-                     <div className="flex-1">
-                       <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">AI 角色判定根據</div>
-                       <p className="text-[11px] text-indigo-700 leading-relaxed font-medium">
-                         {data.protagonist.verification}
-                       </p>
-                     </div>
-                   </div>
-                 )}
-              </div>
+            <div className="space-y-4">
+              {data.protagonists.filter(p => !p.isNone).map((p, pIdx) => {
+                const pId = p.id || p.name || `P${pIdx}`;
+                return (
+                  <div key={pId} className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex flex-col md:flex-row gap-4">
+                    <div className="w-full md:w-1/3">
+                      <div className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                         <span className="w-5 h-5 bg-blue-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">{pIdx + 1}</span>
+                         {p.name}
+                      </div>
+                      <div className="text-xs text-slate-500 mb-2 mt-1">{p.description}</div>
+                      
+                      {handleExtractImageTraits && (
+                        <div className="mt-4">
+                          <input type="file" id={`upload-${pId}`} onChange={(e) => handleFileUpload(e, pId)} accept="image/*" className="hidden" />
+                          <button 
+                            onClick={() => document.getElementById(`upload-${pId}`)?.click()}
+                            disabled={isExtracting || isLoading}
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white border border-blue-200 text-blue-600 rounded-lg text-[10px] font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                          >
+                            {isExtracting && extractingProtagId === pId ? <Loader2 size={12} className="animate-spin" /> : <ImageIcon size={12} />}
+                            {isExtracting && extractingProtagId === pId ? "正在解析..." : "上傳圖萃取 DNA"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Visual DNA Traits ({p.name})</label>
+                      <textarea
+                        value={protagonistDNAs[pId] || ''}
+                        onChange={(e) => setProtagonistDNAs(prev => ({ ...prev, [pId]: e.target.value }))}
+                        className="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm font-mono text-slate-700 shadow-inner outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={3}
+                        placeholder="請輸入此角色的外型特徵..."
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

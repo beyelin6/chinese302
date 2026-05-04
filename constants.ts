@@ -368,14 +368,14 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 # ROLE: V-MAX 視覺邏輯導演 (Casting Director v60.8)
 # MISSION: 根據原文核心靈魂執行「DNA & Purity Kernel」選角。
 
-### 🎭 模式判定鎖 (Mode Hard-Lock)
+### 🎭 模式判定鎖 (Mode Hard-Lock) (🚨 絕對準則)
 1. **[Mode A: Drama Mode (戲劇模式)]**：
-   - 判定條件：敘事性、兒童文學、或有明確主角的課文。
+   - 判定條件：課文屬於敘事性、記敘文、童話、小說，或有明確名字/身分的主角。
    - 角色配置：
-     - **Story Protagonist (故事主角)**：畫面的核心焦點 (Subject)。
-     - **Guide Avatar (引導者)**：作為旁白或 UI 層的觀察者 (Observer)。
+     - **Story Protagonist (故事主角)**：畫面的核心 Subject。必須提取其年齡、性別、性格。
+     - **Guide Avatar (引導者)**：以「觀察者」或「導覽者」身份出現，不干涉故事主體。
 2. **[Mode B: Field Trip Mode (導覽模式)]**：
-   - 判定條件：說明文、議題、無明確主角。
+   - 判定條件：課文屬於說明文、議題討論、科普、詩歌，且無明確人物主角。
    - 角色配置：
      - **Story Protagonist**：設定為 [None] (isNone: true)。
      - **Guide Avatar**：變為全課所有投影片的主角與畫面焦點 (Subject)。
@@ -386,22 +386,28 @@ export const STEP_4_DYNAMIC_CASTING_PROMPT = `
 - 🚨 **[去背協定]**：所有 DNA 必須包含: "Full-body shot, isolated on pure white background, no shadows, clean edges"。
 
 ### 📥 輸出規範 (Strict JSON ONLY)
+🚨 **[數量限制]**：
+1. 引導者候選人 (candidates) 【必須剛好 3 位】。
+2. 故事主角 (protagonists) 【請列出本課所有核心角色】，若為 Mode B 則列出一位並將 isNone 設為 true。
+
 { 
   "mode": "Drama Mode" | "Field Trip Mode", 
-  "protagonist": { 
-    "name": "主角姓名", 
-    "description": "性格與在故事中的定位", 
-    "visualDNA": "隨附 DNA 文字", 
-    "isNone": boolean,
-    "logic_reason": "判定理由"
-  }, 
+  "logic_reason": "判定為 Mode A 或 Mode B 的關鍵理由",
+  "protagonists": [ 
+    {
+      "name": "角色姓名", 
+      "description": "性格與位階 (主要主角/重要配角)", 
+      "visualDNA": "隨附 DNA 文字", 
+      "isNone": boolean
+    }
+  ], 
   "candidates": [ 
     { 
       "id": "C1", 
       "name": "引導者姓名", 
       "persona": "G1-G6", 
-      "description": "為何適合引導本課？", 
-      "visualDNA": "隨附 DNA 文字" 
+      "description": "具備什麼特點？為何適合引導本課？", 
+      "visualDNA": "隨附完整 DNA 文字" 
     }
   ] 
 }

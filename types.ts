@@ -214,7 +214,7 @@ export interface GuideCandidate {
 
 export interface CastingData {
   mode: 'Drama Mode' | 'Field Trip Mode'; // 🌟 新增：模式鎖定
-  protagonist: {
+  protagonists: {
     name: string;
     description: string;
     visualDNA: string;
@@ -224,9 +224,15 @@ export interface CastingData {
     gender?: string;
     age?: string;
     traits?: string;
-  };
+  }[];
   candidates: GuideCandidate[];
   // Optional fields for backward compatibility
+  protagonist?: {
+    name: string;
+    description: string;
+    visualDNA: string;
+    isNone: boolean;
+  };
   contextTone?: string;
   fusionTable?: string; 
 }

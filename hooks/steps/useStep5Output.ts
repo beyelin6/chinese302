@@ -73,6 +73,10 @@ export const useStep5Output = () => {
     const unitName = analysisData?.basicInfo?.unitName || "未命名課程";
     const hasExternalImage = casting?.useRefMode === true;
     
+    // 🌟 解析多主角 DNA
+    const protagList = Array.isArray(casting?.protagonists) ? casting.protagonists.filter((p: any) => !p.isNone) : [];
+    const protagonistsDNAString = protagList.map((p: any) => `${p.name}: ${p.visualDNA}`).join(' | ') || '無明確主角設定';
+
     // 🌟 這裡就是魔法：把引導角色變成指定的 IP，並精準分離「長相」與「動作」
     const ipInstruction = hasExternalImage
       ? `1. 專屬人物 IP 植入與動態演繹 (CRITICAL)：
@@ -84,6 +88,7 @@ export const useStep5Output = () => {
     const systemInstructions = `[⚠️ SYSTEM META - STRICT TRANSCRIPTION MODE & DESIGN SYSTEM]
 【NotebookLM 簡報生成絕對守則】
 ${ipInstruction}
+故事主角 DNA 設定：${protagonistsDNAString}
 2. 頁數與結構鐵律：必須嚴格依照 'slides' 陣列的長度製作，嚴禁自行增減頁數、合併頁面或省略任何內容。
 3. 內容忠實性 (CRITICAL)：'displayText' 內的文字為核心文案，您必須「100% 逐字照抄」。絕對禁止縮寫、改寫、潤飾或發揮創意。
 4. 視覺美學絕對禁令 (Negative Prompts)：為確保現代高級感，生成設計時絕對禁止使用「漸層(Gradient)」、「發光(Glow)」、「立體浮雕(Bevel)」。禁止高飽和度純色與純黑(#000000)。所有文字方塊邊緣必須保持至少 20% 的呼吸留白。
@@ -181,7 +186,7 @@ ${ipInstruction}
           ${SYSTEM_PROMPT}
           ${compiledSystemPrompt}
           # ⚙️ NOTEBOOKLM DRIVER
-          - 視覺 DNA：${castingData?.protagonist}
+          - 視覺 DNA (主角)：${Array.isArray(castingData?.protagonists) ? castingData.protagonists.map((p:any) => `${p.name}: ${p.visualDNA}`).join(' | ') : (castingData?.protagonist || '無')}
           - 語氣校準：導師為 ${castingData?.guide?.name}，展現「${castingData?.guide?.persona}」特質。
           
           # 任務：生成第 ${i+1} 至 ${Math.min(i+chunkSize, blueprint.length)} 頁

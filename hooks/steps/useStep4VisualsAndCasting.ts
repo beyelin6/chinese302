@@ -137,7 +137,7 @@ export const useStep4VisualsAndCasting = () => {
     try {
       const prompt = `
         ${SYSTEM_PROMPT}
-        [任務目標]：執行 V-MAX v59.0 萬用選角矩陣 (DNA & Purity Kernel)。
+        [任務目標]：執行 V-MAX v60.8 萬用選角矩陣 (DNA & Purity Kernel)。
         【老師已選定的全域視覺風格】：${styleName} (${styleDesc})
         【課文原文參考】：${sourceText.substring(0, 2500)}
         
@@ -145,7 +145,7 @@ export const useStep4VisualsAndCasting = () => {
       `;
 
       const response = await sendMessageToGemini(prompt, [], 0, { 
-        temperature: 0.5, // 稍微降低溫度以增加穩定性
+        temperature: 0.5, 
         responseMimeType: "application/json" 
       });
       
@@ -153,7 +153,7 @@ export const useStep4VisualsAndCasting = () => {
       
       // 🌟 [DNA 結構對位] 智慧搜尋候選人清單
       const rawCandidates = parsed?.candidates || parsed?.options || parsed?.choices || parsed?.guides || [];
-      const normalizedCandidates = Array.isArray(rawCandidates) ? rawCandidates.map((c: any, index: number) => ({
+      let normalizedCandidates = Array.isArray(rawCandidates) ? rawCandidates.map((c: any, index: number) => ({
         id: c.id || `C${index + 1}`,
         name: c.name || (c.persona === 'G1' ? "溫柔老師" : c.persona === 'G2' ? "偵探導師" : "引導者"),
         persona: c.persona || `G${(index % 6) + 1}`,
@@ -163,34 +163,46 @@ export const useStep4VisualsAndCasting = () => {
 
       // 🎭 [模式自動校正] 根據主角是否存在自動轉換
       let detectedMode = parsed?.mode || "Field Trip Mode";
-      let protagonist = parsed?.protagonist || { name: "None", description: "無明確主角", visualDNA: "", isNone: true };
       
-      if (protagonist.isNone === false && !protagonist.name) {
-         // 有時候 AI 忘了寫名字但覺得有主角
-         protagonist.name = "故事主角";
+      // 🌟 [主角結構對位] 智慧搜尋主角清單
+      let rawProtagonists = parsed?.protagonists || [];
+      // 如果 AI 還在使用舊的單數格式
+      if (rawProtagonists.length === 0 && parsed?.protagonist) {
+        rawProtagonists = [parsed.protagonist];
       }
 
-      if (protagonist.isNone) {
+      const normalizedProtagonists = Array.isArray(rawProtagonists) ? rawProtagonists.map((p: any) => ({
+        name: p.name || "主角",
+        description: p.description || "",
+        visualDNA: p.visualDNA || "",
+        isNone: p.isNone === undefined ? (p.name === "None" || !p.name) : p.isNone
+      })) : [{ name: "None", description: "無明確主角", visualDNA: "", isNone: true }];
+
+      // 如果所有主角都是 isNone，強制轉回 Field Trip
+      const hasAnyRealProtagonist = normalizedProtagonists.some(p => !p.isNone);
+      if (!hasAnyRealProtagonist) {
         detectedMode = "Field Trip Mode";
-      } else if (detectedMode === "Field Trip Mode" && !protagonist.isNone) {
+      } else if (detectedMode === "Field Trip Mode" && hasAnyRealProtagonist) {
         detectedMode = "Drama Mode";
+      }
+
+      // 🛡️ [補齊機制] 確保至少有 3 位候選人
+      const fallbacks = [
+        { id: "C1", name: "智慧博士", persona: "G3", description: "以科學視角解析課文。", visualDNA: "Gender: Male | Age: 50 | Hair: Grey | Full-body shot, isolated on pure white background, no shadows" },
+        { id: "C2", name: "Bee老師", persona: "G4", description: "創意觀察家。專業溫暖，熱情活力有創意。", visualDNA: "Gender: Female | Age: 30s | Hair: Black | Professional and creative style | Full-body shot, isolated on pure white background, no shadows" },
+        { id: "C3", name: "熱血教練", persona: "G6", description: "帶領高強度學習挑戰。", visualDNA: "Gender: Male | Age: 30 | Hair: Black | Full-body shot, isolated on pure white background, no shadows" }
+      ];
+
+      while (normalizedCandidates.length < 3) {
+        const nextFallback = fallbacks[normalizedCandidates.length];
+        normalizedCandidates.push(nextFallback);
       }
 
       let castingOptions = {
         mode: detectedMode,
-        protagonist: protagonist,
-        candidates: normalizedCandidates
+        protagonists: normalizedProtagonists,
+        candidates: normalizedCandidates.slice(0, 3) // 嚴格取 3 位
       };
-      
-      // 🛡️ [核彈級保底] 如果候選人數量不足，給予預設角色避免卡死
-      if (castingOptions.candidates.length === 0) {
-        console.warn("AI didn't produce candidates, using emergency fallbacks.");
-        castingOptions.candidates = [
-          { id: "C1", name: "智慧博士", persona: "G3", description: "以科學視角解析課文。", visualDNA: "Gender: Male | Age: 50 | Hair: Grey | Full-body shot, isolated on pure white background, no shadows" },
-          { id: "C2", name: "靈感精靈", persona: "G4", description: "激發創意想像力。", visualDNA: "Gender: Female | Age: 20 | Hair: Blue | Full-body shot, isolated on pure white background, no shadows" },
-          { id: "C3", name: "熱血教練", persona: "G6", description: "帶領高強度學習挑戰。", visualDNA: "Gender: Male | Age: 30 | Hair: Black | Full-body shot, isolated on pure white background, no shadows" }
-        ];
-      }
 
       dispatch({ type: 'SET_CASTING_RESULT', payload: JSON.stringify(castingOptions) });
     } catch (error: any) {
@@ -273,18 +285,28 @@ export const useStep4VisualsAndCasting = () => {
   /**
    * 5. 最終確認選角
    */
-  const handleCastingConfirm = (protagonistTraits: string, guide: any, customGuideVisuals?: string) => {
+  const handleCastingConfirm = (protagonistTraitsJSON: string, guide: any, customGuideVisuals?: string) => {
+    let protagonists = [];
+    try {
+      protagonists = JSON.parse(protagonistTraitsJSON);
+    } catch (e) {
+      // 相容舊格式或直接傳入的字串
+      protagonists = [{ name: "故事主角", visualDNA: protagonistTraitsJSON, isNone: false }];
+    }
+
     const finalGuide = {
       ...guide,
-      visualDNA: customGuideVisuals || '使用預設視覺設定'
+      visualDNA: customGuideVisuals || guide.visualDNA || '使用預設視覺設定'
     };
     
-    const castingData = { 
-        protagonist: protagonistTraits, 
+    // 🌟 最終產出的選角結果結構
+    const finalCastingResult = { 
+        mode: protagonists.some(p => !p.isNone) ? 'Drama Mode' : 'Field Trip Mode',
+        protagonists: protagonists, 
         guide: finalGuide 
     };
 
-    dispatch({ type: 'SET_CASTING_RESULT', payload: JSON.stringify(castingData) });
+    dispatch({ type: 'SET_CASTING_RESULT', payload: JSON.stringify(finalCastingResult) });
     dispatch({ type: 'SET_STEP', payload: AppStep.STEP_6_OUTPUT });
   };
 

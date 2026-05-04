@@ -108,7 +108,10 @@ useEffect(() => {
     const lessonTitle = analysis?.basicInfo?.unitName || analysis?.title || analysis?.subject || '未命名課文';
 
     // 🌟 解析主角與導師的 DNA，並處理雙軌模式 (useRefMode)
-    const protagDNA = casting?.protagonist?.visualDNA || casting?.protagonist?.description || '無特殊主角設定';
+    const protagDNA = Array.isArray(casting?.protagonists)
+      ? casting.protagonists.filter((p: any) => !p.isNone).map((p: any) => `${p.name}: ${p.visualDNA}`).join(' | ')
+      : (casting?.protagonist?.visualDNA || casting?.protagonist?.description || '無特殊主角設定');
+
     const guideDNA = casting?.guide?.visualDNA || '標準人設';
     const isImageAnchorMode = !!casting?.guide?.useRefMode;
     const finalGuideInstruction = isImageAnchorMode 
