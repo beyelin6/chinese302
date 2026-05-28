@@ -615,7 +615,7 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
                    </div>
                    
                    <p className="text-xs text-slate-600 mb-4 leading-relaxed line-clamp-3">
-                     {guide.description}
+                     {guide.role}
                    </p>
 
                    <div className="flex flex-wrap gap-2 mb-4">

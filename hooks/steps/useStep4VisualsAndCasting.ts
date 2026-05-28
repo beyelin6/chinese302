@@ -152,6 +152,7 @@ export const useStep4VisualsAndCasting = () => {
       const parsed = sanitizeAndParseJSON(response);
       
       // 🌟 [結構重組] 確保所有引導者擁有完整欄位
+      const rawCandidates = parsed?.candidates || parsed?.options || parsed?.choices || parsed?.guides || [];
       let normalizedCandidates = Array.isArray(rawCandidates) ? rawCandidates.map((c: any, index: number) => ({
         id: c.id || `C${index + 1}`,
         name: c.name || (c.persona === 'G1' ? "溫柔老師" : c.persona === 'G2' ? "偵探導師" : "引導者"),
