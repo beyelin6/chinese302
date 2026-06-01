@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   User, Users, Check, AlertCircle, Play, 
   Info, Edit2, X, ArrowLeft, Sparkles, ImagePlus, Loader2,
-  CheckCircle, Wand2, Upload, Image as ImageIcon, Plus, Copy
+  CheckCircle, Wand2, Upload, Image as ImageIcon, Plus, Copy,
+  Trash2, Settings, UserPlus
 } from 'lucide-react';
 import { CastingData, GuideCandidate, MediaData } from '../types';
 import ReactMarkdown from 'react-markdown';
@@ -342,6 +343,58 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
     });
   };
 
+  const handleAddProtagonist = () => {
+    if (!data) return;
+    const newId = `PROTAG_CUSTOM_${Date.now()}`;
+    const newProtag = {
+      id: newId,
+      name: `全新主角`,
+      description: `故事中的關鍵角色`,
+      visualDNA: "Gender: Female | Age: 12 | Hair: Dark brown | Clothing: School uniform | Full-body shot, isolated on pure white background, no shadows",
+      isNone: false
+    };
+
+    const existing = data.protagonists.filter(p => !p.isNone);
+    const updated = [...existing, newProtag];
+
+    setData({
+      ...data,
+      mode: "Drama Mode",
+      protagonists: updated
+    });
+
+    setProtagonistDNAs(prev => ({
+      ...prev,
+      [newId]: newProtag.visualDNA
+    }));
+  };
+
+  const handleRemoveProtagonist = (index: number) => {
+    if (!data) return;
+    const toRemove = data.protagonists[index];
+    const updated = data.protagonists.filter((_, idx) => idx !== index);
+
+    if (updated.length === 0) {
+      setData({
+        ...data,
+        protagonists: [{ id: "PROTAG_0", name: "None", description: "無明確主角", visualDNA: "", isNone: true }]
+      });
+    } else {
+      setData({
+        ...data,
+        protagonists: updated
+      });
+    }
+    
+    if (toRemove?.id) {
+      setProtagonistDNAs(prev => {
+        const copy = { ...prev };
+        delete copy[toRemove.id!];
+        return copy;
+      });
+    }
+  };
+
   const handleEditClick = (guide: GuideCandidate, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingCandidate({ ...guide });
@@ -521,11 +574,91 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
           </div>
         )}
 
-        {isModeA && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-            <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-              <User className="text-blue-500" /> 故事主角 DNA 鎖定 (支援多角色)
-            </h3>
+        {/* 🌟 模式與角色結構設定 (Mode and Structure Selection) */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+            <Settings className="text-slate-500" size={16} />
+            選角與故事模式定位 (可自由切換)
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              onClick={() => {
+                if (!data) return;
+                let updatedProtags = [...data.protagonists];
+                // 如果原本是 None，切換為戲劇模式時，自動塞入一筆真正的主角，避免畫面空無一物
+                if (updatedProtags.length === 0 || updatedProtags.every(p => p.isNone)) {
+                  const newId = "PROTAG_0";
+                  const defaultProtag = { 
+                    id: newId, 
+                    name: "主要主角", 
+                    description: "課文或故事中的關鍵人物", 
+                    visualDNA: "Gender: Female | Age: 12 | Hair: Black | Style: Anime | Full-body shot, isolated on pure white background, no shadows", 
+                    isNone: false 
+                  };
+                  updatedProtags = [defaultProtag];
+                  setProtagonistDNAs(prev => ({ ...prev, [newId]: defaultProtag.visualDNA }));
+                }
+                setData({
+                  ...data,
+                  mode: "Drama Mode",
+                  protagonists: updatedProtags
+                });
+              }}
+              className={`p-4 rounded-xl border-2 text-left flex items-start gap-3 transition-all ${
+                data.mode === "Drama Mode"
+                  ? "border-blue-500 bg-blue-50/30 shadow-sm"
+                  : "border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              <div className={`p-2 rounded-lg ${data.mode === "Drama Mode" ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500"}`}>
+                <User size={20} />
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-slate-800 text-sm">🎭 戲劇雙核心模式 (Drama Mode)</div>
+                <div className="text-xs text-slate-500 mt-1 leading-relaxed">課文帶有明確主角，引導者與主角將在簡報中聯手冒險與對話。</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
+                if (!data) return;
+                setData({
+                  ...data,
+                  mode: "Field Trip Mode"
+                });
+              }}
+              className={`p-4 rounded-xl border-2 text-left flex items-start gap-3 transition-all ${
+                data.mode === "Field Trip Mode"
+                  ? "border-teal-500 bg-teal-50/30 shadow-sm"
+                  : "border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              <div className={`p-2 rounded-lg ${data.mode === "Field Trip Mode" ? "bg-teal-100 text-teal-600" : "bg-slate-100 text-slate-500"}`}>
+                <Users size={20} />
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-slate-800 text-sm">🌲 導師引導模式 (Field Trip Mode)</div>
+                <div className="text-xs text-slate-500 mt-1 leading-relaxed">課文著重知識科普說明，僅由您選定的專業導師進行講解，無主角。</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {data.mode === "Drama Mode" && (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <User className="text-blue-500" /> 故事主角 DNA 鎖定 (可支援多主角/增刪)
+              </h3>
+              <button
+                onClick={handleAddProtagonist}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition-all shadow active:scale-95"
+              >
+                <UserPlus size={14} />
+                新增主角角色
+              </button>
+            </div>
+            
             <div className="space-y-4">
               {data.protagonists.filter(p => !p.isNone).map((p, pIdx) => {
                 const pId = p.id || p.name || `P${pIdx}`;
@@ -533,10 +666,19 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
                   <div key={pId} className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex flex-col md:flex-row gap-4 animate-in fade-in duration-200">
                     <div className="w-full md:w-1/3 space-y-3">
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                          <span className="w-5 h-5 bg-blue-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">{pIdx + 1}</span>
-                          主角姓名 (可修改)
-                        </label>
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                            <span className="w-5 h-5 bg-blue-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">{pIdx + 1}</span>
+                            主角姓名 (可修改)
+                          </label>
+                          <button
+                            onClick={() => handleRemoveProtagonist(pIdx)}
+                            className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1 rounded-lg transition-colors"
+                            title="刪除此主角"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                         <input
                           type="text"
                           value={p.name}
@@ -584,6 +726,12 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
                   </div>
                 );
               })}
+
+              {data.protagonists.filter(p => !p.isNone).length === 0 && (
+                <div className="bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center text-slate-500 text-xs leading-relaxed">
+                  💡 目前沒有登用主角角色。您可以點擊右上角的「新增主角角色」來建立主角，或在上個區塊點擊切換為「導師引導模式」。
+                </div>
+              )}
             </div>
           </div>
         )}
