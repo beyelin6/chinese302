@@ -173,12 +173,13 @@ export const useStep4VisualsAndCasting = () => {
         rawProtagonists = [parsed.protagonist];
       }
 
-      const normalizedProtagonists = Array.isArray(rawProtagonists) ? rawProtagonists.map((p: any) => ({
+      const normalizedProtagonists = Array.isArray(rawProtagonists) ? rawProtagonists.map((p: any, idx: number) => ({
+        id: p.id || `PROTAG_${idx}`,
         name: p.name || "主角",
         description: p.description || "",
         visualDNA: p.visualDNA || "",
         isNone: p.isNone === undefined ? (p.name === "None" || !p.name) : p.isNone
-      })) : [{ name: "None", description: "無明確主角", visualDNA: "", isNone: true }];
+      })) : [{ id: "PROTAG_0", name: "None", description: "無明確主角", visualDNA: "", isNone: true }];
 
       // 如果所有主角都是 isNone，強制轉回 Field Trip
       const hasAnyRealProtagonist = normalizedProtagonists.some(p => !p.isNone);

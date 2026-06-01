@@ -295,17 +295,23 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
       
       const parsed = JSON.parse(cleanJson);
       
+      const rawProtags = parsed.protagonists || (parsed.protagonist ? [parsed.protagonist] : []);
+      const normalizedProtags = rawProtags.map((p: any, idx: number) => ({
+        ...p,
+        id: p.id || `PROTAG_${idx}`
+      }));
+
       const formattedData: CastingData = {
         mode: parsed.mode || "Field Trip Mode",
         candidates: parsed.candidates || [],
-        protagonists: parsed.protagonists || (parsed.protagonist ? [parsed.protagonist] : []),
+        protagonists: normalizedProtags,
         contextTone: parsed.contextTone || "本課語境分析中...",
         fusionTable: parsed.fusionTable
       };
 
       // 🌟 [修正] 確保至少有一個主角結構
       if (formattedData.protagonists.length === 0) {
-        formattedData.protagonists = [{ name: "None", description: "無明確主角", visualDNA: "", isNone: true }];
+        formattedData.protagonists = [{ id: "PROTAG_0", name: "None", description: "無明確主角", visualDNA: "", isNone: true }];
       }
 
       setData(formattedData);
@@ -325,6 +331,16 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
   }, [castingResult]);
 
   const [protagonistDNAs, setProtagonistDNAs] = useState<Record<string, string>>({});
+
+  const handleUpdateProtagonist = (index: number, fields: Partial<any>) => {
+    if (!data) return;
+    const updated = [...data.protagonists];
+    updated[index] = { ...updated[index], ...fields };
+    setData({
+      ...data,
+      protagonists: updated
+    });
+  };
 
   const handleEditClick = (guide: GuideCandidate, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -514,16 +530,35 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
               {data.protagonists.filter(p => !p.isNone).map((p, pIdx) => {
                 const pId = p.id || p.name || `P${pIdx}`;
                 return (
-                  <div key={pId} className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex flex-col md:flex-row gap-4">
-                    <div className="w-full md:w-1/3">
-                      <div className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                         <span className="w-5 h-5 bg-blue-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">{pIdx + 1}</span>
-                         {p.name}
+                  <div key={pId} className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex flex-col md:flex-row gap-4 animate-in fade-in duration-200">
+                    <div className="w-full md:w-1/3 space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                          <span className="w-5 h-5 bg-blue-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">{pIdx + 1}</span>
+                          主角姓名 (可修改)
+                        </label>
+                        <input
+                          type="text"
+                          value={p.name}
+                          onChange={(e) => handleUpdateProtagonist(pIdx, { name: e.target.value })}
+                          className="w-full p-2 border border-blue-250 rounded-lg text-sm font-semibold text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
+                          placeholder="請輸入主角姓名"
+                        />
                       </div>
-                      <div className="text-xs text-slate-500 mb-2 mt-1">{p.description}</div>
+                      
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">角色敘述與地位 (可修改)</label>
+                        <textarea
+                          value={p.description}
+                          onChange={(e) => handleUpdateProtagonist(pIdx, { description: e.target.value })}
+                          className="w-full p-2 border border-blue-250 rounded-lg text-xs text-slate-600 bg-white focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
+                          rows={2}
+                          placeholder="例如：主要主角 / 本課的冒險者"
+                        />
+                      </div>
                       
                       {handleExtractImageTraits && (
-                        <div className="mt-4">
+                        <div className="mt-2">
                           <input type="file" id={`upload-${pId}`} onChange={(e) => handleFileUpload(e, pId)} accept="image/*" className="hidden" />
                           <button 
                             onClick={() => document.getElementById(`upload-${pId}`)?.click()}

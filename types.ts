@@ -216,6 +216,7 @@ export interface GuideCandidate {
 export interface CastingData {
   mode: 'Drama Mode' | 'Field Trip Mode'; // 🌟 新增：模式鎖定
   protagonists: {
+    id?: string;
     name: string;
     description: string;
     visualDNA: string;
