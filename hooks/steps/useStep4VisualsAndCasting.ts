@@ -163,8 +163,8 @@ export const useStep4VisualsAndCasting = () => {
         visualDNA: c.visualDNA || "Full-body shot, isolated on pure white background, no shadows"
       })) : [];
 
-      // 🎭 [模式自動校正] 根據主角是否存在自動轉換
-      let detectedMode = parsed?.mode || "Field Trip Mode";
+      // 🎭 [模式自動校正] 預設優先為 Drama Mode (戲劇雙核心)，方便老師確認主角資訊是否正確
+      let detectedMode = "Drama Mode";
       
       // 🌟 [主角結構對位] 智慧搜尋主角清單
       let rawProtagonists = parsed?.protagonists || [];
@@ -181,13 +181,7 @@ export const useStep4VisualsAndCasting = () => {
         isNone: p.isNone === undefined ? (p.name === "None" || !p.name) : p.isNone
       })) : [{ id: "PROTAG_0", name: "None", description: "無明確主角", visualDNA: "", isNone: true }];
 
-      // 如果所有主角都是 isNone，強制轉回 Field Trip
-      const hasAnyRealProtagonist = normalizedProtagonists.some(p => !p.isNone);
-      if (!hasAnyRealProtagonist) {
-        detectedMode = "Field Trip Mode";
-      } else if (detectedMode === "Field Trip Mode" && hasAnyRealProtagonist) {
-        detectedMode = "Drama Mode";
-      }
+      // 預設不再因「無主角」自動強制切換為 Field Trip Mode，而是讓老師在 Drama Mode 下看到「主角：無」，可手動新增或切換，保有高度掌控力。
 
       // 🛡️ [補齊機制] 確保至少有 3 位候選人，且符合最新結構
       const fallbacks = [

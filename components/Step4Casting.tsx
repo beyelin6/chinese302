@@ -728,8 +728,16 @@ const Step4Casting: React.FC<Step4CastingProps> = ({
               })}
 
               {data.protagonists.filter(p => !p.isNone).length === 0 && (
-                <div className="bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center text-slate-500 text-xs leading-relaxed">
-                  💡 目前沒有登用主角角色。您可以點擊右上角的「新增主角角色」來建立主角，或在上個區塊點擊切換為「導師引導模式」。
+                <div className="bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center text-slate-600 text-xs leading-relaxed space-y-2">
+                  <div className="font-bold text-slate-800 text-sm flex items-center justify-center gap-1.5">
+                    <AlertCircle size={16} className="text-amber-500" />
+                    課文主角：【無】 (本課未偵測到明確故事主角)
+                  </div>
+                  <p className="max-w-xl mx-auto text-slate-500">
+                    預設先為您開啟<strong>戲劇雙核心模式</strong>以利確認。如果此課文有主角（例如雙主角只抓到一個），
+                    只需點擊右上角的 <span className="text-blue-600 font-semibold px-1 rounded bg-blue-50">新增主角角色</span> 手動建立與編輯主角名字；
+                    若確定不需要主角，可保持無主角狀態直接往下一步（簡報中將<strong>只有引導者</strong>單獨授課），或者在上方切換為<strong>導師引導模式</strong>。
+                  </p>
                 </div>
               )}
             </div>
