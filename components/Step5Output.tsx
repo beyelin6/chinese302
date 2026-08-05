@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useWorkflowContext } from '../context/WorkflowContext';
 import InteractiveQuiz from './InteractiveQuiz';
+import { getSlidesFromPayload, updateSlidesInPayload, NOTEBOOKLM_LAYOUT_PRESETS, inferLayoutCode } from '../utils/notebooklmPayload';
 
 interface Step5OutputProps {
   outputScript: string | null;
@@ -45,14 +46,14 @@ const Step5Output: React.FC<Step5OutputProps> = ({
     }
   }, [outputScript, isLoading, onScriptPipeline]);
 
-useEffect(() => {
+  useEffect(() => {
     if (outputScript) {
       try {
         // 安全解析字串
         const parsed = typeof outputScript === 'string' ? JSON.parse(outputScript) : outputScript;
         
         // 🌟 強化容錯：支援各種資料結構 (陣列、包含 slides 的物件、包含 presentation_data 的物件)
-        const incomingSlides = parsed?.presentation_data?.slides || parsed?.slides || (Array.isArray(parsed) ? parsed : []);
+        const incomingSlides = getSlidesFromPayload(parsed);
         
         // 只要一拿到任何新頁面，就立刻渲染到畫面上 (這就是分段顯示的關鍵！)
         if (incomingSlides.length > 0) {
@@ -74,7 +75,7 @@ useEffect(() => {
         setEditableSlides(newSlides);
         
         const currentPayload = JSON.parse(outputScript || '{}');
-        const newPayload = { ...currentPayload, slides: newSlides };
+        const newPayload = updateSlidesInPayload(currentPayload, newSlides);
         dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: JSON.stringify(newPayload, null, 2) } });
       }
     } catch (e) {
@@ -113,20 +114,34 @@ useEffect(() => {
       : (casting?.protagonist?.visualDNA || casting?.protagonist?.description || '無特殊主角設定');
 
     const guideDNA = casting?.guide?.visualDNA || '標準人設';
-    const isImageAnchorMode = !!casting?.guide?.useRefMode;
+    const isImageAnchorMode = !!(casting?.useRefMode || casting?.guide?.useRefMode);
     const finalGuideInstruction = isImageAnchorMode 
       ? `[IMAGE_ANCHOR_MODE] 🚨 絕對鎖定！請完全以「上傳之基準圖」作為唯一長相標準。參考輔助特徵：${guideDNA}`
       : `[TEXT_DNA_MODE] 請嚴格依照以下文字設定繪製：${guideDNA}`;
 
     if (viewMode === 'human') {
-      let humanReadableText = `# 📚 視覺化教學腳本：${lessonTitle}\n\n`;
+      let humanReadableText = `# NotebookLM 圖文簡報來源文件：${lessonTitle}\n\n`;
       humanReadableText += `> 🎨 **視覺風格**：${visual?.style?.description || '保持一致'}\n`;
       humanReadableText += `> 👤 **導師設定**：${casting?.guide?.name || '標準導師'} ${isImageAnchorMode ? '(🔗 已啟用基準圖鎖定)' : ''}\n\n---\n\n`;
+      humanReadableText += `## 教材核心資料\n\n`;
+      humanReadableText += `- 課名：${lessonTitle}\n`;
+      humanReadableText += `- 年級：${analysis?.basicInfo?.grade || '未填'}\n`;
+      humanReadableText += `- 文體：${analysis?.basicInfo?.genre || '未填'}\n`;
+      humanReadableText += `- 主旨：${analysis?.basicInfo?.mainIdea || '未填'}\n`;
+      humanReadableText += `- 結構：${analysis?.visualStructureRecommendation || analysis?.macroStructure || '未填'}\n\n`;
+      humanReadableText += `## 課文與教學內容\n\n${analysis?.fullText || '(未提供課文內容)'}\n\n---\n\n`;
+      humanReadableText += `## 全域版型代碼定義\n\n`;
+      Object.entries(NOTEBOOKLM_LAYOUT_PRESETS).forEach(([code, desc]) => {
+        humanReadableText += `- **${code}**：${desc}\n`;
+      });
+      humanReadableText += `\n---\n\n## 圖文簡報逐頁藍圖\n\n`;
 
       editableSlides.forEach((slide, idx) => {
+        const layoutCode = slide.layout_code || inferLayoutCode(slide);
         humanReadableText += `## 🎬 投影片 P${slide.page_number || (idx + 1)}：${slide.title || '未命名場景'}\n`;
         humanReadableText += `- **模組定位**：\`${slide.type || '一般'}\`\n`;
         humanReadableText += `- **排版指令**：\`${slide.layout || '預設'}\`\n`;
+        humanReadableText += `- **版型代碼**：\`${layoutCode}\`\n`;
         humanReadableText += `- **鏡頭指令**：\`${slide.lens || '中景'}\`\n\n`;
         humanReadableText += `### 📝 畫面顯示文字\n${slide.displayText || '(無文字)'}\n\n`;
         humanReadableText += `### 🗣️ 導師引導台詞\n> ${slide.guideAction ? `*(${slide.guideAction})* ` : ''}${slide.guideTalk || '(無台詞)'}\n\n`;
@@ -140,23 +155,7 @@ useEffect(() => {
   ui_layout_protocol:
     core_rule: "NEVER put all displayText into a single visual container. You MUST split the text into distinct spatial UI boxes. CRITICAL: You MUST also render the 'guideTalk' text directly ON THE SLIDE visually as a Speech Bubble or Quote Box!"
     layout_mapping:
-      wide-scene: "Split screen 50/50. Left: Wide-angle scene image. Right: Text content separated into primary block (段落大意) and secondary block (難詞顯影)."
-      dialogue-scene: "Split Screen Layout. CRITICAL: Render guideTalk in a speech bubble on the left, and main text on the right. NO guide character visible on the right side."
-      close-tool: "Split screen. Left: Close-up image of the guide/tool. Right: Text separated into definition blocks (e.g., 修辭/句型) with distinct colored borders."
-      quiz-card: "Single Info Board. Top: Image of guide. Bottom: Two distinct colored tag boxes. Blue tag box for 【提取】(Extraction) questions, Amber/Orange tag box for 【推論】(Inference) questions."
-      split-2: "Split Screen Layout. CRITICAL: Put the text for Character 1 INSIDE the left panel under its image, and Character 2 INSIDE the right panel. Put the 【💡 辨析口訣】 in a separate wide box at the bottom. NO guide character."
-      grid-3: "3-Column Grid Layout. CRITICAL: Put the text for each character INSIDE its corresponding column under its image. Put the 【💡 辨析口訣】 in a separate wide box at the bottom. NO guide character."
-      grid-4: "2x2 Grid Layout. CRITICAL: Put the text for each character INSIDE its corresponding cell under its image. Put the 【💡 辨析口訣】 in a separate wide box at the bottom. NO guide character."
-      compare-scale: "Balance Screen Layout. Left and right distinct scenario images. NO guide character."
-      triptych: "3-panel Balance Screen Layout. Left, center, and right distinct scenario images. NO guide character."
-      story-panel: "Horizontal Split Layout. Top 60% is a clear image explicitly illustrating the example sentence (CRITICAL: NO text overlay on the image). Bottom 40% is a structured text box containing the idiom title, definition, and example sentence. NO guide character."
-      pattern-drill: "Single Image, Large Text overlay."
-      punctuation-chart: "Single Image, Large Text overlay."
-      phrase-demo: "Single Image, Large Text overlay."
-      speech-stage: "Single Image, Large Text overlay."
-      info-flow: "Single Box Focus, Large Text overlay."
-      step-flow: "Single Box Focus, Large Text overlay."
-      single-board: "Single Info Board Layout."
+${Object.entries(NOTEBOOKLM_LAYOUT_PRESETS).map(([code, desc]) => `      ${code}: "${desc}"`).join('\n')}
   artistic_consistency: "${visual?.style?.code || "A"}"
   style_prompt: "${visual?.style?.description || "Maintain stylistic consistency."}"
   dna_traits:
@@ -177,11 +176,13 @@ VMAX_STRUCTURE_YAML:
 slides:\n`;
 
     editableSlides.forEach((slide) => {
+      const layoutCode = slide.layout_code || inferLayoutCode(slide);
       yamlString += `  - page_number: ${slide.page_number || 1}\n`;
       yamlString += `    part_label: "${slide.part_label || ''}"\n`;
       yamlString += `    type: "${slide.type || ''}"\n`;
       yamlString += `    title: "${(slide.title || '').replace(/"/g, '\\"')}"\n`;
       yamlString += `    layout: "${slide.layout || ''}"\n`;
+      yamlString += `    layout_code: "${layoutCode}"\n`;
       yamlString += `    lens: "${slide.lens || ''}"\n`;
       yamlString += `    visual_prompt: |-\n      ${(slide.visual_prompt || '').replace(/\n/g, '\n      ')}\n`;
       yamlString += `    displayText: |-\n      ${(slide.displayText || '').replace(/\n/g, '\n      ')}\n`;
@@ -198,7 +199,7 @@ slides:\n`;
     setEditableSlides(newSlides);
     
     const currentPayload = JSON.parse(outputScript || '{}');
-    const newPayload = { ...currentPayload, slides: newSlides };
+    const newPayload = updateSlidesInPayload(currentPayload, newSlides);
     dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: JSON.stringify(newPayload, null, 2) } });
   };
 
@@ -221,7 +222,7 @@ slides:\n`;
       
       // 4. 同步更新到全域 Context (這樣左邊的 YAML 跟匯出功能才會同步)
       const currentPayload = JSON.parse(outputScript || '{}');
-      const newPayload = { ...currentPayload, slides: renumberedSlides };
+      const newPayload = updateSlidesInPayload(currentPayload, renumberedSlides);
       dispatch({ type: 'SET_OUTPUTS', payload: { outputScript: JSON.stringify(newPayload, null, 2) } });
     }
   };

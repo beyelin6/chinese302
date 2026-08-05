@@ -19,6 +19,7 @@ import {
   CHARACTER_EXTERNAL_ANCHOR_PROMPT_TEMPLATE
 } from '../../constants';
 import { sanitizeAndParseJSON } from '../../utils/jsonParser';
+import { getSlidesFromPayload, inferLayoutCode, NOTEBOOKLM_LAYOUT_PRESETS } from '../../utils/notebooklmPayload';
 
 export const useStep5Output = () => {
   const { state, dispatch } = useWorkflowContext();
@@ -34,8 +35,8 @@ export const useStep5Output = () => {
    * 根據使用者是否開啟「外部圖片模式」來決定要注入哪一種 DNA 鎖定指令
    */
   const getCompiledSystemPrompt = (castingData: any, visualData: any) => {
-    const useRefMode = castingData?.useRefMode === true;
-    const refUrl = castingData?.characterRefUrl || '';
+    const useRefMode = castingData?.useRefMode === true || castingData?.guide?.useRefMode === true;
+    const refUrl = castingData?.characterRefUrl || castingData?.guide?.characterRefUrl || '';
     const guideName = castingData?.guide?.name || 'V-MAX 導師';
     const guidePersona = castingData?.guide?.persona || '專業、溫暖、具啟發性';
     const stylePrompt = visualData?.style?.description || visualData?.style?.prompt || 'Clean, high-quality educational vector art.';
@@ -71,7 +72,7 @@ export const useStep5Output = () => {
     // 2. 萃取角色 DNA 與判斷外部圖片模式
     const guideName = casting?.guide?.name || "V-MAX 導師";
     const unitName = analysisData?.basicInfo?.unitName || "未命名課程";
-    const hasExternalImage = casting?.useRefMode === true;
+    const hasExternalImage = casting?.useRefMode === true || casting?.guide?.useRefMode === true;
     
     // 🌟 解析多主角 DNA
     const protagList = Array.isArray(casting?.protagonists) ? casting.protagonists.filter((p: any) => !p.isNone) : [];
@@ -96,18 +97,23 @@ ${ipInstruction}
 6. 導師對白強制顯影：'guideTalk' 的內容必須以「對話框 (Speech Bubble)」或「引述框」的形式，直接視覺化渲染在投影片畫面上！
 7. 絕對無字化生圖：'visual_prompt' 生成的畫面背景中，絕對不可出現任何亂碼、英文或中文字元。`;
 
-    // 4. 絕對頁碼注入器
+    // 4. 絕對頁碼注入器與 layout_code 推導
     const numberedSlides = slides.map((slide, index) => {
       const { page_number, ...restProps } = slide; 
-      return { page_number: index + 1, ...restProps };
+      return { 
+        page_number: index + 1, 
+        ...restProps,
+        layout_code: slide.layout_code || inferLayoutCode(slide)
+      };
     });
 
-    // 5. 輸出符合高級規範的 Payload (捨棄舊的 notebooklm_driver)
+    // 5. 輸出符合高級規範的 Unified Payload (無重複根層 slides)
     const unifiedPayload = {
       presentation_data: {
         suggested_filename: `${unitName}_VMAX_教案腳本`,
         system_instructions: systemInstructions,
         artistic_consistency: `Artistic VIS [${styleCode}]: ${styleDesc}`,
+        layout_presets: NOTEBOOKLM_LAYOUT_PRESETS,
         slides: numberedSlides
       }
     };
@@ -277,7 +283,8 @@ ${ipInstruction}
     }
 
     // 🌟 在指南中明確註明外部圖片的需求
-    const guideDnaInstruction = castingData?.useRefMode
+    const hasExternalImage = castingData?.useRefMode === true || castingData?.guide?.useRefMode === true;
+    const guideDnaInstruction = hasExternalImage
       ? `[最高優先級] 請務必讀取左側上傳的外部圖片檔案，以該圖片的長相作為導師生成的唯一標準！`
       : guide.visualDNA || "預設";
 
@@ -289,6 +296,7 @@ ${ipInstruction}
       .replace(/{GUIDE_PERSONA}/g, guide.persona || '專業')
       .replace(/{VISUAL_STYLE}/g, visualData?.style?.name || '預設')
       .replace(/{DATE}/g, today)
+      .replace(/{GUIDE_DNA_MODE_INSTRUCTION}/g, guideDnaInstruction)
       .replace(/{GUIDE_DNA}/g, guideDnaInstruction)
       .replace(/{AUDIO_FOCUS}/g, audioFocus)
       .replace(/{BATCHING_DIRECTORY}/g, batchingDirectory);
@@ -306,7 +314,7 @@ ${ipInstruction}
        let slides = [];
        if (state.outputScript) {
          const parsedScript = getSafeData(state.outputScript);
-         slides = Array.isArray(parsedScript) ? parsedScript : (parsedScript.slides || []);
+         slides = getSlidesFromPayload(parsedScript);
        }
 
        const guideStr = generateNotebookLMGuide(castingData, vocab, state.analysisData, visualData, slides);

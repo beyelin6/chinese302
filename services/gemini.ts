@@ -54,13 +54,13 @@ const markKeyFailure = (key: string, statusCode: number) => {
 const loadInitialApiKeys = (): string[] => {
   let keys: string[] = [];
 
-  // 1. 嘗試從環境變數讀取 (Vite 模式)
-  // @ts-ignore
-  const envKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) || 
-                 (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY);
+  // 1. 嘗試從環境變數讀取 (Process 與 Vite 模式)
+  const metaEnv = typeof import.meta !== 'undefined' ? (import.meta as any).env : null;
+  const envKey = (typeof process !== 'undefined' && (process.env?.GEMINI_API_KEY || process.env?.API_KEY)) ||
+                 (metaEnv?.VITE_GEMINI_API_KEY || metaEnv?.GEMINI_API_KEY);
   
-  if (envKey) {
-    keys = envKey.split(',').map((k: string) => k.trim());
+  if (envKey && typeof envKey === 'string') {
+    keys = envKey.split(',').map((k: string) => k.trim().replace(/^["']|["']$/g, ''));
   }
 
   // 2. 嘗試從本地儲存讀取
@@ -77,7 +77,9 @@ const loadInitialApiKeys = (): string[] => {
     }
   }
 
-  return Array.from(new Set(keys)).filter(k => k.startsWith('AIza'));
+  return Array.from(new Set(keys))
+    .map(k => typeof k === 'string' ? k.trim().replace(/^["']|["']$/g, '') : '')
+    .filter(k => Boolean(k) && k.length > 5);
 };
 
 // --- 核心導出函數 ---

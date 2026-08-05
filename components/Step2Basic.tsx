@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { AnalysisData, VocabularyItem } from '../types';
 import { useWorkflowContext } from '../context/WorkflowContext';
+import { checkVocabSourceFeatures } from '../utils/curatedBriefing';
 
 // --------------------------------------------------------
 // 🛡️ 步驟一：將單一「卡片」抽成獨立元件，並用 React.memo 包覆
@@ -132,27 +133,35 @@ const Step2Basic: React.FC<Step2BasicProps> = ({ analysis, onConfirmBasic, isLoa
       const cleanJson = analysis.replace(/```json/g, '').replace(/```/g, '');
       const parsed = JSON.parse(cleanJson);
       
-      // 🌟 [自動化意圖配置]：初始化時預設「形近字」為開啟，「字形」、「多音」為關閉
+      // 🌟 [自動化意圖配置]：依照資料來源（Curated Briefing / 輸入文本 / 預設資料）動態預先勾選「教形近」或「教多音」
+      const sourceTextForFeatures = state.analysisData?.fullText || state.rawInputText || analysis || "";
+
       if (parsed.coreVocabulary) {
-        parsed.coreVocabulary = parsed.coreVocabulary.map((v: any) => ({
-          ...v,
-          isFocused: v.isFocused ?? false,
-          wantsWritingTips: false,  
-          wantsShapeSimilar: true, 
-          wantsPolyphonic: false,  
-          writingTips: v.writingTips || "請注意字形比例與重心。"
-        }));
+        parsed.coreVocabulary = parsed.coreVocabulary.map((v: any) => {
+          const feat = checkVocabSourceFeatures(v, sourceTextForFeatures);
+          return {
+            ...v,
+            isFocused: v.isFocused ?? feat.isFocused,
+            wantsWritingTips: v.wantsWritingTips ?? false,  
+            wantsShapeSimilar: feat.wantsShapeSimilar, 
+            wantsPolyphonic: feat.wantsPolyphonic,  
+            writingTips: v.writingTips || "請注意字形比例與重心。"
+          };
+        });
       }
 
       if (parsed.recognitionVocabulary) {
-        parsed.recognitionVocabulary = parsed.recognitionVocabulary.map((v: any) => ({
-          ...v,
-          isFocused: v.isFocused ?? false,
-          wantsWritingTips: false,
-          wantsShapeSimilar: true,
-          wantsPolyphonic: false,
-          writingTips: v.writingTips || "認讀字，重點在於認讀。"
-        }));
+        parsed.recognitionVocabulary = parsed.recognitionVocabulary.map((v: any) => {
+          const feat = checkVocabSourceFeatures(v, sourceTextForFeatures);
+          return {
+            ...v,
+            isFocused: v.isFocused ?? feat.isFocused,
+            wantsWritingTips: v.wantsWritingTips ?? false,
+            wantsShapeSimilar: feat.wantsShapeSimilar,
+            wantsPolyphonic: feat.wantsPolyphonic,
+            writingTips: v.writingTips || "認讀字，重點在於認讀。"
+          };
+        });
       }
 
       // [難詞與成語物件化] 支援 Selectable 結構

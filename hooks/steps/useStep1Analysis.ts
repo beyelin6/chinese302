@@ -13,6 +13,7 @@ import {
 } from '../../constants';
 import { extractTextFromPDFBase64 } from '../../utils.ts';
 import { sanitizeAndParseJSON } from '../../utils/jsonParser';
+import { buildCuratedBriefingMappingPrompt, isCuratedBriefing, checkVocabSourceFeatures } from '../../utils/curatedBriefing';
 
 export const useStep1Analysis = () => {
   const { dispatch } = useWorkflowContext();
@@ -81,7 +82,8 @@ export const useStep1Analysis = () => {
       }
 
       // 🌟 [對齊 1] 強化雷達：擴大正則表達式的命中範圍
-      const isStructured = /基本資訊|各段大意|意義段大意|字形字音|結構大意|內容大意|[一二三四五六七八九十]、|㈠|㈡|㈢|㈣|㈤/.test(finalInputText);
+      const isCurated = isCuratedBriefing(finalInputText);
+      const isStructured = isCurated || /基本資訊|各段大意|意義段大意|字形字音|結構大意|內容大意|[一二三四五六七八九十]、|㈠|㈡|㈢|㈣|㈤/.test(finalInputText);
       
       const promptSuffix = isStructured 
         ? STEP_1_FAST_PROMPT_SUFFIX 
@@ -93,7 +95,9 @@ export const useStep1Analysis = () => {
         dispatch({ type: 'SET_LOADING_STATUS', payload: '正在掃描文本並提取核心特徵...' });
       }
 
-      const fullPrompt = `${SYSTEM_PROMPT}\n${promptSuffix}\n${finalInputText}`;
+      const fullPrompt = isCurated
+        ? `${SYSTEM_PROMPT}\n${buildCuratedBriefingMappingPrompt(finalInputText)}`
+        : `${SYSTEM_PROMPT}\n${promptSuffix}\n${finalInputText}`;
 
       let responseText = "";
       let basicAnalysisObj: any = null;
@@ -145,6 +149,7 @@ export const useStep1Analysis = () => {
         visualStructureRecommendation: basicAnalysisObj.visualStructureRecommendation || "N1 故事山",
 
         basicInfo: {
+          unitName: basicAnalysisObj.basicInfo?.unitName || basicAnalysisObj.unitName || "未知課目",
           grade: basicAnalysisObj.basicInfo?.grade || basicAnalysisObj.grade || "未知",
           genre: basicAnalysisObj.basicInfo?.genre || basicAnalysisObj.genre || "未分類",
           theme: basicAnalysisObj.basicInfo?.subject || basicAnalysisObj.subject || "人物描寫",
@@ -159,8 +164,7 @@ export const useStep1Analysis = () => {
           const word = isString ? v : (v.word || v);
           const shapeSimilar = isString ? [] : (v.shapeSimilar || []);
           const polyphonic = isString ? [] : (v.polyphonic || []);
-          const hasDeepData = (Array.isArray(shapeSimilar) && shapeSimilar.length > 0) || 
-                             (Array.isArray(polyphonic) && polyphonic.length > 0);
+          const feat = checkVocabSourceFeatures(v, finalInputText);
 
           return {
             word: word,
@@ -169,24 +173,31 @@ export const useStep1Analysis = () => {
             writingTips: isString ? "無" : (v.writingTips || "無"),
             shapeSimilar: shapeSimilar, 
             polyphonic: polyphonic,
-            isFocused: hasDeepData 
+            isFocused: feat.isFocused,
+            wantsWritingTips: v.wantsWritingTips ?? false,
+            wantsShapeSimilar: feat.wantsShapeSimilar,
+            wantsPolyphonic: feat.wantsPolyphonic
           };
         }),
 
         recognitionVocabulary: (basicAnalysisObj.recognitionVocabulary || []).map((v: any) => {
           const isString = typeof v === 'string';
           const word = isString ? v : (v.word || v);
+          const shapeSimilar = isString ? [] : (v.shapeSimilar || []);
+          const polyphonic = isString ? [] : (v.polyphonic || []);
+          const feat = checkVocabSourceFeatures(v, finalInputText);
+
           return {
             word: word,
             radical: isString ? "部" : (v.radical || "部"),
             type: isString ? "認讀字" : (v.type || "認讀字"),
             writingTips: "認讀字，重點在於認字而非寫法。",
-            shapeSimilar: isString ? [] : (v.shapeSimilar || []),
-            polyphonic: isString ? [] : (v.polyphonic || []),
-            isFocused: false, // 認讀字預設不勾選
-            wantsWritingTips: false,
-            wantsShapeSimilar: true,
-            wantsPolyphonic: false
+            shapeSimilar: shapeSimilar,
+            polyphonic: polyphonic,
+            isFocused: feat.isFocused,
+            wantsWritingTips: v.wantsWritingTips ?? false,
+            wantsShapeSimilar: feat.wantsShapeSimilar,
+            wantsPolyphonic: feat.wantsPolyphonic
           };
         }),
 

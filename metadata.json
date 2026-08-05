@@ -1,5 +1,6 @@
 {
   "name": "V-MAX Omni Architect",
   "description": "A high-end educational material generation engine designed for teachers, powering the V-MAX v59.0 Kernel using Gemini API.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

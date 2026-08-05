@@ -17,7 +17,7 @@ export enum AppStepEnum {
 export const VMAX_KERNEL_VERSION = "v60.8-DNA-Purity-Universal";
 
 // 🌟 [2026 核心升級] 切換至最新支援型號
-export const GEMINI_MODEL = "gemini-3-flash-preview";
+export const GEMINI_MODEL = "gemini-3.6-flash";
 
 // ============================================================
 // 🎭 視覺基因鎖定系統 (Visual DNA Anchoring System)
