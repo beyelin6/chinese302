@@ -1,0 +1,14 @@
+interface:
+  display_name: V-MAX 國語預習單
+  short_description: 製作清楚框線版或自由手繪版的 AI 國語預習單
+  default_prompt: 使用 $vmax-chinese-preview-worksheet，從教材鎖定主檔選擇清楚框線版或自由手繪版，製作一課 A4
+    橫式預習單並完成校對與上傳。
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
